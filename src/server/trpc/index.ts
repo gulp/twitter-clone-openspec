@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { log } from "@/lib/logger";
 import { TRPCError, initTRPC } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { getServerSession } from "next-auth";
 import superjson from "superjson";
-import { log } from "@/lib/logger";
 import { authOptions } from "../auth";
 import { requestContext } from "../db";
 
@@ -103,10 +103,7 @@ const loggingMiddleware = t.middleware(async ({ ctx, path, type, next }) => {
           log.warn("Auth failure", logData);
         } else if (error.code === "TOO_MANY_REQUESTS") {
           log.warn("Rate limit hit", logData);
-        } else if (
-          error.code === "INTERNAL_SERVER_ERROR" ||
-          error.code === "TIMEOUT"
-        ) {
+        } else if (error.code === "INTERNAL_SERVER_ERROR" || error.code === "TIMEOUT") {
           log.error("tRPC error", { ...logData, message: error.message });
         } else {
           log.warn("tRPC error", logData);
@@ -142,16 +139,14 @@ export const publicProcedure = t.procedure.use(loggingMiddleware);
  * Includes logging middleware and session check.
  * Throws UNAUTHORIZED if no session.
  */
-export const protectedProcedure = t.procedure
-  .use(loggingMiddleware)
-  .use(({ ctx, next }) => {
-    if (!ctx.session?.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
-    return next({
-      ctx: {
-        ...ctx,
-        session: { ...ctx.session, user: ctx.session.user },
-      },
-    });
+export const protectedProcedure = t.procedure.use(loggingMiddleware).use(({ ctx, next }) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      session: { ...ctx.session, user: ctx.session.user },
+    },
   });
+});

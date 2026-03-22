@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { env } from "@/env";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import bcrypt from "bcryptjs";
 import { basePrisma, prisma } from "./db";
 import { sessionDel, sessionGet, sessionSet } from "./redis";
 
@@ -87,8 +87,7 @@ export const authOptions: NextAuthOptions = {
 
         // Pre-computed dummy hash for timing-safe comparison when user not found
         // Using bcrypt hash of "dummy_password_for_timing_safety"
-        const DUMMY_HASH =
-          "$2a$12$LQDW7KYN5Z5kqX9Z8qZ0Z.LQDW7KYN5Z5kqX9Z8qZ0ZLQDW7KYN5Z";
+        const DUMMY_HASH = "$2a$12$LQDW7KYN5Z5kqX9Z8qZ0Z.LQDW7KYN5Z5kqX9Z8qZ0ZLQDW7KYN5Z";
 
         // Always run bcrypt.compare to prevent timing oracle
         // Use dummy hash if user not found
@@ -154,10 +153,8 @@ export const authOptions: NextAuthOptions = {
         // Check if email is verified
         const email = user.email;
         const emailVerified =
-          (profile as { email_verified?: boolean; verified_email?: boolean })
-            ?.email_verified ??
-          (profile as { email_verified?: boolean; verified_email?: boolean })
-            ?.verified_email;
+          (profile as { email_verified?: boolean; verified_email?: boolean })?.email_verified ??
+          (profile as { email_verified?: boolean; verified_email?: boolean })?.verified_email;
 
         if (!email) {
           console.error("[AUTH] OAuth sign-in rejected: no email provided", {
@@ -167,10 +164,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (!emailVerified) {
-          console.error(
-            "[AUTH] OAuth sign-in rejected: email not verified",
-            { provider: account.provider, email }
-          );
+          console.error("[AUTH] OAuth sign-in rejected: email not verified", {
+            provider: account.provider,
+            email,
+          });
           return false;
         }
 
