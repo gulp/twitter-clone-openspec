@@ -41,10 +41,10 @@ export function RegisterForm() {
     const result = registerSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof RegisterFormData, string>> = {};
-      result.error.errors.forEach((error) => {
+      for (const error of result.error.errors) {
         const field = error.path[0] as keyof RegisterFormData;
         fieldErrors[field] = error.message;
-      });
+      }
       setErrors(fieldErrors);
       return false;
     }
@@ -101,12 +101,12 @@ export function RegisterForm() {
       // Success - redirect to home
       router.push("/home");
       router.refresh();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Registration error:", error);
 
       // Handle tRPC errors with specific messages
-      if (error?.message) {
-        setServerError(error.message);
+      if (error && typeof error === "object" && "message" in error) {
+        setServerError(String(error.message));
       } else {
         setServerError("An unexpected error occurred. Please try again.");
       }

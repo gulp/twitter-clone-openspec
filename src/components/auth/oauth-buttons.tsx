@@ -19,6 +19,7 @@ export function OAuthButtons() {
   return (
     <div className="space-y-3">
       <button
+        type="button"
         onClick={() => handleOAuthSignIn("google")}
         disabled={loadingProvider !== null}
         className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-700 rounded-full font-medium text-white bg-transparent hover:bg-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
@@ -68,6 +69,7 @@ export function OAuthButtons() {
       </button>
 
       <button
+        type="button"
         onClick={() => handleOAuthSignIn("github")}
         disabled={loadingProvider !== null}
         className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-700 rounded-full font-medium text-white bg-transparent hover:bg-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"

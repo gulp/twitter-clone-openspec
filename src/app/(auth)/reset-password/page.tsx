@@ -38,7 +38,7 @@ export default function ResetPasswordPage() {
       await requestResetMutation.mutateAsync({ email });
       setSuccess(true);
       setEmail("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Password reset request error:", err);
       // Even on error, show generic success message (per security spec)
       setSuccess(true);

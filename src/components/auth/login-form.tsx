@@ -43,10 +43,10 @@ export function LoginForm() {
     const result = loginFormSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof LoginFormData, string>> = {};
-      result.error.errors.forEach((error) => {
+      for (const error of result.error.errors) {
         const field = error.path[0] as keyof LoginFormData;
         fieldErrors[field] = error.message;
-      });
+      }
       setErrors(fieldErrors);
       return false;
     }

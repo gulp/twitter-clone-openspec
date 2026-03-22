@@ -54,10 +54,10 @@ export default function CompleteResetPage() {
     const result = resetCompleteSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<Record<keyof ResetFormData, string>> = {};
-      result.error.errors.forEach((error) => {
+      for (const error of result.error.errors) {
         const field = error.path[0] as keyof ResetFormData;
         fieldErrors[field] = error.message;
-      });
+      }
       setErrors(fieldErrors);
       return false;
     }
@@ -111,9 +111,13 @@ export default function CompleteResetPage() {
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Password reset completion error:", error);
-      setServerError(error?.message || "Failed to reset password. This link may have expired.");
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Failed to reset password. This link may have expired.";
+      setServerError(message);
       setIsLoading(false);
     }
   };
