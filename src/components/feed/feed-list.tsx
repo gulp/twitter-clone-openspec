@@ -1,9 +1,9 @@
 "use client";
 
-import { trpc } from "@/lib/trpc";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TweetCard } from "@/components/tweet/tweet-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { trpc } from "@/lib/trpc";
 
 /**
  * Feed list component with infinite scroll
@@ -15,29 +15,19 @@ import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
  * next page when scrolling near the bottom.
  */
 export function FeedList() {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    error,
-  } = trpc.feed.home.useInfiniteQuery(
-    { limit: 20 },
-    {
-      getNextPageParam: (lastPage) => lastPage.nextCursor,
-    }
-  );
-
-  const sentinelRef = useInfiniteScroll(
-    () => {
-      if (hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error } =
+    trpc.feed.home.useInfiniteQuery(
+      { limit: 20 },
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
       }
-    },
-    hasNextPage && !isFetchingNextPage
-  );
+    );
+
+  const sentinelRef = useInfiniteScroll(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, hasNextPage && !isFetchingNextPage);
 
   // Loading state
   if (isLoading) {
@@ -67,9 +57,7 @@ export function FeedList() {
   if (isError) {
     return (
       <div className="px-4 py-8 text-center">
-        <p className="text-[#F91880] font-manrope">
-          {error?.message || "Failed to load feed"}
-        </p>
+        <p className="text-[#F91880] font-manrope">{error?.message || "Failed to load feed"}</p>
       </div>
     );
   }

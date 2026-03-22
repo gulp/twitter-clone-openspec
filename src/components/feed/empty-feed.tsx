@@ -29,8 +29,8 @@ export function EmptyFeed() {
             Welcome to your timeline!
           </h2>
           <p className="text-[#71767B] text-base leading-relaxed">
-            Your home feed is empty because you're not following anyone yet.
-            Follow some users to see their tweets here.
+            Your home feed is empty because you're not following anyone yet. Follow some users to
+            see their tweets here.
           </p>
         </div>
 

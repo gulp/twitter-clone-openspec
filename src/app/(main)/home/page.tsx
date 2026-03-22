@@ -85,20 +85,13 @@ export default function HomePage() {
       </div>
 
       {/* Tweet composer */}
-      <TweetComposer
-        placeholder="What's happening?"
-        onSuccess={handleTweetSuccess}
-      />
+      <TweetComposer placeholder="What's happening?" onSuccess={handleTweetSuccess} />
 
       {/* New tweets indicator */}
       <NewTweetsIndicator onShowNewTweets={handleShowNewTweets} />
 
       {/* Feed content */}
-      {isEmpty ? (
-        <EmptyFeed />
-      ) : (
-        <FeedList />
-      )}
+      {isEmpty ? <EmptyFeed /> : <FeedList />}
     </div>
   );
 }
