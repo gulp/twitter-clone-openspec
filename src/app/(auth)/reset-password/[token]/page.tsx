@@ -156,6 +156,7 @@ export default function CompleteResetPage() {
               viewBox="0 0 24 24"
               aria-label="Success"
             >
+              <title>Success</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

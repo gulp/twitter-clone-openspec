@@ -32,6 +32,7 @@ export function OAuthButtons() {
             viewBox="0 0 24 24"
             aria-label="Loading"
           >
+            <title>Loading</title>
             <circle
               className="opacity-25"
               cx="12"
@@ -83,6 +84,7 @@ export function OAuthButtons() {
             viewBox="0 0 24 24"
             aria-label="Loading"
           >
+            <title>Loading</title>
             <circle
               className="opacity-25"
               cx="12"
