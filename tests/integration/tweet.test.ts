@@ -236,13 +236,13 @@ describe("tweet router", () => {
       });
 
       expect(page1.items.length).toBe(2);
-      expect(page1.nextCursor).toBeDefined();
+      expect(page1.nextCursor).toBeTruthy();
 
       // Get second page using cursor
       const page2 = await caller.tweet.getUserTweets({
         userId: user.id,
         limit: 2,
-        cursor: page1.nextCursor ?? undefined,
+        cursor: page1.nextCursor!,
       });
 
       expect(page2.items.length).toBe(1);

@@ -274,11 +274,11 @@ describe("social router", () => {
       const result = await caller.social.getSuggestions();
 
       // Should not include self or already-followed user
-      expect(result.map((u) => u.id)).not.toContain(user.id);
-      expect(result.map((u) => u.id)).not.toContain(other1.id);
+      expect(result.map((u: { id: string }) => u.id)).not.toContain(user.id);
+      expect(result.map((u: { id: string }) => u.id)).not.toContain(other1.id);
 
       // Should include other2
-      expect(result.map((u) => u.id)).toContain(other2.id);
+      expect(result.map((u: { id: string }) => u.id)).toContain(other2.id);
     });
   });
 });
