@@ -55,22 +55,30 @@ export const socialRouter = createTRPCRouter({
       }
 
       // Transaction: create Follow + increment counts (I3)
-      await prisma.$transaction([
-        prisma.follow.create({
-          data: {
-            followerId,
-            followingId,
-          },
-        }),
-        prisma.user.update({
-          where: { id: followerId },
-          data: { followingCount: { increment: 1 } },
-        }),
-        prisma.user.update({
-          where: { id: followingId },
-          data: { followerCount: { increment: 1 } },
-        }),
-      ]);
+      // Catch P2002 (unique constraint) for concurrent follow race condition
+      try {
+        await prisma.$transaction([
+          prisma.follow.create({
+            data: {
+              followerId,
+              followingId,
+            },
+          }),
+          prisma.user.update({
+            where: { id: followerId },
+            data: { followingCount: { increment: 1 } },
+          }),
+          prisma.user.update({
+            where: { id: followingId },
+            data: { followerCount: { increment: 1 } },
+          }),
+        ]);
+      } catch (error) {
+        if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+          return { success: true }; // Already followed (concurrent request)
+        }
+        throw error;
+      }
 
       // Fire FOLLOW notification (self-suppression handled in createNotification)
       await createNotification({
