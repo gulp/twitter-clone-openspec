@@ -4,6 +4,7 @@ dist/
 *.db
 .env
 .env.local
+coverage/
 e2e/results/
 e2e/screenshots/
 playwright-report/
@@ -17,3 +18,6 @@ test-results/
 .claude/ralph-loop.local.md
 loop-ui
 storage.sqlite3
+
+# bv (beads viewer) local config and caches
+.bv/
