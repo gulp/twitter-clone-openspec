@@ -6,7 +6,6 @@ import { useSSE } from "@/hooks/use-sse";
 import { Bell } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 
 /**
  * Bell icon with unread count badge for sidebar navigation
@@ -24,20 +23,14 @@ export function NotificationBell() {
   const isActive = pathname === "/notifications";
 
   // Get unread count from tRPC
-  const { data: unreadData, refetch } = trpc.notification.unreadCount.useQuery(undefined, {
+  const { data: unreadData } = trpc.notification.unreadCount.useQuery(undefined, {
     refetchOnWindowFocus: true,
     staleTime: 30000, // Cache for 30s
   });
 
   // Listen for real-time notifications via SSE
-  const { latestNotification } = useSSE();
-
-  // Refetch unread count when new notification arrives
-  useEffect(() => {
-    if (latestNotification) {
-      refetch();
-    }
-  }, [latestNotification, refetch]);
+  // The useSSE hook already invalidates notification queries on new events
+  useSSE();
 
   const unreadCount = unreadData?.count ?? 0;
 

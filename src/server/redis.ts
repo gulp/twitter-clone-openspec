@@ -332,10 +332,11 @@ export async function getUnreadCount(userId: string, requestId?: string): Promis
  * Unread notification count — fail open.
  * Set unread notification count in Redis cache.
  * No-op on Redis failure.
+ * TTL: 5 minutes to prevent stale counts from persisting indefinitely.
  */
 export async function setUnreadCount(userId: string, count: number, requestId?: string): Promise<void> {
   try {
-    await redis.set(`notification:unread:${userId}`, count.toString());
+    await redis.setex(`notification:unread:${userId}`, 300, count.toString());
   } catch (error) {
     log.warn("Redis operation failed", {
       feature: "unread",
