@@ -99,6 +99,9 @@ export async function cacheIncr(key: string): Promise<number | null> {
  * Auth rate limiting wrapper — fail closed.
  * RETHROWS on Redis failure — allowing auth requests without rate limiting
  * turns a Redis outage into an account-abuse incident.
+ *
+ * Uses atomic Lua script to prevent race condition where concurrent requests
+ * could both pass the count check before either adds their entry.
  */
 export async function authRateLimitCheck(
   scope: string,
@@ -109,23 +112,46 @@ export async function authRateLimitCheck(
   const key = `rate:${scope}:${identifier}`;
   const now = Date.now();
   const windowStart = now - windowSeconds * 1000;
+  const member = `${now}:${Math.random().toString(36).slice(2, 8)}`;
 
   try {
-    // Remove expired entries
-    await redis.zremrangebyscore(key, 0, windowStart);
+    // Atomic Lua script: remove expired, count, check limit, add entry, set expiry
+    const luaScript = `
+      local key = KEYS[1]
+      local now = ARGV[1]
+      local windowStart = ARGV[2]
+      local limit = ARGV[3]
+      local windowSeconds = ARGV[4]
+      local member = ARGV[5]
 
-    // Count requests in current window
-    const count = await redis.zcard(key);
+      redis.call('ZREMRANGEBYSCORE', key, 0, windowStart)
+      local count = redis.call('ZCARD', key)
 
-    if (count >= limit) {
-      return { allowed: false, remaining: 0 };
-    }
+      if count >= tonumber(limit) then
+        return {0, 0}
+      end
 
-    // Add current request (use timestamp + random suffix to avoid member collision)
-    await redis.zadd(key, now, `${now}:${Math.random().toString(36).slice(2, 8)}`);
-    await redis.expire(key, windowSeconds);
+      redis.call('ZADD', key, now, member)
+      redis.call('EXPIRE', key, windowSeconds)
 
-    return { allowed: true, remaining: limit - count - 1 };
+      return {1, tonumber(limit) - count - 1}
+    `;
+
+    const result = await redis.eval(
+      luaScript,
+      1, // number of keys
+      key,
+      now.toString(),
+      windowStart.toString(),
+      limit.toString(),
+      windowSeconds.toString(),
+      member
+    ) as [number, number];
+
+    return {
+      allowed: result[0] === 1,
+      remaining: result[1],
+    };
   } catch (error) {
     // FAIL CLOSED: reject request on Redis failure
     console.error("[REDIS] authRateLimitCheck failed (fail closed):", {
