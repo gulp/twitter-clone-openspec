@@ -154,6 +154,7 @@ export default function CompleteResetPage() {
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-label="Success"
             >
               <path
                 strokeLinecap="round"

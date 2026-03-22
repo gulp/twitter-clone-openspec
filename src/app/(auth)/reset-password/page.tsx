@@ -73,6 +73,7 @@ export default function ResetPasswordPage() {
               Back to login
             </Link>
             <button
+              type="button"
               onClick={() => setSuccess(false)}
               className="block w-full text-gray-400 hover:text-white transition-all text-sm"
             >
