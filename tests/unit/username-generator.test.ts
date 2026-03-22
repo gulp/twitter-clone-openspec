@@ -15,7 +15,7 @@ describe("generateUsername", () => {
 
   it("should strip special characters", () => {
     const result = generateUsername("Alice-Bob.Smith!", "clx9abc123def");
-    expect(result).toBe("alicebobsm_clx9ab"); // truncated to 9 chars + CUID
+    expect(result).toBe("alicebobs_clx9ab"); // "alicebobsmith" truncated to 9 chars + CUID
   });
 
   it("should handle short name without truncation", () => {
@@ -63,7 +63,7 @@ describe("generateUsername", () => {
 
   it("should strip spaces", () => {
     const result = generateUsername("Alice  Bob  Carol", "clx9abc123def");
-    expect(result).toBe("alicebobca_clx9ab"); // spaces removed, truncated to 9 chars
+    expect(result).toBe("alicebobc_clx9ab"); // "alicebobcarol" truncated to 9 chars
   });
 
   it("should guarantee uniqueness via CUID prefix", () => {

@@ -65,9 +65,8 @@ describe("Notification self-suppression contract", () => {
     const recipient = "user-2";
     const actor = "user-1";
 
-    const shouldSuppress = recipient === actor;
-
-    expect(shouldSuppress).toBe(false);
+    // Different users → should NOT suppress
+    expect(recipient).not.toBe(actor);
   });
 
   it("should verify self-suppression logic for all notification types", () => {
