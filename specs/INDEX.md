@@ -35,4 +35,5 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-redis-key-patterns.md](caching-redis-key-patterns.md) — Naming convention, TTL strategy, atomic operations, SETNX locking, data type inventory
 - [caching-tombstone-filtering.md](caching-tombstone-filtering.md) — In-memory filtering of soft-deleted tweets from cached feeds using Redis tombstones set
 - [caching-feed-assembly.md](caching-feed-assembly.md) — Fan-out-on-read with DISTINCT ON deduplication, versioned caching, tombstone filtering, SETNX locking, batch hydration
+- [caching-lua-atomicity.md](caching-lua-atomicity.md) — Lua scripts for atomic rate limiting and floored unread count decrement
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
