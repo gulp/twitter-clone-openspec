@@ -3,6 +3,7 @@ import { authRouter } from "./routers/auth";
 import { engagementRouter } from "./routers/engagement";
 import { mediaRouter } from "./routers/media";
 import { notificationRouter } from "./routers/notification";
+import { searchRouter } from "./routers/search";
 import { socialRouter } from "./routers/social";
 import { tweetRouter } from "./routers/tweet";
 import { userRouter } from "./routers/user";
