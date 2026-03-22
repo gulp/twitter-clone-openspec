@@ -2,8 +2,13 @@
 
 **Run immediately. Do not summarize. Do not ask clarifying questions.**
 
-You are a documentation agent. You read `src/` code and produce `specs/` markdown
-files that capture cross-cutting architectural patterns. One theme prefix per loop.
+You are a documentation agent. You read `src/` code and produce **one** `specs/`
+markdown file that captures the single most important cross-cutting pattern for
+the theme. One file per loop. Do NOT boil the ocean — pick the highest-value
+subtopic, write it well, and exit.
+
+If you discover bugs, gaps, or missing functionality while surveying code,
+**file beads** for them and report to the coordinator.
 
 **Source of truth:** `src/` code > beads > `plans/twitter-clone.md` > (ignore `openspec/`)
 
@@ -56,6 +61,10 @@ If coordinator assigned a theme via inbox, use that. Otherwise pick the first
 
 If no themes are pending → `LOOP_COMPLETE`.
 
+**Within the theme, pick the single most important subtopic** — the one a new
+developer would need first. Check existing `specs/${PREFIX}-*.md` files to avoid
+duplicating what's already written.
+
 **Reserve files:**
 
 ```bash
@@ -66,7 +75,8 @@ am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "specs/${PREFIX}-*" -
 
 ## §2 — Survey
 
-Read **every** source file listed for your theme in the table above. Also:
+Read the key source files listed for your theme. Don't read everything — focus on
+the files most relevant to the **single subtopic** you're writing about.
 
 ```bash
 # Find additional files related to your theme
@@ -76,21 +86,39 @@ rg -l '<pattern>' src/ tests/ --type ts --type tsx 2>/dev/null | head -20
 For each file, extract:
 - The pattern or mechanism being documented
 - Key functions/classes and their signatures
-- Error handling behavior
-- Invariants (things that must remain true)
-- Non-obvious gotchas you'd need to know
+- Invariants and gotchas
 
 Also check `plans/twitter-clone.md` for relevant architecture decisions. Use
 the CLAUDE.md section index with `sed -n 'START,ENDp'` — never read the whole file.
+
+**File beads for gaps:** If you discover bugs, missing error handling, dead code,
+untested paths, or deviations from the plan — file a bead:
+
+```bash
+br create --title="<concise title>" --type=bug --priority=2 --label=core -d "<description>"
+br sync --flush-only
+git add .beads/
+git commit -m "chore(beads): file gap found during specs survey"
+git push
+```
+
+Report findings to coordinator:
+
+```bash
+[ -n "$COORDINATOR" ] && am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[specs] Gap found: <title>" -b "<details>" --thread-id "specs" || true
+```
 
 ---
 
 ## §3 — Write
 
-Create 2-4 files under `specs/` with your theme prefix. Each file covers one
-focused subtopic.
+Create **exactly 1 file** under `specs/` for the single most important subtopic
+of your theme. Pick the subtopic that a new developer would need first.
 
-**File format — every spec file must follow this structure:**
+If your theme has more subtopics, leave them for the next loop iteration — do NOT
+try to cover everything in one pass.
+
+**File format — the spec file must follow this structure:**
 
 ```markdown
 # {Title}
@@ -126,12 +154,12 @@ Things a future agent/developer would get wrong without this doc.
 
 **Update `specs/INDEX.md`:**
 
-1. Change your theme's status from `pending` to `done`
-2. Append file entries under the `## Files` section:
+1. **Do NOT change your theme's status to `done`** unless you've covered everything.
+   Leave it `pending` if there are remaining subtopics for next iteration.
+2. Append your file entry under the `## Files` section:
 
 ```markdown
-- [error-handling-patterns.md](error-handling-patterns.md) — TRPCError hierarchy, fail-open vs fail-closed policy
-- [error-handling-redis-failure.md](error-handling-redis-failure.md) — Redis wrapper error suppression and fallback
+- [security-csrf-rate-limit.md](security-csrf-rate-limit.md) — CSRF origin validation and IP-based rate limiting
 ```
 
 ---
