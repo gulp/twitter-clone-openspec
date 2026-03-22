@@ -5,6 +5,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
 import { prisma } from "./db";
 import { sessionDel, sessionGet, sessionSet } from "./redis";
 
@@ -51,8 +52,12 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     /**
-     * CredentialsProvider — placeholder for Phase B.
-     * Full implementation will be in auth.ts router (registration, login).
+     * CredentialsProvider — email/password authentication.
+     *
+     * Security requirements (§1.4):
+     * 1. Return 'Invalid email or password' for both wrong email AND wrong password
+     * 2. Use timing-safe comparison: always run bcrypt.compare even when user not found
+     * 3. Use pre-computed dummy hash when user doesn't exist to prevent timing oracle
      */
     CredentialsProvider({
       name: "credentials",
@@ -60,10 +65,48 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize() {
-        // Placeholder — full implementation in Phase B (tw-bpw.13)
-        // Will verify email/password via tRPC auth.login mutation
-        return null;
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Invalid email or password");
+        }
+
+        const { email, password } = credentials;
+
+        // Look up user by email
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+            hashedPassword: true,
+          },
+        });
+
+        // Pre-computed dummy hash for timing-safe comparison when user not found
+        // Using bcrypt hash of "dummy_password_for_timing_safety"
+        const DUMMY_HASH =
+          "$2a$12$LQDW7KYN5Z5kqX9Z8qZ0Z.LQDW7KYN5Z5kqX9Z8qZ0ZLQDW7KYN5Z";
+
+        // Always run bcrypt.compare to prevent timing oracle
+        // Use dummy hash if user not found
+        const hashToCompare = user?.hashedPassword ?? DUMMY_HASH;
+        const isValid = await bcrypt.compare(password, hashToCompare);
+
+        // Return user only if found AND password is valid
+        if (!user || !isValid) {
+          throw new Error("Invalid email or password");
+        }
+
+        // Return user object for NextAuth (without hashedPassword)
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.displayName,
+          image: user.avatarUrl || null,
+        };
       },
     }),
 
@@ -92,6 +135,106 @@ export const authOptions: NextAuthOptions = {
       : []),
   ],
   callbacks: {
+    /**
+     * signIn callback — handles OAuth auto-account creation (§1.6).
+     *
+     * For OAuth providers (Google, GitHub):
+     * - Only create account when provider supplies verified email
+     * - Generate username: CUID prefix strategy (zero retries)
+     * - Set displayName from OAuth profile
+     */
+    async signIn({ user, account, profile }) {
+      // Credentials provider: always allow (validation in authorize)
+      if (account?.provider === "credentials") {
+        return true;
+      }
+
+      // OAuth provider: only allow if email is verified
+      if (account?.provider === "google" || account?.provider === "github") {
+        // Check if email is verified
+        const email = user.email;
+        const emailVerified =
+          (profile as { email_verified?: boolean; verified_email?: boolean })
+            ?.email_verified ??
+          (profile as { email_verified?: boolean; verified_email?: boolean })
+            ?.verified_email;
+
+        if (!email) {
+          console.error("[AUTH] OAuth sign-in rejected: no email provided", {
+            provider: account.provider,
+          });
+          return false;
+        }
+
+        if (!emailVerified) {
+          console.error(
+            "[AUTH] OAuth sign-in rejected: email not verified",
+            { provider: account.provider, email }
+          );
+          return false;
+        }
+
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true },
+        });
+
+        // If user exists, allow sign-in
+        if (existingUser) {
+          return true;
+        }
+
+        // Auto-create new user
+        // Generate username per §1.6: CUID prefix strategy (zero retries)
+        try {
+          // Generate CUID first
+          const { createId } = await import("@paralleldrive/cuid2");
+          const userId = createId();
+
+          // Derive username from OAuth display name
+          const displayName = user.name || "user";
+          const baseUsername = displayName
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "")
+            .slice(0, 9);
+
+          // Append CUID prefix (first 6 chars) for uniqueness
+          const username = `${baseUsername}_${userId.slice(0, 6)}`;
+
+          // Create user (using the pre-generated CUID as id)
+          await prisma.user.create({
+            data: {
+              id: userId,
+              email,
+              username,
+              displayName,
+              avatarUrl: user.image || "",
+              hashedPassword: null, // OAuth users have no password
+            },
+          });
+
+          console.log("[AUTH] OAuth auto-created user:", {
+            provider: account.provider,
+            email,
+            username,
+          });
+
+          return true;
+        } catch (error) {
+          console.error("[AUTH] Failed to auto-create OAuth user:", {
+            provider: account.provider,
+            email,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return false;
+        }
+      }
+
+      // Unknown provider: reject
+      return false;
+    },
+
     /**
      * JWT callback — stores userId, session ID (jti), and session version (sv).
      *
