@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 /**
@@ -10,10 +10,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format date as relative time (e.g., "2 hours ago")
+ * Format date as relative time (e.g., "2 hours ago") or specific format
  */
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string, formatType?: "monthYear"): string {
   const d = typeof date === "string" ? new Date(date) : date;
+
+  if (formatType === "monthYear") {
+    return format(d, "MMMM yyyy");
+  }
+
   return formatDistanceToNow(d, { addSuffix: true });
 }
 
