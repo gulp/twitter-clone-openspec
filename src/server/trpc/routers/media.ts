@@ -35,7 +35,7 @@ export const mediaRouter = createTRPCRouter({
       const { filename, contentType, purpose } = input;
 
       // Validate content type
-      if (!ALLOWED_MIME_TYPES.includes(contentType as any)) {
+      if (!ALLOWED_MIME_TYPES.includes(contentType as (typeof ALLOWED_MIME_TYPES)[number])) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Supported formats: JPEG, PNG, GIF, WebP",
@@ -120,7 +120,7 @@ export function validateMediaUrls(
     }
 
     // Extract the S3 key (everything after the public URL base)
-    const key = url.replace(s3PublicUrl + "/", "");
+    const key = url.replace(`${s3PublicUrl}/`, "");
 
     // Expected prefix: {purpose}/{userId}/
     const expectedPrefix = `${purpose}/${userId}/`;
