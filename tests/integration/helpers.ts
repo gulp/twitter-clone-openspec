@@ -101,9 +101,10 @@ export async function createTestTweet(
  * Create a tRPC caller context for testing.
  *
  * @param userId - Optional user ID for authenticated context
+ * @param ip - Optional IP address for rate limiting (defaults to unique IP per call to avoid rate limit collisions)
  * @returns tRPC caller instance
  */
-export function createTestContext(userId?: string) {
+export function createTestContext(userId?: string, ip?: string) {
   const requestId = randomUUID();
 
   // Create session if userId provided
@@ -118,12 +119,16 @@ export function createTestContext(userId?: string) {
       }
     : null;
 
+  // Use unique IP per test by default to avoid rate limit collisions
+  // This simulates different clients making requests
+  const testIp = ip || `10.0.0.${Math.floor(Math.random() * 255)}`;
+
   // Create mock request object
   const req = new Request("http://localhost:3000/api/trpc", {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-forwarded-for": "127.0.0.1",
+      "x-forwarded-for": testIp,
     },
   });
 
