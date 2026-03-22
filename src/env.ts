@@ -2,8 +2,8 @@ import { z } from "zod";
 
 /**
  * Environment variable validation schema.
- * This file is imported at process start to validate all required environment variables.
- * If validation fails, the process exits immediately with a clear error message.
+ * Validation is deferred until first access to allow builds without full .env.
+ * If validation fails at runtime, the process exits immediately with a clear error message.
  */
 
 const envSchema = z.object({
