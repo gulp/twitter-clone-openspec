@@ -4,7 +4,7 @@ import { SearchInput } from "@/components/search/search-input";
 import { SearchResults } from "@/components/search/search-results";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 /**
  * Search page with tweet and user search
@@ -20,7 +20,7 @@ import { useState, useEffect } from "react";
  * - 300ms debounce before executing search
  * - Real-time search as user types (after debounce)
  */
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
@@ -88,5 +88,23 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#0F1419]">
+          <div className="sticky top-0 z-20 backdrop-blur-md bg-[#0F1419]/95 border-b border-[#38444d]">
+            <div className="px-4 py-3">
+              <div className="h-10 bg-[#202327] rounded-full animate-pulse" />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <SearchPageContent />
+    </Suspense>
   );
 }
