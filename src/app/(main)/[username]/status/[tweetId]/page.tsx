@@ -49,7 +49,7 @@ export default function TweetDetailPage() {
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries;
-      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+      if (target?.isIntersecting && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
     },
