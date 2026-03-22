@@ -6,7 +6,7 @@ Test utilities for creating authenticated tRPC callers, seeding test data, and i
 
 ## Where
 
-Primary implementation: `tests/integration/helpers.ts:1-289`
+Primary implementation: `tests/integration/helpers.ts:1-288`
 
 Usage examples:
 - `tests/integration/tweet.test.ts:1-318` — tweet router tests

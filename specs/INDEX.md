@@ -12,7 +12,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 | `pagination-` | Cursor encoding, keyset patterns, Prisma cursor | pending |
 | `sse-` | Publisher, replay buffer, client reconnect | pending |
 | `optimistic-` | Mutation callbacks, rollback, cache invalidation | pending |
-| `testing-` | Helpers, integration patterns, E2E fixtures | pending |
+| `testing-` | Helpers, integration patterns, E2E fixtures | done |
 | `logging-` | Structured JSON, request correlation, redaction | pending |
 
 ## Files
@@ -41,3 +41,4 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
 - [optimistic-ui-mutation-pattern.md](optimistic-ui-mutation-pattern.md) — tRPC mutation lifecycle (onMutate/onError/onSuccess), local state sync, rollback pattern, query invalidation
 - [testing-integration-helpers.md](testing-integration-helpers.md) — Test data factories, tRPC caller creation, database/Redis cleanup, unique IP generation, log capture for assertions
+- [testing-e2e-page-objects.md](testing-e2e-page-objects.md) — Page Object pattern for E2E tests, fixture integration, data-testid selectors, action/assertion separation
