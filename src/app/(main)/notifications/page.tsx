@@ -111,7 +111,7 @@ export default function NotificationsPage() {
               variant="ghost"
               size="sm"
               onClick={() => markAllReadMutation.mutate()}
-              loading={markAllReadMutation.isLoading}
+              loading={markAllReadMutation.isPending}
               className="text-[rgb(var(--color-brand))] hover:text-[rgb(var(--color-brand-hover))]"
             >
               Mark all read
