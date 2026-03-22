@@ -1,6 +1,6 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/env";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
  * S3 client singleton.
@@ -37,10 +37,7 @@ if (env.NODE_ENV !== "production") {
  * @param contentType - MIME type (e.g., "image/jpeg")
  * @returns Pre-signed URL for PUT upload
  */
-export async function getUploadUrl(
-  key: string,
-  contentType: string,
-): Promise<string> {
+export async function getUploadUrl(key: string, contentType: string): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: env.S3_BUCKET,
     Key: key,

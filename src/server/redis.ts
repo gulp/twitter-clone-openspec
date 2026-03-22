@@ -1,5 +1,5 @@
-import Redis from "ioredis";
 import { env } from "@/env";
+import Redis from "ioredis";
 
 /**
  * Redis client singleton.
@@ -48,11 +48,7 @@ export async function cacheGet(key: string): Promise<string | null> {
  * Cache SET wrapper — fail open.
  * No-op on Redis failure (cache write is best-effort).
  */
-export async function cacheSet(
-  key: string,
-  value: string,
-  ttlSeconds?: number,
-): Promise<void> {
+export async function cacheSet(key: string, value: string, ttlSeconds?: number): Promise<void> {
   try {
     if (ttlSeconds) {
       await redis.setex(key, ttlSeconds, value);
@@ -108,7 +104,7 @@ export async function authRateLimitCheck(
   scope: string,
   identifier: string,
   limit: number,
-  windowSeconds: number,
+  windowSeconds: number
 ): Promise<{ allowed: boolean; remaining: number }> {
   const key = `rate:${scope}:${identifier}`;
   const now = Date.now();
@@ -161,11 +157,7 @@ export async function sessionGet(jti: string): Promise<string | null> {
  * Session SET wrapper — fail open.
  * No-op on Redis failure (session allow-list is best-effort performance optimization).
  */
-export async function sessionSet(
-  jti: string,
-  data: string,
-  ttlSeconds: number,
-): Promise<void> {
+export async function sessionSet(jti: string, data: string, ttlSeconds: number): Promise<void> {
   try {
     await redis.setex(`session:jti:${jti}`, ttlSeconds, data);
   } catch (error) {
@@ -197,10 +189,7 @@ export async function sessionDel(jti: string): Promise<void> {
  * Add a connection ID to the set of active SSE connections for a user.
  * No-op on Redis failure.
  */
-export async function sseAddConnection(
-  userId: string,
-  connectionId: string,
-): Promise<void> {
+export async function sseAddConnection(userId: string, connectionId: string): Promise<void> {
   try {
     await redis.sadd(`sse:connections:${userId}`, connectionId);
   } catch (error) {
@@ -217,10 +206,7 @@ export async function sseAddConnection(
  * Remove a connection ID from the set of active SSE connections.
  * No-op on Redis failure.
  */
-export async function sseRemoveConnection(
-  userId: string,
-  connectionId: string,
-): Promise<void> {
+export async function sseRemoveConnection(userId: string, connectionId: string): Promise<void> {
   try {
     await redis.srem(`sse:connections:${userId}`, connectionId);
   } catch (error) {
@@ -257,7 +243,7 @@ export async function sseGetConnections(userId: string): Promise<string[]> {
 export async function getUnreadCount(userId: string): Promise<number | null> {
   try {
     const count = await redis.get(`notification:unread:${userId}`);
-    return count ? parseInt(count, 10) : null;
+    return count ? Number.parseInt(count, 10) : null;
   } catch (error) {
     console.warn("[REDIS] getUnreadCount failed (fail open):", {
       userId,
@@ -272,10 +258,7 @@ export async function getUnreadCount(userId: string): Promise<number | null> {
  * Set unread notification count in Redis cache.
  * No-op on Redis failure.
  */
-export async function setUnreadCount(
-  userId: string,
-  count: number,
-): Promise<void> {
+export async function setUnreadCount(userId: string, count: number): Promise<void> {
   try {
     await redis.set(`notification:unread:${userId}`, count.toString());
   } catch (error) {
