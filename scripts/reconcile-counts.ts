@@ -254,8 +254,7 @@ async function main() {
     const userDiscrepancies = await reconcileUserCounts();
     const tweetDiscrepancies = await reconcileTweetCounts();
 
-    const totalDiscrepancies =
-      (userDiscrepancies?.length || 0) + (tweetDiscrepancies?.length || 0);
+    const totalDiscrepancies = (userDiscrepancies?.length || 0) + (tweetDiscrepancies?.length || 0);
 
     console.log("✅ Count reconciliation complete!\n");
     console.log("Summary:");

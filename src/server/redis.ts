@@ -137,7 +137,7 @@ export async function authRateLimitCheck(
       return {1, tonumber(limit) - count - 1}
     `;
 
-    const result = await redis.eval(
+    const result = (await redis.eval(
       luaScript,
       1, // number of keys
       key,
@@ -146,7 +146,7 @@ export async function authRateLimitCheck(
       limit.toString(),
       windowSeconds.toString(),
       member
-    ) as [number, number];
+    )) as [number, number];
 
     return {
       allowed: result[0] === 1,

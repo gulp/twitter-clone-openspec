@@ -116,13 +116,15 @@ async function seedUsers() {
 /**
  * Create fixture tweets
  */
-async function seedTweets(users: [{ id: string }, { id: string }, { id: string }, { id: string }, { id: string }]) {
+async function seedTweets(
+  users: [{ id: string }, { id: string }, { id: string }, { id: string }, { id: string }]
+) {
   console.log("\n📝 Creating tweets...");
 
   // Standalone tweets (1-10)
   const tweet1 = await prisma.tweet.create({
     data: {
-      authorId: users[0]!.id,
+      authorId: users[0]?.id,
       content: "Hello world! This is user1's first tweet.",
       createdAt: createTimestamp(30),
     },
@@ -130,7 +132,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet2 = await prisma.tweet.create({
     data: {
-      authorId: users[1]!.id,
+      authorId: users[1]?.id,
       content: "User2 checking in. Great to be here!",
       createdAt: createTimestamp(35),
     },
@@ -138,7 +140,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet3 = await prisma.tweet.create({
     data: {
-      authorId: users[2]!.id,
+      authorId: users[2]?.id,
       content: "User3 loves TypeScript and Next.js",
       createdAt: createTimestamp(40),
     },
@@ -146,7 +148,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet4 = await prisma.tweet.create({
     data: {
-      authorId: users[3]!.id,
+      authorId: users[3]?.id,
       content: "User4 is learning tRPC. It's amazing!",
       createdAt: createTimestamp(45),
     },
@@ -154,7 +156,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet5 = await prisma.tweet.create({
     data: {
-      authorId: users[4]!.id,
+      authorId: users[4]?.id,
       content: "User5 here. Building cool stuff with Prisma.",
       createdAt: createTimestamp(50),
     },
@@ -162,7 +164,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet6 = await prisma.tweet.create({
     data: {
-      authorId: users[0]!.id,
+      authorId: users[0]?.id,
       content: "Another tweet from user1 about clean architecture",
       createdAt: createTimestamp(55),
     },
@@ -170,7 +172,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet7 = await prisma.tweet.create({
     data: {
-      authorId: users[1]!.id,
+      authorId: users[1]?.id,
       content: "User2 shares thoughts on software design",
       createdAt: createTimestamp(60),
     },
@@ -178,7 +180,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet8 = await prisma.tweet.create({
     data: {
-      authorId: users[2]!.id,
+      authorId: users[2]?.id,
       content: "User3 announces a new side project",
       createdAt: createTimestamp(65),
     },
@@ -186,7 +188,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet9 = await prisma.tweet.create({
     data: {
-      authorId: users[3]!.id,
+      authorId: users[3]?.id,
       content: "User4 celebrates a production deployment",
       createdAt: createTimestamp(70),
     },
@@ -194,7 +196,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet10 = await prisma.tweet.create({
     data: {
-      authorId: users[4]!.id,
+      authorId: users[4]?.id,
       content: "User5 reflects on developer productivity",
       createdAt: createTimestamp(75),
     },
@@ -203,7 +205,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
   // Replies (11-15)
   const tweet11 = await prisma.tweet.create({
     data: {
-      authorId: users[1]!.id,
+      authorId: users[1]?.id,
       parentId: tweet1.id,
       content: "@user1 Welcome! Great to see you here.",
       createdAt: createTimestamp(80),
@@ -212,7 +214,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet12 = await prisma.tweet.create({
     data: {
-      authorId: users[2]!.id,
+      authorId: users[2]?.id,
       parentId: tweet1.id,
       content: "@user1 Looking forward to your tweets!",
       createdAt: createTimestamp(85),
@@ -221,7 +223,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet13 = await prisma.tweet.create({
     data: {
-      authorId: users[3]!.id,
+      authorId: users[3]?.id,
       parentId: tweet4.id,
       content: "@user4 tRPC is indeed fantastic. Have you tried it with Next.js?",
       createdAt: createTimestamp(90),
@@ -230,7 +232,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet14 = await prisma.tweet.create({
     data: {
-      authorId: users[0]!.id,
+      authorId: users[0]?.id,
       parentId: tweet8.id,
       content: "@user3 Sounds exciting! Tell us more.",
       createdAt: createTimestamp(95),
@@ -239,7 +241,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet15 = await prisma.tweet.create({
     data: {
-      authorId: users[4]!.id,
+      authorId: users[4]?.id,
       parentId: tweet7.id,
       content: "@user2 Totally agree with your take on design patterns.",
       createdAt: createTimestamp(100),
@@ -249,7 +251,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
   // Quote tweets (16-20)
   const tweet16 = await prisma.tweet.create({
     data: {
-      authorId: users[0]!.id,
+      authorId: users[0]?.id,
       quoteTweetId: tweet3.id,
       content: "Couldn't agree more! TypeScript is the future.",
       createdAt: createTimestamp(105),
@@ -258,7 +260,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet17 = await prisma.tweet.create({
     data: {
-      authorId: users[1]!.id,
+      authorId: users[1]?.id,
       quoteTweetId: tweet5.id,
       content: "Prisma makes database work so much easier.",
       createdAt: createTimestamp(110),
@@ -267,7 +269,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet18 = await prisma.tweet.create({
     data: {
-      authorId: users[2]!.id,
+      authorId: users[2]?.id,
       quoteTweetId: tweet9.id,
       content: "Congrats on the deployment! 🚀",
       createdAt: createTimestamp(115),
@@ -276,7 +278,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet19 = await prisma.tweet.create({
     data: {
-      authorId: users[3]!.id,
+      authorId: users[3]?.id,
       quoteTweetId: tweet10.id,
       content: "Great insights on productivity. Developer experience matters!",
       createdAt: createTimestamp(120),
@@ -285,7 +287,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 
   const tweet20 = await prisma.tweet.create({
     data: {
-      authorId: users[4]!.id,
+      authorId: users[4]?.id,
       quoteTweetId: tweet6.id,
       content: "Clean architecture is key to maintainable code.",
       createdAt: createTimestamp(125),
@@ -293,16 +295,32 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
   });
 
   const allTweets = [
-    tweet1, tweet2, tweet3, tweet4, tweet5,
-    tweet6, tweet7, tweet8, tweet9, tweet10,
-    tweet11, tweet12, tweet13, tweet14, tweet15,
-    tweet16, tweet17, tweet18, tweet19, tweet20,
+    tweet1,
+    tweet2,
+    tweet3,
+    tweet4,
+    tweet5,
+    tweet6,
+    tweet7,
+    tweet8,
+    tweet9,
+    tweet10,
+    tweet11,
+    tweet12,
+    tweet13,
+    tweet14,
+    tweet15,
+    tweet16,
+    tweet17,
+    tweet18,
+    tweet19,
+    tweet20,
   ];
 
   console.log(`✓ Created ${allTweets.length} tweets`);
-  console.log(`  - ${allTweets.filter(t => !t.parentId && !t.quoteTweetId).length} standalone`);
-  console.log(`  - ${allTweets.filter(t => t.parentId).length} replies`);
-  console.log(`  - ${allTweets.filter(t => t.quoteTweetId).length} quote tweets`);
+  console.log(`  - ${allTweets.filter((t) => !t.parentId && !t.quoteTweetId).length} standalone`);
+  console.log(`  - ${allTweets.filter((t) => t.parentId).length} replies`);
+  console.log(`  - ${allTweets.filter((t) => t.quoteTweetId).length} quote tweets`);
 
   return allTweets;
 }
@@ -310,22 +328,24 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 /**
  * Create follow graph
  */
-async function seedFollows(users: [{ id: string }, { id: string }, { id: string }, { id: string }, { id: string }]) {
+async function seedFollows(
+  users: [{ id: string }, { id: string }, { id: string }, { id: string }, { id: string }]
+) {
   console.log("\n🤝 Creating follow relationships...");
 
   const follows = await Promise.all([
     // user1 follows user2, user3
     prisma.follow.create({
       data: {
-        followerId: users[0]!.id,
-        followingId: users[1]!.id,
+        followerId: users[0]?.id,
+        followingId: users[1]?.id,
         createdAt: createTimestamp(130),
       },
     }),
     prisma.follow.create({
       data: {
-        followerId: users[0]!.id,
-        followingId: users[2]!.id,
+        followerId: users[0]?.id,
+        followingId: users[2]?.id,
         createdAt: createTimestamp(135),
       },
     }),
@@ -333,22 +353,22 @@ async function seedFollows(users: [{ id: string }, { id: string }, { id: string 
     // user2 follows user1, user3, user4
     prisma.follow.create({
       data: {
-        followerId: users[1]!.id,
-        followingId: users[0]!.id,
+        followerId: users[1]?.id,
+        followingId: users[0]?.id,
         createdAt: createTimestamp(140),
       },
     }),
     prisma.follow.create({
       data: {
-        followerId: users[1]!.id,
-        followingId: users[2]!.id,
+        followerId: users[1]?.id,
+        followingId: users[2]?.id,
         createdAt: createTimestamp(145),
       },
     }),
     prisma.follow.create({
       data: {
-        followerId: users[1]!.id,
-        followingId: users[3]!.id,
+        followerId: users[1]?.id,
+        followingId: users[3]?.id,
         createdAt: createTimestamp(150),
       },
     }),
@@ -356,15 +376,15 @@ async function seedFollows(users: [{ id: string }, { id: string }, { id: string 
     // user3 follows user1, user2
     prisma.follow.create({
       data: {
-        followerId: users[2]!.id,
-        followingId: users[0]!.id,
+        followerId: users[2]?.id,
+        followingId: users[0]?.id,
         createdAt: createTimestamp(155),
       },
     }),
     prisma.follow.create({
       data: {
-        followerId: users[2]!.id,
-        followingId: users[1]!.id,
+        followerId: users[2]?.id,
+        followingId: users[1]?.id,
         createdAt: createTimestamp(160),
       },
     }),
@@ -372,8 +392,8 @@ async function seedFollows(users: [{ id: string }, { id: string }, { id: string 
     // user4 follows user1
     prisma.follow.create({
       data: {
-        followerId: users[3]!.id,
-        followingId: users[0]!.id,
+        followerId: users[3]?.id,
+        followingId: users[0]?.id,
         createdAt: createTimestamp(165),
       },
     }),
@@ -381,15 +401,15 @@ async function seedFollows(users: [{ id: string }, { id: string }, { id: string 
     // user5 follows user1, user4
     prisma.follow.create({
       data: {
-        followerId: users[4]!.id,
-        followingId: users[0]!.id,
+        followerId: users[4]?.id,
+        followingId: users[0]?.id,
         createdAt: createTimestamp(170),
       },
     }),
     prisma.follow.create({
       data: {
-        followerId: users[4]!.id,
-        followingId: users[3]!.id,
+        followerId: users[4]?.id,
+        followingId: users[3]?.id,
         createdAt: createTimestamp(175),
       },
     }),
@@ -422,22 +442,22 @@ async function seedEngagement(
     // Multiple users like tweet1
     prisma.like.create({
       data: {
-        userId: users[1]!.id,
-        tweetId: tweets[0]!.id,
+        userId: users[1]?.id,
+        tweetId: tweets[0]?.id,
         createdAt: createTimestamp(180),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[2]!.id,
-        tweetId: tweets[0]!.id,
+        userId: users[2]?.id,
+        tweetId: tweets[0]?.id,
         createdAt: createTimestamp(185),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[3]!.id,
-        tweetId: tweets[0]!.id,
+        userId: users[3]?.id,
+        tweetId: tweets[0]?.id,
         createdAt: createTimestamp(190),
       },
     }),
@@ -445,15 +465,15 @@ async function seedEngagement(
     // User1 likes some tweets
     prisma.like.create({
       data: {
-        userId: users[0]!.id,
-        tweetId: tweets[1]!.id,
+        userId: users[0]?.id,
+        tweetId: tweets[1]?.id,
         createdAt: createTimestamp(195),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[0]!.id,
-        tweetId: tweets[2]!.id,
+        userId: users[0]?.id,
+        tweetId: tweets[2]?.id,
         createdAt: createTimestamp(200),
       },
     }),
@@ -461,15 +481,15 @@ async function seedEngagement(
     // More scattered likes
     prisma.like.create({
       data: {
-        userId: users[4]!.id,
-        tweetId: tweets[3]!.id,
+        userId: users[4]?.id,
+        tweetId: tweets[3]?.id,
         createdAt: createTimestamp(205),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[1]!.id,
-        tweetId: tweets[5]!.id,
+        userId: users[1]?.id,
+        tweetId: tweets[5]?.id,
         createdAt: createTimestamp(210),
       },
     }),
@@ -480,8 +500,8 @@ async function seedEngagement(
     // User2 retweets tweet1
     prisma.retweet.create({
       data: {
-        userId: users[1]!.id,
-        tweetId: tweets[0]!.id,
+        userId: users[1]?.id,
+        tweetId: tweets[0]?.id,
         createdAt: createTimestamp(215),
       },
     }),
@@ -489,8 +509,8 @@ async function seedEngagement(
     // User3 retweets tweet1
     prisma.retweet.create({
       data: {
-        userId: users[2]!.id,
-        tweetId: tweets[0]!.id,
+        userId: users[2]?.id,
+        tweetId: tweets[0]?.id,
         createdAt: createTimestamp(220),
       },
     }),
@@ -498,8 +518,8 @@ async function seedEngagement(
     // User1 retweets tweet2
     prisma.retweet.create({
       data: {
-        userId: users[0]!.id,
-        tweetId: tweets[1]!.id,
+        userId: users[0]?.id,
+        tweetId: tweets[1]?.id,
         createdAt: createTimestamp(225),
       },
     }),
@@ -507,8 +527,8 @@ async function seedEngagement(
     // User4 retweets tweet3
     prisma.retweet.create({
       data: {
-        userId: users[3]!.id,
-        tweetId: tweets[2]!.id,
+        userId: users[3]?.id,
+        tweetId: tweets[2]?.id,
         createdAt: createTimestamp(230),
       },
     }),

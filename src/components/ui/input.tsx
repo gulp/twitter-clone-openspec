@@ -1,9 +1,4 @@
-import {
-  type InputHTMLAttributes,
-  type TextareaHTMLAttributes,
-  forwardRef,
-  useId,
-} from "react";
+import { type InputHTMLAttributes, type TextareaHTMLAttributes, forwardRef, useId } from "react";
 import { cn } from "./utils";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
