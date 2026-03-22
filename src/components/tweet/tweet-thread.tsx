@@ -7,7 +7,7 @@ export interface TweetThreadProps {
   currentUserId?: string;
 }
 
-export function TweetThread({ tweets, currentUserId }: TweetThreadProps) {
+export function TweetThread({ tweets, currentUserId: _currentUserId }: TweetThreadProps) {
   if (tweets.length === 0) {
     return null;
   }
