@@ -1,34 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { randomUUID } from "crypto";
-import { env } from "@/env";
-import { log } from "@/lib/logger";
 
 /**
  * Next.js middleware for security headers and CSRF protection.
  * Per §1.17 and §1.20.
+ *
+ * Runs in Edge Runtime — no Node.js imports (crypto module, fs, etc.).
+ * Uses process.env directly (not src/env.ts which calls process.exit at import).
  */
 
 export function middleware(request: NextRequest) {
-  const requestId = randomUUID();
-  const nonce = randomUUID();
+  const requestId = crypto.randomUUID();
+  const nonce = crypto.randomUUID();
 
   // CSRF Origin Validation (§1.20)
-  // For POST requests to /api/trpc and /api/auth, validate Origin header
   if (request.method === "POST") {
     const pathname = request.nextUrl.pathname;
     if (pathname.startsWith("/api/trpc") || pathname.startsWith("/api/auth")) {
       const origin = request.headers.get("origin");
       const allowedOrigins = getAllowedOrigins();
 
-      // Reject if no origin header or origin doesn't match allowed list
       if (!origin || !allowedOrigins.includes(origin)) {
-        log.warn("CSRF origin validation failed", {
-          requestId,
-          origin: origin ?? "(missing)",
-          route: pathname,
-          method: request.method,
-        });
+        console.warn(
+          JSON.stringify({
+            level: "warn",
+            msg: "CSRF origin validation failed",
+            requestId,
+            origin: origin ?? "(missing)",
+            route: pathname,
+            ts: new Date().toISOString(),
+          }),
+        );
 
         return new NextResponse("Forbidden", { status: 403 });
       }
@@ -46,26 +48,38 @@ export function middleware(request: NextRequest) {
     "form-action 'self'",
   ].join("; ");
 
-  const response = NextResponse.next();
+  // Pass nonce to pages via request header (not response header — that leaks it to JS)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("x-request-id", requestId);
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
   response.headers.set("Content-Security-Policy", cspHeader);
   response.headers.set("X-Request-Id", requestId);
-  response.headers.set("X-Nonce", nonce);
 
   return response;
 }
 
 /**
  * Get list of allowed origins for CSRF validation.
- * Includes APP_ORIGIN and any preview origins from environment.
+ * Uses process.env directly (Edge Runtime compatible).
  */
 function getAllowedOrigins(): string[] {
-  const origins = [env.APP_ORIGIN];
+  const appOrigin = process.env.APP_ORIGIN;
+  if (!appOrigin) return [];
 
-  if (env.ALLOWED_PREVIEW_ORIGINS) {
-    const previewOrigins = env.ALLOWED_PREVIEW_ORIGINS.split(",")
-      .map((o) => o.trim())
-      .filter((o) => o.length > 0);
-    origins.push(...previewOrigins);
+  const origins = [appOrigin];
+
+  const previewOrigins = process.env.ALLOWED_PREVIEW_ORIGINS;
+  if (previewOrigins) {
+    const parsed = previewOrigins
+      .split(",")
+      .map((o: string) => o.trim())
+      .filter((o: string) => o.length > 0);
+    origins.push(...parsed);
   }
 
   return origins;
@@ -73,12 +87,6 @@ function getAllowedOrigins(): string[] {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
