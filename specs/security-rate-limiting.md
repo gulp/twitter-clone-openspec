@@ -113,9 +113,9 @@ Auth endpoints convert the "Rate limiting unavailable" exception to INTERNAL_SER
 ## Gotchas
 
 - **failClosed=true throws, failClosed=false returns {allowed: true}** — caller must check both exception type and return value
-- **IP extraction uses x-forwarded-for split on comma** (`ctx.req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()` in auth.ts:28) — assumes reverse proxy sets this header correctly. If no proxy, falls back to x-real-ip.
+- **IP extraction uses x-forwarded-for split on comma** (`ctx.req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()` in src/server/trpc/routers/auth.ts:28) — assumes reverse proxy sets this header correctly. If no proxy, falls back to x-real-ip.
 - **retryAfter is computed from oldest entry** — tells client how many seconds until the oldest request in the window expires and a slot opens up.
-- **Member format is `${now}:${random}`** (`${now}:${Math.random().toString(36).slice(2, 8)}` in rate-limiter.ts:49) — timestamp alone is not unique if two requests arrive in same millisecond.
+- **Member format is `${now}:${random}`** (`${now}:${Math.random().toString(36).slice(2, 8)}` in src/server/services/rate-limiter.ts:49) — timestamp alone is not unique if two requests arrive in same millisecond.
 - **Auth endpoints check rate limit BEFORE database queries** — prevents attackers from using rate-limited endpoints to cause database load.
 - **Fail-closed errors surface as "Service temporarily unavailable"** — generic message prevents revealing Redis outage to attackers.
 - **ZCARD counts all non-expired entries** — Lua script removes expired entries first, so count is always accurate.

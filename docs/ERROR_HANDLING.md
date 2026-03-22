@@ -13,7 +13,7 @@ This document catalogs all error handling policies and failure modes in the Twit
 
 ### Fail Closed (Security-Critical)
 
-**Auth rate limiting** (`authRateLimitCheck` in `redis.ts`):
+**Auth rate limiting** (`checkAuthIPRateLimit` in `services/rate-limiter.ts`):
 - **Policy**: RETHROW errors — reject request on Redis failure
 - **Rationale**: Allowing auth requests without rate limiting turns a Redis outage into an account-abuse incident
 - **Log level**: ERROR
@@ -102,12 +102,25 @@ All other Redis operations degrade gracefully and return null/no-op on failure:
 - **Unexpected errors**: Log ERROR before re-throwing
 - **Log fields**: `userId`, `tweetId`, `error`, `requestId`
 
+**`unlike` / `undoRetweet` procedures**:
+- **Idempotent**: Return `{ success: true }` silently on P2025 (concurrent unlike/undoRetweet race)
+- **Rationale**: Between the existence check and the delete transaction, a concurrent request may win the race
+
 ## Social Graph Failures (follow)
 
 **`follow` procedure**:
 - **Idempotent**: Return `{ success: true }` silently on P2002 (already following)
 - **Unexpected errors**: Log ERROR before re-throwing
 - **Log fields**: `followerId`, `followingId`, `error`, `requestId`
+
+**`unfollow` procedure**:
+- **Idempotent**: Return `{ success: true }` silently on P2025 (concurrent unfollow race)
+
+## Registration Failures
+
+**`register` procedure**:
+- **Concurrent race**: Catches P2002 on `prisma.user.create` and returns field-specific error (`"Email already in use"` or `"Username already taken"`) based on the violated constraint's `meta.target`
+- **Rationale**: Between the uniqueness check and the create, a concurrent registration may claim the same email/username
 
 ## Feed Assembly Failures
 
@@ -188,5 +201,9 @@ Integration tests verify:
 | Email | SMTP failure | Fire-and-forget | ERROR | None — log only |
 | S3 | Pre-sign failure | THROW | ERROR | None — user gets error |
 | Notifications | Unexpected error | Log + THROW | ERROR | None — propagate |
-| Engagement | Unexpected error | Log + THROW | ERROR | None — propagate |
-| Social | Unexpected error | Log + THROW | ERROR | None — propagate |
+| Engagement (like/rt) | P2002 duplicate | Idempotent success | — | Silent |
+| Engagement (unlike/undo) | P2025 race | Idempotent success | — | Silent |
+| Social (follow) | P2002 duplicate | Idempotent success | — | Silent |
+| Social (unfollow) | P2025 race | Idempotent success | — | Silent |
+| Registration | P2002 race | Field-specific error | — | User sees conflict message |
+| Engagement/Social | Unexpected error | Log + THROW | ERROR | None — propagate |
