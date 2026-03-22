@@ -9,7 +9,7 @@ export const usernameSchema = z
 
 export const passwordSchema = z.string().min(8);
 
-export const displayNameSchema = z.string().max(50);
+export const displayNameSchema = z.string().min(1).max(50);
 
 export const bioSchema = z.string().max(160);
 

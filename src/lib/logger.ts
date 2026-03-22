@@ -26,7 +26,9 @@ function redact(data?: LogFields): LogFields | undefined {
   if (!data) return data;
   const clone = { ...data };
   for (const key of REDACTED_KEYS) {
-    delete clone[key];
+    if (key in clone) {
+      clone[key] = "[REDACTED]";
+    }
   }
   return clone;
 }
