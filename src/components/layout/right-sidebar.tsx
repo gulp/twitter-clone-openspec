@@ -67,9 +67,7 @@ function TrendingWidget() {
     <div className="overflow-hidden rounded-2xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border-primary)/0.3)]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border-primary)/0.3)]">
-        <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
-          Trending
-        </h2>
+        <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Trending</h2>
       </div>
 
       {/* Trending items */}
@@ -126,9 +124,7 @@ function WhoToFollowWidget() {
     <div className="overflow-hidden rounded-2xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border-primary)/0.3)]">
       {/* Header */}
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border-primary)/0.3)]">
-        <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
-          Who to follow
-        </h2>
+        <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Who to follow</h2>
       </div>
 
       {/* Suggestions list */}
@@ -150,7 +146,7 @@ function WhoToFollowWidget() {
             ))}
           </>
         ) : suggestions && suggestions.length > 0 ? (
-          suggestions.slice(0, 3).map((user: typeof suggestions[0]) => (
+          suggestions.slice(0, 3).map((user: (typeof suggestions)[0]) => (
             <div
               key={user.id}
               className="px-4 py-3 transition-colors duration-150 hover:bg-[rgb(var(--color-bg-tertiary))]"
@@ -173,10 +169,7 @@ function WhoToFollowWidget() {
 
                 {/* User info */}
                 <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/${user.username}`}
-                    className="group block"
-                  >
+                  <Link href={`/${user.username}`} className="group block">
                     <p className="truncate text-[15px] font-bold text-[rgb(var(--color-text-primary))] group-hover:underline">
                       {user.displayName}
                     </p>

@@ -18,10 +18,7 @@ export function TweetSkeleton({ count = 1 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="border-b border-[rgb(var(--color-border-primary))] px-4 py-3"
-        >
+        <div key={i} className="border-b border-[rgb(var(--color-border-primary))] px-4 py-3">
           <div className="flex gap-3">
             {/* Avatar */}
             <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
@@ -110,10 +107,7 @@ export function UserListSkeleton({ count = 5 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="border-b border-[rgb(var(--color-border-primary))] px-4 py-3"
-        >
+        <div key={i} className="border-b border-[rgb(var(--color-border-primary))] px-4 py-3">
           <div className="flex items-start gap-3">
             {/* Avatar */}
             <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
@@ -146,12 +140,7 @@ export function CardSkeleton({
   lines?: number;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl bg-[rgb(var(--color-bg-secondary))] p-4",
-        className
-      )}
-    >
+    <div className={cn("rounded-2xl bg-[rgb(var(--color-bg-secondary))] p-4", className)}>
       <div className="space-y-3">
         {Array.from({ length: lines }).map((_, i) => (
           <div
@@ -172,10 +161,7 @@ export function SearchResultSkeleton({ count = 5 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="border-b border-[rgb(var(--color-border-primary))] px-4 py-4"
-        >
+        <div key={i} className="border-b border-[rgb(var(--color-border-primary))] px-4 py-4">
           <div className="flex items-start gap-3">
             {/* Avatar */}
             <div className="h-12 w-12 flex-shrink-0 rounded-full bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
@@ -208,10 +194,7 @@ export function NotificationSkeleton({ count = 5 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="border-b border-[rgb(var(--color-border-primary))] px-4 py-4"
-        >
+        <div key={i} className="border-b border-[rgb(var(--color-border-primary))] px-4 py-4">
           <div className="flex gap-3">
             {/* Icon placeholder */}
             <div className="h-8 w-8 flex-shrink-0 rounded-full bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
