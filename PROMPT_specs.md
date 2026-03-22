@@ -12,6 +12,10 @@ If you discover bugs, gaps, or missing functionality while surveying code,
 
 **Source of truth:** `src/` code > beads > `plans/twitter-clone.md`
 
+**Search tools:** For broad semantic searches (e.g. "how does feed caching work"),
+use `mcp__morph-mcp__codebase_search` — it accepts natural-language questions and
+returns relevant code. Use `Grep` for exact patterns. Do NOT use `ToolSearch`.
+
 ## PROHIBITED — shared worktree safety
 
 - `git stash` / `git checkout -- .` / `git reset --hard` / `git clean -f`

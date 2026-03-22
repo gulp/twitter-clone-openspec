@@ -9,6 +9,11 @@ Fix trivial issues directly. File beads for substantial ones. Notify the coordin
 **Tools available:** You already have `Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`
 tools. Do NOT use `ToolSearch` to find them — call them directly.
 
+**For broad semantic searches** (e.g. "how does auth work", "trace the feed assembly
+flow"), use `mcp__morph-mcp__codebase_search` — it accepts natural-language questions
+and returns relevant code across the whole repo. Much faster than multiple Grep calls
+for exploratory research. Use `Grep` for exact patterns (`P2002`, function names, etc.).
+
 ## PROHIBITED — shared worktree safety
 
 Multiple agents share this worktree. The following commands are **never allowed**:
