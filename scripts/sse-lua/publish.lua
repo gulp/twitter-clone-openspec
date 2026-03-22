@@ -2,11 +2,12 @@
   Atomic SSE event publishing script.
 
   This script atomically:
-  1. PUBLISH event to Pub/Sub channel
-  2. INCR sequence number
-  3. LPUSH event to replay buffer with sequence
-  4. LTRIM replay buffer to max 200 entries
-  5. EXPIRE replay buffer to 5 minutes
+  1. INCR sequence number
+  2. Add seq to event JSON
+  3. PUBLISH event to Pub/Sub channel (with seq)
+  4. LPUSH event to replay buffer (with seq)
+  5. LTRIM replay buffer to max 200 entries
+  6. EXPIRE replay buffer to 5 minutes
 
   Arguments:
     KEYS[1] - Pub/Sub channel (e.g., "sse:user:{userId}")
