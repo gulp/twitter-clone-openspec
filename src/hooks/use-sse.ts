@@ -133,7 +133,8 @@ export function useSSE(): SSEHookReturn {
           setLatestNotification(data.notification);
 
           // Invalidate notification queries to refetch
-          queryClient.invalidateQueries({ queryKey: ["notification"] });
+          // tRPC wraps keys in nested arrays: [["notification", "list"], ...]
+          queryClient.invalidateQueries({ queryKey: [["notification"]] });
         } catch (error) {
           console.warn("[SSE] Failed to parse notification event:", error);
         }
@@ -146,7 +147,8 @@ export function useSSE(): SSEHookReturn {
           const { tweetId } = data;
 
           // Remove tweet from all feed caches (handles infinite query pagination)
-          queryClient.setQueriesData({ queryKey: ["feed"] }, (oldData: unknown) => {
+          // tRPC wraps keys in nested arrays: [["feed", "home"], ...]
+          queryClient.setQueriesData({ queryKey: [["feed"]] }, (oldData: unknown) => {
             if (!oldData) return oldData;
 
             // Handle paginated data structure
@@ -184,7 +186,7 @@ export function useSSE(): SSEHookReturn {
           });
 
           // Update tweet caches (mark as deleted or remove from replies)
-          queryClient.setQueriesData({ queryKey: ["tweet"] }, (oldData: unknown) => {
+          queryClient.setQueriesData({ queryKey: [["tweet"]] }, (oldData: unknown) => {
             if (!oldData) return oldData;
 
             // Handle paginated replies

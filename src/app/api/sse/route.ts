@@ -114,11 +114,12 @@ export async function GET(req: NextRequest) {
   const encoder = new TextEncoder();
   let heartbeatInterval: NodeJS.Timeout | null = null;
   let isClosed = false;
+  let connTracker: { userId: string; connectionId: string; controller: ReadableStreamDefaultController } | null = null;
 
   const stream = new ReadableStream({
     async start(controller) {
       // Track this connection for SIGTERM handling
-      const connTracker = { userId, connectionId, controller };
+      connTracker = { userId, connectionId, controller };
       activeConnections.add(connTracker);
 
       try {
@@ -134,8 +135,8 @@ export async function GET(req: NextRequest) {
               // Fetch replay buffer from Redis
               const replayBuffer = await redis.lrange(`sse:replay:${userId}`, 0, 199);
 
-              // Filter events with sequence > lastEventId
-              for (const event of replayBuffer) {
+              // Replay buffer is newest-first (LPUSH), reverse for chronological order
+              for (const event of replayBuffer.reverse()) {
                 try {
                   const parsed = JSON.parse(event);
                   if (parsed.seq > lastSeq) {
@@ -237,7 +238,7 @@ export async function GET(req: NextRequest) {
         sseRemoveConnection(userId, connectionId).catch(() => {});
 
         // Remove from SIGTERM tracking
-        activeConnections.delete(connTracker);
+        if (connTracker) activeConnections.delete(connTracker);
 
         // Close stream
         try {
@@ -261,6 +262,11 @@ export async function GET(req: NextRequest) {
         subscriber.quit().catch(() => {});
 
         sseRemoveConnection(userId, connectionId).catch(() => {});
+
+        // Remove from SIGTERM tracking
+        if (connTracker) {
+          activeConnections.delete(connTracker);
+        }
       }
     },
   });
