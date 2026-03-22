@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { inMemoryPublisher } from "@/server/services/sse-publisher";
+import { describe, expect, it } from "vitest";
 
 /**
  * Unit tests for SSE publisher in-memory fallback

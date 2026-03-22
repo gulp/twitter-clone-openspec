@@ -366,9 +366,11 @@ export const engagementRouter = createTRPCRouter({
    */
   getLikers: publicProcedure
     .input(
-      z.object({
-        tweetId: z.string(),
-      }).merge(paginationSchema)
+      z
+        .object({
+          tweetId: z.string(),
+        })
+        .merge(paginationSchema)
     )
     .query(async ({ input }) => {
       const { tweetId, cursor, limit } = input;
@@ -404,9 +406,11 @@ export const engagementRouter = createTRPCRouter({
    */
   getUserLikes: publicProcedure
     .input(
-      z.object({
-        userId: z.string(),
-      }).merge(paginationSchema)
+      z
+        .object({
+          userId: z.string(),
+        })
+        .merge(paginationSchema)
     )
     .query(async ({ input }) => {
       const { userId, cursor, limit } = input;

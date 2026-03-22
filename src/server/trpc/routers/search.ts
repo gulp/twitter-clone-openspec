@@ -200,30 +200,41 @@ export const searchRouter = createTRPCRouter({
       // Determine next cursor
       let nextCursor: string | null = null;
       if (tweets.length > limit) {
-        const nextItem = tweets.pop()!;
-        const cursorPayload = {
-          rank: nextItem.rank,
-          ts: nextItem.createdAt.toISOString(),
-          id: nextItem.id,
-        };
-        nextCursor = Buffer.from(JSON.stringify(cursorPayload), "utf-8").toString("base64url");
+        const nextItem = tweets.pop();
+        if (nextItem) {
+          const cursorPayload = {
+            rank: nextItem.rank,
+            ts: nextItem.createdAt.toISOString(),
+            id: nextItem.id,
+          };
+          nextCursor = Buffer.from(JSON.stringify(cursorPayload), "utf-8").toString("base64url");
+        }
       }
 
       // Map results with author and engagement state
-      const items = tweets.map((tweet) => ({
-        id: tweet.id,
-        content: tweet.content,
-        authorId: tweet.authorId,
-        parentId: tweet.parentId,
-        mediaUrls: tweet.mediaUrls,
-        createdAt: tweet.createdAt,
-        likeCount: tweet.likeCount,
-        retweetCount: tweet.retweetCount,
-        replyCount: tweet.replyCount,
-        author: authorMap.get(tweet.authorId)!,
-        hasLiked: likesMap.get(tweet.id) ?? false,
-        hasRetweeted: retweetsMap.get(tweet.id) ?? false,
-      }));
+      const items = tweets.map((tweet) => {
+        const author = authorMap.get(tweet.authorId);
+        if (!author) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Author not found for tweet",
+          });
+        }
+        return {
+          id: tweet.id,
+          content: tweet.content,
+          authorId: tweet.authorId,
+          parentId: tweet.parentId,
+          mediaUrls: tweet.mediaUrls,
+          createdAt: tweet.createdAt,
+          likeCount: tweet.likeCount,
+          retweetCount: tweet.retweetCount,
+          replyCount: tweet.replyCount,
+          author,
+          hasLiked: likesMap.get(tweet.id) ?? false,
+          hasRetweeted: retweetsMap.get(tweet.id) ?? false,
+        };
+      });
 
       return {
         items,
@@ -288,12 +299,14 @@ export const searchRouter = createTRPCRouter({
       // Determine next cursor
       let nextCursor: string | null = null;
       if (users.length > limit) {
-        const nextItem = users.pop()!;
-        const cursorPayload = {
-          followerCount: nextItem.followerCount,
-          id: nextItem.id,
-        };
-        nextCursor = Buffer.from(JSON.stringify(cursorPayload), "utf-8").toString("base64url");
+        const nextItem = users.pop();
+        if (nextItem) {
+          const cursorPayload = {
+            followerCount: nextItem.followerCount,
+            id: nextItem.id,
+          };
+          nextCursor = Buffer.from(JSON.stringify(cursorPayload), "utf-8").toString("base64url");
+        }
       }
 
       return {
