@@ -8,12 +8,12 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 |--------|-------|--------|
 | `error-handling-` | Error patterns, fail-open/closed, Prisma error codes | done |
 | `security-` | CSRF, rate limiting, auth, input validation | done |
-| `caching-` | Redis strategy, feed versioning, TTL, fallback | pending |
-| `pagination-` | Cursor encoding, keyset patterns, Prisma cursor | pending |
-| `sse-` | Publisher, replay buffer, client reconnect | pending |
-| `optimistic-` | Mutation callbacks, rollback, cache invalidation | pending |
+| `caching-` | Redis strategy, feed versioning, TTL, fallback | done |
+| `pagination-` | Cursor encoding, keyset patterns, Prisma cursor | done |
+| `sse-` | Publisher, replay buffer, client reconnect | done |
+| `optimistic-` | Mutation callbacks, rollback, cache invalidation | done |
 | `testing-` | Helpers, integration patterns, E2E fixtures | done |
-| `logging-` | Structured JSON, request correlation, redaction | pending |
+| `logging-` | Structured JSON, request correlation, redaction | done |
 
 ## Files
 
