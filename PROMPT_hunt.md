@@ -9,10 +9,32 @@ Fix trivial issues directly. File beads for substantial ones. Notify the coordin
 **Tools available:** You already have `Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`
 tools. Do NOT use `ToolSearch` to find them — call them directly.
 
-**For broad semantic searches** (e.g. "how does auth work", "trace the feed assembly
-flow"), use `mcp__morph-mcp__codebase_search` — it accepts natural-language questions
-and returns relevant code across the whole repo. Much faster than multiple Grep calls
-for exploratory research. Use `Grep` for exact patterns (`P2002`, function names, etc.).
+**Search tools (use the right one for the job):**
+
+- **`mcp__morph-mcp__codebase_search`** — natural-language semantic search. Best for
+  broad questions ("how does auth work", "trace feed assembly flow"). Returns relevant
+  code across the whole repo. Much faster than multiple Grep calls for exploration.
+- **`Grep`** — regex/literal pattern search. Best for exact matches (`P2002`, function
+  names, import paths).
+- **`ast-grep`** (via Bash) — AST-aware structural search. Best for finding code
+  patterns regardless of formatting. Examples:
+  ```bash
+  ast-grep run -p 'prisma.$transaction($$$)' -l typescript src/   # all transactions
+  ast-grep run -p 'throw new TRPCError($$$)' -l typescript src/   # all tRPC errors
+  ast-grep run -p 'try { $$$ } catch ($$$) {}' -l typescript src/ # empty catch blocks
+  ast-grep run -p 'useState($$$)' -l tsx src/components/          # all useState calls
+  ```
+
+**Verification tools:**
+
+- **`agent-browser`** (via Bash) — headless browser for verifying UI behavior after
+  fixes. Useful to confirm a component renders correctly:
+  ```bash
+  agent-browser open http://localhost:3000/home
+  agent-browser snapshot -i              # interactive elements
+  agent-browser screenshot --full        # full page screenshot
+  agent-browser click @ref               # click by ref from snapshot
+  ```
 
 ## PROHIBITED — shared worktree safety
 
