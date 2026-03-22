@@ -17,7 +17,7 @@ import type { NextRequest } from "next/server";
  * - Heartbeat: ': heartbeat\n\n' every 30 seconds
  * - Replay buffer: sse:replay:{userId} (200 entries, 5-minute TTL)
  * - Connection tracking: sse:connections:{userId} (max 5 per user)
- * - Sequence numbers: sse:seq:{userId} (Redis INCR)
+ * - Sequence numbers: sse:seq:{userId} (assigned by Lua publish script)
  *
  * Event types:
  * - new-tweet: { tweetId, authorUsername }
@@ -174,14 +174,8 @@ export async function GET(req: NextRequest) {
           try {
             const event = JSON.parse(message);
 
-            // Get sequence number for this event
-            let seq = 0;
-            try {
-              seq = (await redis.incr(`sse:seq:${userId}`)) ?? 0;
-            } catch (error) {
-              console.warn("[SSE] Failed to get sequence number:", error);
-              seq = Date.now(); // Fallback to timestamp
-            }
+            // Extract sequence number from the message (assigned by Lua script)
+            const seq = event.seq ?? Date.now(); // Fallback to timestamp if missing
 
             // Format SSE event
             const sseEvent = `id: ${seq}\nevent: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;

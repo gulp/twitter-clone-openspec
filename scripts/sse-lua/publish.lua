@@ -23,20 +23,20 @@ local seqKey = KEYS[2]
 local replayKey = KEYS[3]
 local eventJson = ARGV[1]
 
--- Step 1: PUBLISH to Pub/Sub channel
-redis.call('PUBLISH', channel, eventJson)
-
--- Step 2: INCR sequence number
+-- Step 1: INCR sequence number FIRST
 local seq = redis.call('INCR', seqKey)
 
--- Step 3: Build replay entry with sequence number
+-- Step 2: Build event with sequence number
 -- Parse the event JSON, add seq field, and re-serialize
 local event = cjson.decode(eventJson)
 event.seq = seq
-local replayEntry = cjson.encode(event)
+local eventWithSeq = cjson.encode(event)
 
--- Step 4: LPUSH to replay buffer
-redis.call('LPUSH', replayKey, replayEntry)
+-- Step 3: PUBLISH to Pub/Sub channel (WITH seq)
+redis.call('PUBLISH', channel, eventWithSeq)
+
+-- Step 4: LPUSH to replay buffer (same event with seq)
+redis.call('LPUSH', replayKey, eventWithSeq)
 
 -- Step 5: LTRIM to max 200 entries (0-indexed, 0 to 199 inclusive)
 redis.call('LTRIM', replayKey, 0, 199)
