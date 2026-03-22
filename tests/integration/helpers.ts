@@ -12,7 +12,6 @@ import { redis } from "@/server/redis";
 import { appRouter } from "@/server/trpc/router";
 import type { Session } from "next-auth";
 import bcrypt from "bcryptjs";
-import type { AppRouter } from "@/server/trpc/router";
 
 /**
  * Per-test Redis key prefix to prevent cross-test pollution.
@@ -226,7 +225,7 @@ export class LogCapture {
   /**
    * Parse and capture a log entry.
    */
-  private captureLog(level: string, args: unknown[]) {
+  private captureLog(_level: string, args: unknown[]) {
     try {
       // Try to parse JSON log output
       const firstArg = args[0];
