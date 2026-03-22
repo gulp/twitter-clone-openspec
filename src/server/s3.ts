@@ -5,16 +5,29 @@ import { env } from "@/env";
 /**
  * S3 client singleton.
  * Configured for MinIO in development (forcePathStyle) and AWS S3 in production.
+ *
+ * In development, we store the client in a global variable to prevent
+ * hot-reload connection exhaustion. In production, we instantiate fresh.
  */
-export const s3 = new S3Client({
-  region: env.S3_REGION,
-  endpoint: env.S3_ENDPOINT,
-  credentials: {
-    accessKeyId: env.S3_ACCESS_KEY,
-    secretAccessKey: env.S3_SECRET_KEY,
-  },
-  forcePathStyle: env.NODE_ENV === "development", // Required for MinIO
-});
+const globalForS3 = globalThis as unknown as {
+  s3: S3Client | undefined;
+};
+
+export const s3 =
+  globalForS3.s3 ??
+  new S3Client({
+    region: env.S3_REGION,
+    endpoint: env.S3_ENDPOINT,
+    credentials: {
+      accessKeyId: env.S3_ACCESS_KEY,
+      secretAccessKey: env.S3_SECRET_KEY,
+    },
+    forcePathStyle: env.NODE_ENV === "development", // Required for MinIO
+  });
+
+if (env.NODE_ENV !== "production") {
+  globalForS3.s3 = s3;
+}
 
 /**
  * Generate a pre-signed PUT URL for client-side uploads.

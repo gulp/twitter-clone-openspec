@@ -191,3 +191,114 @@ export async function sessionDel(jti: string): Promise<void> {
     });
   }
 }
+
+/**
+ * SSE connection tracking — fail open.
+ * Add a connection ID to the set of active SSE connections for a user.
+ * No-op on Redis failure.
+ */
+export async function sseAddConnection(
+  userId: string,
+  connectionId: string,
+): Promise<void> {
+  try {
+    await redis.sadd(`sse:connections:${userId}`, connectionId);
+  } catch (error) {
+    console.warn("[REDIS] sseAddConnection failed (fail open):", {
+      userId,
+      connectionId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * SSE connection tracking — fail open.
+ * Remove a connection ID from the set of active SSE connections.
+ * No-op on Redis failure.
+ */
+export async function sseRemoveConnection(
+  userId: string,
+  connectionId: string,
+): Promise<void> {
+  try {
+    await redis.srem(`sse:connections:${userId}`, connectionId);
+  } catch (error) {
+    console.warn("[REDIS] sseRemoveConnection failed (fail open):", {
+      userId,
+      connectionId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * SSE connection tracking — fail open.
+ * Get all active SSE connection IDs for a user.
+ * Returns empty array on Redis failure.
+ */
+export async function sseGetConnections(userId: string): Promise<string[]> {
+  try {
+    return await redis.smembers(`sse:connections:${userId}`);
+  } catch (error) {
+    console.warn("[REDIS] sseGetConnections failed (fail open):", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}
+
+/**
+ * Unread notification count — fail open.
+ * Get unread notification count from Redis cache.
+ * Returns null on Redis failure (caller should fall back to DB COUNT(*)).
+ */
+export async function getUnreadCount(userId: string): Promise<number | null> {
+  try {
+    const count = await redis.get(`notification:unread:${userId}`);
+    return count ? parseInt(count, 10) : null;
+  } catch (error) {
+    console.warn("[REDIS] getUnreadCount failed (fail open):", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+/**
+ * Unread notification count — fail open.
+ * Set unread notification count in Redis cache.
+ * No-op on Redis failure.
+ */
+export async function setUnreadCount(
+  userId: string,
+  count: number,
+): Promise<void> {
+  try {
+    await redis.set(`notification:unread:${userId}`, count.toString());
+  } catch (error) {
+    console.warn("[REDIS] setUnreadCount failed (fail open):", {
+      userId,
+      count,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * Unread notification count — fail open.
+ * Increment unread notification count.
+ * No-op on Redis failure.
+ */
+export async function incrUnreadCount(userId: string): Promise<void> {
+  try {
+    await redis.incr(`notification:unread:${userId}`);
+  } catch (error) {
+    console.warn("[REDIS] incrUnreadCount failed (fail open):", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
