@@ -39,6 +39,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-data-structure-selection.md](caching-data-structure-selection.md) — Choosing STRING vs SET vs ZSET vs LIST for different caching patterns with performance characteristics
 - [caching-wrapper-functions.md](caching-wrapper-functions.md) — Typed Redis wrappers with fail-open/fail-closed policies, structured logging, requestId correlation, Lua atomicity
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
+- [pagination-where-clause-construction.md](pagination-where-clause-construction.md) — Compound cursor WHERE clause pattern, lexicographic comparison, row syntax, null handling, peek-ahead
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
 - [optimistic-ui-mutation-pattern.md](optimistic-ui-mutation-pattern.md) — tRPC mutation lifecycle (onMutate/onError/onSuccess), local state sync, rollback pattern, query invalidation
