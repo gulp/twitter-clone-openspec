@@ -336,3 +336,70 @@ export async function decrUnreadCount(userId: string): Promise<void> {
     });
   }
 }
+
+/**
+ * SSE sequence number — fail open.
+ * Get next monotonic sequence number for user's SSE stream.
+ * Returns null on Redis failure (caller should generate local sequence).
+ */
+export async function sseNextSeq(userId: string): Promise<number | null> {
+  try {
+    return await redis.incr(`sse:seq:${userId}`);
+  } catch (error) {
+    console.warn("[REDIS] sseNextSeq failed (fail open):", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+/**
+ * SSE replay buffer — fail open.
+ * Add event to replay buffer with TTL and size limit.
+ * Buffer is capped at 200 entries via LTRIM.
+ * No-op on Redis failure.
+ */
+export async function sseAddToReplay(userId: string, eventData: string): Promise<void> {
+  try {
+    const key = `sse:replay:${userId}`;
+    await redis.lpush(key, eventData);
+    await redis.ltrim(key, 0, 199); // Keep max 200 entries
+    await redis.expire(key, 300); // 5-minute TTL
+  } catch (error) {
+    console.warn("[REDIS] sseAddToReplay failed (fail open):", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * SSE replay buffer — fail open.
+ * Get events from replay buffer since a given sequence number.
+ * Returns empty array on Redis failure.
+ */
+export async function sseGetReplay(userId: string, sinceSeq: number): Promise<string[]> {
+  try {
+    const key = `sse:replay:${userId}`;
+    const events = await redis.lrange(key, 0, -1);
+
+    // Filter events with seq > sinceSeq
+    // Events are stored as serialized JSON with id field
+    return events.filter((event) => {
+      try {
+        const parsed = JSON.parse(event);
+        return parsed.id > sinceSeq;
+      } catch {
+        return false;
+      }
+    });
+  } catch (error) {
+    console.warn("[REDIS] sseGetReplay failed (fail open):", {
+      userId,
+      sinceSeq,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}
