@@ -8,9 +8,9 @@
  * - Empty-database handling
  */
 
-import { PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 const execAsync = promisify(exec);
