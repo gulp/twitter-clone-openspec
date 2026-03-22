@@ -7,7 +7,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 | Prefix | Theme | Status |
 |--------|-------|--------|
 | `error-handling-` | Error patterns, fail-open/closed, Prisma error codes | done |
-| `security-` | CSRF, rate limiting, auth, input validation | pending |
+| `security-` | CSRF, rate limiting, auth, input validation | done |
 | `caching-` | Redis strategy, feed versioning, TTL, fallback | pending |
 | `pagination-` | Cursor encoding, keyset patterns, Prisma cursor | pending |
 | `sse-` | Publisher, replay buffer, client reconnect | pending |
@@ -23,3 +23,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [error-handling-prisma-race-conditions.md](error-handling-prisma-race-conditions.md) — P2002/P2025 handling for idempotent mutations, concurrent request races
 - [error-handling-redis-failure-policy.md](error-handling-redis-failure-policy.md) — Fail-open vs fail-closed strategy, auth rate limiting, cache degradation
 - [error-handling-validation.md](error-handling-validation.md) — Zod schema validation, business rule checks, authorization vs input errors
+- [security-csrf-and-headers.md](security-csrf-and-headers.md) — Origin header CSRF protection, CSP with nonces, request ID propagation
+- [security-rate-limiting.md](security-rate-limiting.md) — Redis sliding window with atomic Lua, fail-open/closed policies, IP and user-based limits
+- [security-auth-and-sessions.md](security-auth-and-sessions.md) — Three-layer session validation, timing-safe auth, password reset tokens, OAuth username generation
+- [security-input-validation.md](security-input-validation.md) — Zod schemas, field validators, pagination defaults, tRPC integration
