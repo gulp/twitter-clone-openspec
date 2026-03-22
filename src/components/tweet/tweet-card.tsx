@@ -4,7 +4,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
 import { ImageGrid } from "../media/image-grid";
 import { EngagementButtons } from "./engagement-buttons";
 import { QuoteTweetEmbed } from "./quote-tweet-embed";
