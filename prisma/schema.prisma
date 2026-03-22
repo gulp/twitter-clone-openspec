@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  username       String   @unique
+  displayName    String
+  bio            String   @default("")
+  avatarUrl      String   @default("")
+  bannerUrl      String   @default("")
+  hashedPassword String
+  createdAt      DateTime @default(now())
+
+  tweets        Tweet[]
+  likes         Like[]
+  retweets      Retweet[]
+  followers     Follow[]       @relation("Following")
+  following     Follow[]       @relation("Follower")
+  notifications Notification[] @relation("Recipient")
+  acted         Notification[] @relation("Actor")
+}
+
+model Tweet {
+  id           String   @id @default(cuid())
+  content      String
+  authorId     String
+  parentId     String?
+  quoteTweetId String?
+  mediaUrls    String   @default("[]")
+  deleted      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  author     User      @relation(fields: [authorId], references: [id])
+  parent     Tweet?    @relation("Replies", fields: [parentId], references: [id])
+  replies    Tweet[]   @relation("Replies")
+  quoteTweet Tweet?    @relation("QuoteTweets", fields: [quoteTweetId], references: [id])
+  quotedBy   Tweet[]   @relation("QuoteTweets")
+  likes      Like[]
+  retweets   Retweet[]
+
+  @@index([authorId, createdAt])
+  @@index([parentId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id])
+  following User @relation("Following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  tweetId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  tweet Tweet @relation(fields: [tweetId], references: [id])
+
+  @@unique([userId, tweetId])
+  @@index([tweetId])
+}
+
+model Retweet {
+  id        String   @id @default(cuid())
+  userId    String
+  tweetId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  tweet Tweet @relation(fields: [tweetId], references: [id])
+
+  @@unique([userId, tweetId])
+  @@index([tweetId])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  recipientId String
+  type        String
+  actorId     String
+  tweetId     String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  recipient User @relation("Recipient", fields: [recipientId], references: [id])
+  actor     User @relation("Actor", fields: [actorId], references: [id])
+
+  @@index([recipientId, createdAt])
+}

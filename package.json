@@ -1,0 +1,47 @@
+{
+  "name": "twitter-clone",
+  "version": "1.0.0",
+  "description": "Twitter clone built with Next.js, tRPC, Prisma",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:reset": "prisma db push --force-reset && npx tsx prisma/seed.ts",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:report": "npx playwright show-report",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@tanstack/react-query": "^5.94.5",
+    "@trpc/client": "^11.14.1",
+    "@trpc/next": "^11.14.1",
+    "@trpc/react-query": "^11.14.1",
+    "@trpc/server": "^11.14.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.27",
+    "bcryptjs": "^3.0.3",
+    "next": "^14.2.35",
+    "next-auth": "^4.24.13",
+    "postcss": "^8.5.8",
+    "prisma": "^5.22.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "superjson": "^2.2.6",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "tsx": "^4.21.0"
+  }
+}

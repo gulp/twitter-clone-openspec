@@ -1,0 +1,10 @@
+node_modules/
+.next/
+dist/
+*.db
+.env
+e2e/results/
+e2e/screenshots/
+playwright-report/
+test-results/
+.DS_Store
