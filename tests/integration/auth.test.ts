@@ -7,12 +7,18 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { TRPCError } from "@trpc/server";
 import { prisma } from "@/server/db";
+import { redis } from "@/server/redis";
 import { cleanupDatabase, createTestContext, createTestUser, LogCapture } from "./helpers";
 import bcrypt from "bcryptjs";
 
 describe("auth router", () => {
   beforeEach(async () => {
     await cleanupDatabase();
+    // Clear rate limit keys between tests
+    const keys = await redis.keys("ratelimit:*");
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
   });
 
   afterEach(async () => {
