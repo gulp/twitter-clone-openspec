@@ -82,6 +82,15 @@ export async function createNotification(
       return null;
     }
 
+    // Log unexpected errors before re-throwing
+    log.error("Failed to create notification", {
+      recipientId,
+      actorId,
+      type,
+      tweetId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     // Re-throw unexpected errors
     throw error;
   }

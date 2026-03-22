@@ -1,4 +1,5 @@
 import { paginationSchema, tweetContentSchema } from "@/lib/validators";
+import { log } from "@/lib/logger";
 import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -78,6 +79,14 @@ export const engagementRouter = createTRPCRouter({
           // Idempotent: already liked, return success silently
           return { success: true };
         }
+
+        // Log unexpected errors before re-throwing
+        log.error("Failed to like tweet", {
+          userId,
+          tweetId,
+          error: error instanceof Error ? error.message : String(error),
+          requestId: ctx.requestId,
+        });
         throw error;
       }
     }),
@@ -198,6 +207,14 @@ export const engagementRouter = createTRPCRouter({
           // Idempotent: already retweeted, return success silently
           return { success: true };
         }
+
+        // Log unexpected errors before re-throwing
+        log.error("Failed to retweet", {
+          userId,
+          tweetId,
+          error: error instanceof Error ? error.message : String(error),
+          requestId: ctx.requestId,
+        });
         throw error;
       }
     }),

@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma, publicUserSelect } from "../../db";
@@ -77,6 +78,14 @@ export const socialRouter = createTRPCRouter({
         if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
           return { success: true }; // Already followed (concurrent request)
         }
+
+        // Log unexpected errors before re-throwing
+        log.error("Failed to follow user", {
+          followerId,
+          followingId,
+          error: error instanceof Error ? error.message : String(error),
+          requestId: ctx.requestId,
+        });
         throw error;
       }
 
