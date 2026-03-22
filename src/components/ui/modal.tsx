@@ -13,7 +13,7 @@ export interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDialogElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -96,15 +96,15 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
       onClick={handleBackdropClick}
       onKeyDown={handleBackdropKeyDown}
     >
-      <div
+      <dialog
         ref={modalRef}
         className={cn(
           "relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto",
           className
         )}
-        role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
+        open
       >
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           {title && (
@@ -136,7 +136,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
           </button>
         </div>
         <div className="px-6 py-4">{children}</div>
-      </div>
+      </dialog>
     </div>,
     document.body
   );
