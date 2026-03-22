@@ -1,9 +1,9 @@
+import { paginationSchema } from "@/lib/validators";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { paginationSchema } from "@/lib/validators";
-import { createTRPCRouter, protectedProcedure } from "../index";
 import { prisma, publicUserSelect } from "../../db";
 import { decrUnreadCount, getUnreadCount, setUnreadCount } from "../../redis";
+import { createTRPCRouter, protectedProcedure } from "../index";
 
 /**
  * Notification router
@@ -21,40 +21,38 @@ export const notificationRouter = createTRPCRouter({
    * Returns notifications in reverse-chronological order (newest first)
    * with actor user info and tweet content preview.
    */
-  list: protectedProcedure
-    .input(paginationSchema)
-    .query(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-      const { cursor, limit } = input;
+  list: protectedProcedure.input(paginationSchema).query(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id;
+    const { cursor, limit } = input;
 
-      const notifications = await prisma.notification.findMany({
-        where: { recipientId: userId },
-        orderBy: { createdAt: "desc" },
-        take: limit + 1,
-        cursor: cursor ? { id: cursor } : undefined,
-        include: {
-          actor: { select: publicUserSelect },
-          tweet: {
-            select: {
-              id: true,
-              content: true,
-              deleted: true,
-            },
+    const notifications = await prisma.notification.findMany({
+      where: { recipientId: userId },
+      orderBy: { createdAt: "desc" },
+      take: limit + 1,
+      cursor: cursor ? { id: cursor } : undefined,
+      include: {
+        actor: { select: publicUserSelect },
+        tweet: {
+          select: {
+            id: true,
+            content: true,
+            deleted: true,
           },
         },
-      });
+      },
+    });
 
-      let nextCursor: string | null = null;
-      if (notifications.length > limit) {
-        const nextItem = notifications.pop();
-        nextCursor = nextItem?.id ?? null;
-      }
+    let nextCursor: string | null = null;
+    if (notifications.length > limit) {
+      const nextItem = notifications.pop();
+      nextCursor = nextItem?.id ?? null;
+    }
 
-      return {
-        items: notifications,
-        nextCursor,
-      };
-    }),
+    return {
+      items: notifications,
+      nextCursor,
+    };
+  }),
 
   /**
    * unreadCount — Get unread notification count

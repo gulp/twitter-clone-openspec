@@ -30,7 +30,11 @@ export const loginSchema = z.object({
   password: z.string(), // Don't enforce min length on login
 });
 
-export const resetSchema = z.object({
+export const resetRequestSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetCompleteSchema = z.object({
   token: z.string(),
   password: passwordSchema,
 });
@@ -51,6 +55,7 @@ export const paginationSchema = z.object({
 // Type exports
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
-export type ResetInput = z.infer<typeof resetSchema>;
+export type ResetRequestInput = z.infer<typeof resetRequestSchema>;
+export type ResetCompleteInput = z.infer<typeof resetCompleteSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;

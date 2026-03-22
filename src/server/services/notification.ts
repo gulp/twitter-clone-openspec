@@ -1,5 +1,5 @@
-import type { NotificationType } from "@prisma/client";
 import { log } from "@/lib/logger";
+import type { NotificationType } from "@prisma/client";
 import { prisma } from "../db";
 import { incrUnreadCount } from "../redis";
 
