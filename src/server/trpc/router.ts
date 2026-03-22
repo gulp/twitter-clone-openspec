@@ -2,6 +2,7 @@ import { createTRPCRouter } from "./index";
 import { authRouter } from "./routers/auth";
 import { mediaRouter } from "./routers/media";
 import { notificationRouter } from "./routers/notification";
+import { socialRouter } from "./routers/social";
 
 /**
  * Root appRouter.
@@ -13,11 +14,11 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   media: mediaRouter,
   notification: notificationRouter,
+  social: socialRouter,
   // Sub-routers will be added here as they are implemented:
   // user: userRouter,
   // tweet: tweetRouter,
   // feed: feedRouter,
-  // social: socialRouter,
   // engagement: engagementRouter,
   // search: searchRouter,
 });
