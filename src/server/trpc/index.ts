@@ -17,7 +17,9 @@ import { requestContext } from "../db";
  */
 export async function createTRPCContext(opts: FetchCreateContextFnOptions) {
   const session = await getServerSession(authOptions);
-  const requestId = randomUUID();
+  // Use requestId from middleware (x-request-id header) for log correlation.
+  // Fall back to generating new UUID if middleware didn't set it (e.g., in tests).
+  const requestId = opts.req.headers.get("x-request-id") ?? randomUUID();
 
   return {
     session,
@@ -116,6 +118,7 @@ const loggingMiddleware = t.middleware(async ({ ctx, path, type, next }) => {
           userId: ctx.session?.user?.id,
           latencyMs,
           errorCode: "UNKNOWN",
+          message: error instanceof Error ? error.message : String(error),
           ip,
         });
       }
