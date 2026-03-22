@@ -1,6 +1,7 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Log in to Twitter Clone",
@@ -26,7 +27,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <LoginForm />
+      <Suspense fallback={<div className="h-64 animate-pulse bg-gray-800/20 rounded-lg" />}>
+        <LoginForm />
+      </Suspense>
 
       <div className="text-center pt-4 border-t border-gray-800">
         <p className="text-gray-400 text-sm">
