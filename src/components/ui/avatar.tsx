@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "./utils";
 
 export type AvatarSize = "sm" | "md" | "lg";
@@ -18,6 +18,11 @@ const sizeStyles: Record<AvatarSize, string> = {
 
 export function Avatar({ src, alt = "User avatar", size = "md", className }: AvatarProps) {
   const [imageError, setImageError] = useState(false);
+
+  // Reset error state when src changes
+  useEffect(() => {
+    setImageError(false);
+  }, [src]);
 
   const shouldShowPlaceholder = !src || imageError;
 

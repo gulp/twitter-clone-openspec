@@ -84,17 +84,10 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
     }
   };
 
-  const handleBackdropKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      onClose();
-    }
-  };
-
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
       onClick={handleBackdropClick}
-      onKeyDown={handleBackdropKeyDown}
     >
       <dialog
         ref={modalRef}
