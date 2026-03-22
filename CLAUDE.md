@@ -9,7 +9,7 @@ artifacts in `openspec/`.
 ## Task Tracking
 
 All task tracking uses **beads** (`br`/`bv`, SQLite-backed, `.beads/`).
-Beads is the single source of truth. `IMPLEMENTATION_PLAN.md` is a reference artifact only.
+Beads is the single source of truth. The implementation plan lives at `plans/twitter-clone.md`.
 
 ```bash
 br ready --json                                    # actionable work (no blockers)
