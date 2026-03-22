@@ -19,6 +19,9 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      username?: string;
+      displayName?: string;
+      avatarUrl?: string;
     };
   }
 }
@@ -288,13 +291,29 @@ export const authOptions: NextAuthOptions = {
     },
 
     /**
-     * Session callback — exposes userId to the client.
+     * Session callback — exposes userId and profile fields to the client.
      *
      * Called whenever session is checked client-side via useSession() or getServerSession().
      */
     async session({ session, token }) {
-      if (session.user) {
+      if (session.user && token.sub) {
         session.user.id = token.sub as string;
+
+        // Fetch additional user fields for navigation/UI
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub as string },
+          select: {
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        });
+
+        if (user) {
+          session.user.username = user.username;
+          session.user.displayName = user.displayName;
+          session.user.avatarUrl = user.avatarUrl ?? undefined;
+        }
       }
       return session;
     },
