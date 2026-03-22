@@ -102,25 +102,39 @@ export const authRouter = createTRPCRouter({
     // Hash password (bcrypt cost 12)
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        username,
-        displayName,
-        hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        displayName: true,
-        avatarUrl: true,
-        createdAt: true,
-      },
-    });
+    // Create user — catch P2002 for concurrent registration race
+    try {
+      const user = await prisma.user.create({
+        data: {
+          email,
+          username,
+          displayName,
+          hashedPassword,
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          displayName: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      });
 
-    return { user };
+      return { user };
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+        const target = (error as { meta?: { target?: string[] } }).meta?.target;
+        if (target?.includes("email")) {
+          throw new TRPCError({ code: "CONFLICT", message: "Email already in use" });
+        }
+        if (target?.includes("username")) {
+          throw new TRPCError({ code: "CONFLICT", message: "Username already taken" });
+        }
+        throw new TRPCError({ code: "CONFLICT", message: "Email or username already in use" });
+      }
+      throw error;
+    }
   }),
 
   /**

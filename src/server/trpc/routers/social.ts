@@ -137,24 +137,32 @@ export const socialRouter = createTRPCRouter({
       }
 
       // Transaction: delete Follow + decrement counts (I3)
-      await prisma.$transaction([
-        prisma.follow.delete({
-          where: {
-            followerId_followingId: {
-              followerId,
-              followingId,
+      try {
+        await prisma.$transaction([
+          prisma.follow.delete({
+            where: {
+              followerId_followingId: {
+                followerId,
+                followingId,
+              },
             },
-          },
-        }),
-        prisma.user.update({
-          where: { id: followerId },
-          data: { followingCount: { decrement: 1 } },
-        }),
-        prisma.user.update({
-          where: { id: followingId },
-          data: { followerCount: { decrement: 1 } },
-        }),
-      ]);
+          }),
+          prisma.user.update({
+            where: { id: followerId },
+            data: { followingCount: { decrement: 1 } },
+          }),
+          prisma.user.update({
+            where: { id: followingId },
+            data: { followerCount: { decrement: 1 } },
+          }),
+        ]);
+      } catch (error) {
+        // P2025: record not found (concurrent unfollow won the race)
+        if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+          return { success: true };
+        }
+        throw error;
+      }
 
       // Bump feed version for follower (invalidates cached home timeline)
       await bumpFeedVersion(followerId);

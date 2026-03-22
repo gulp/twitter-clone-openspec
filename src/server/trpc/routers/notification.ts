@@ -48,8 +48,14 @@ export const notificationRouter = createTRPCRouter({
       nextCursor = nextItem?.id ?? null;
     }
 
+    // Redact content of deleted tweets (I5: deleted tweets must not leak content)
+    const items = notifications.map((n) => ({
+      ...n,
+      tweet: n.tweet?.deleted ? { id: n.tweet.id, content: "", deleted: true } : n.tweet,
+    }));
+
     return {
-      items: notifications,
+      items,
       nextCursor,
     };
   }),

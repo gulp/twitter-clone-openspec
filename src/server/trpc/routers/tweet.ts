@@ -59,10 +59,11 @@ export const tweetRouter = createTRPCRouter({
       }
 
       // If reply: verify parent exists and is not deleted
+      let parentAuthorId: string | null = null;
       if (parentId) {
         const parent = await prisma.tweet.findUnique({
           where: { id: parentId },
-          select: { id: true, deleted: true },
+          select: { id: true, deleted: true, authorId: true },
         });
 
         if (!parent) {
@@ -78,6 +79,8 @@ export const tweetRouter = createTRPCRouter({
             message: "Cannot reply to a deleted tweet",
           });
         }
+
+        parentAuthorId = parent.authorId;
       }
 
       // Parse mentions from content
@@ -149,21 +152,13 @@ export const tweetRouter = createTRPCRouter({
       );
 
       // Fire REPLY notification if this is a reply
-      if (parentId) {
-        // Get parent author for notification
-        const parent = await prisma.tweet.findUnique({
-          where: { id: parentId },
-          select: { authorId: true },
+      if (parentId && parentAuthorId) {
+        await createNotification({
+          recipientId: parentAuthorId,
+          actorId: userId,
+          type: "REPLY",
+          tweetId: tweet.id,
         });
-
-        if (parent) {
-          await createNotification({
-            recipientId: parent.authorId,
-            actorId: userId,
-            type: "REPLY",
-            tweetId: tweet.id,
-          });
-        }
       }
 
       // Publish new-tweet SSE event to all followers (best-effort, fail-open)

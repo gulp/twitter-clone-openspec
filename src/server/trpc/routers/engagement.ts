@@ -119,20 +119,28 @@ export const engagementRouter = createTRPCRouter({
       }
 
       // Transaction: delete Like + decrement likeCount (I3)
-      await prisma.$transaction([
-        prisma.like.delete({
-          where: {
-            userId_tweetId: {
-              userId,
-              tweetId,
+      try {
+        await prisma.$transaction([
+          prisma.like.delete({
+            where: {
+              userId_tweetId: {
+                userId,
+                tweetId,
+              },
             },
-          },
-        }),
-        prisma.tweet.update({
-          where: { id: tweetId },
-          data: { likeCount: { decrement: 1 } },
-        }),
-      ]);
+          }),
+          prisma.tweet.update({
+            where: { id: tweetId },
+            data: { likeCount: { decrement: 1 } },
+          }),
+        ]);
+      } catch (error) {
+        // P2025: record not found (concurrent unlike won the race)
+        if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+          return { success: true };
+        }
+        throw error;
+      }
 
       return { success: true };
     }),
@@ -248,20 +256,28 @@ export const engagementRouter = createTRPCRouter({
       }
 
       // Transaction: delete Retweet + decrement retweetCount (I3)
-      await prisma.$transaction([
-        prisma.retweet.delete({
-          where: {
-            userId_tweetId: {
-              userId,
-              tweetId,
+      try {
+        await prisma.$transaction([
+          prisma.retweet.delete({
+            where: {
+              userId_tweetId: {
+                userId,
+                tweetId,
+              },
             },
-          },
-        }),
-        prisma.tweet.update({
-          where: { id: tweetId },
-          data: { retweetCount: { decrement: 1 } },
-        }),
-      ]);
+          }),
+          prisma.tweet.update({
+            where: { id: tweetId },
+            data: { retweetCount: { decrement: 1 } },
+          }),
+        ]);
+      } catch (error) {
+        // P2025: record not found (concurrent undoRetweet won the race)
+        if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
+          return { success: true };
+        }
+        throw error;
+      }
 
       // Bump feed version for retweeter's followers
       await bumpFeedVersionForFollowers(userId);
