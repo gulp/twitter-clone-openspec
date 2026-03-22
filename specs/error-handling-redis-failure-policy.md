@@ -19,7 +19,7 @@ All Redis operations are wrapped in `src/server/redis.ts`:
 - `src/server/redis.ts:379-445` — SSE sequence and replay buffer
 
 **Fail-closed wrapper:**
-- `src/server/redis.ts:119-180` — `authRateLimitCheck` re-throws "Rate limiting unavailable"
+- `src/server/services/rate-limiter.ts:39-121` — `checkRateLimit` with fail-closed/open policy
 
 Rate limiter service at `src/server/services/rate-limiter.ts`:
 - `src/server/services/rate-limiter.ts:98-120` — fail-closed/fail-open decision based on `failClosed` parameter

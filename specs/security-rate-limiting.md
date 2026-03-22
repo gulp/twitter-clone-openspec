@@ -10,7 +10,7 @@ Redis-backed sliding-window rate limiter prevents abuse of auth endpoints and ge
 - `src/server/services/rate-limiter.ts:129-154` — Preset helpers (auth, tweet, general API)
 - `src/server/trpc/routers/auth.ts:52-72` — Rate limit enforcement in register endpoint
 - `src/server/trpc/routers/auth.ts:158-178` — Rate limit enforcement in requestReset endpoint
-- `src/server/redis.ts:119-180` — authRateLimitCheck() wrapper with fail-closed policy
+- `src/server/services/rate-limiter.ts:39-121` — checkRateLimit() with configurable fail-closed/open policy
 
 ## How It Works
 
