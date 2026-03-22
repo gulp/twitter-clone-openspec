@@ -114,6 +114,7 @@ scripts/
 PROMPT_build.md                ← Agent loop: implement one beads task
 PROMPT_plan.md                 ← Agent loop: beads hygiene & consolidation
 PROMPT_specs.md                ← Agent loop: write specs/ docs from src/
+PROMPT_hunt.md                 ← Agent loop: deep code review, find bugs
 BEADS.md                       ← br/bv/agent-mail reference
 ```
 
