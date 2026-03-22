@@ -49,6 +49,8 @@ export const createTRPCRouter = t.router;
  * - Auth failures at WARN with IP address
  * - Rate limit hits at WARN with IP and userId
  * - Slow queries (>500ms) at WARN
+ *
+ * Also stores requestId in AsyncLocalStorage for Prisma query correlation (§1.19).
  */
 const loggingMiddleware = t.middleware(async ({ ctx, path, type, next }) => {
   const startMs = Date.now();
@@ -59,68 +61,71 @@ const loggingMiddleware = t.middleware(async ({ ctx, path, type, next }) => {
     ctx.req.headers.get("x-real-ip") ||
     "unknown";
 
-  try {
-    const result = await next();
-    const latencyMs = Date.now() - startMs;
+  // Store requestId in AsyncLocalStorage for Prisma query correlation
+  return requestContext.run({ requestId: ctx.requestId }, async () => {
+    try {
+      const result = await next();
+      const latencyMs = Date.now() - startMs;
 
-    // Base log fields
-    const logData = {
-      requestId: ctx.requestId,
-      route: `${type}.${path}`,
-      userId: ctx.session?.user?.id,
-      latencyMs,
-      statusCode: 200,
-    };
-
-    // Warn on slow queries
-    if (latencyMs > 500) {
-      log.warn("Slow tRPC query", logData);
-    } else {
-      log.info("tRPC response", logData);
-    }
-
-    return result;
-  } catch (error) {
-    const latencyMs = Date.now() - startMs;
-
-    // Handle TRPCError instances
-    if (error instanceof TRPCError) {
+      // Base log fields
       const logData = {
         requestId: ctx.requestId,
         route: `${type}.${path}`,
         userId: ctx.session?.user?.id,
         latencyMs,
-        errorCode: error.code,
-        ip,
+        statusCode: 200,
       };
 
-      // Auth failures and rate limits at WARN
-      if (error.code === "UNAUTHORIZED" || error.code === "FORBIDDEN") {
-        log.warn("Auth failure", logData);
-      } else if (error.code === "TOO_MANY_REQUESTS") {
-        log.warn("Rate limit hit", logData);
-      } else if (
-        error.code === "INTERNAL_SERVER_ERROR" ||
-        error.code === "TIMEOUT"
-      ) {
-        log.error("tRPC error", { ...logData, message: error.message });
+      // Warn on slow queries
+      if (latencyMs > 500) {
+        log.warn("Slow tRPC query", logData);
       } else {
-        log.warn("tRPC error", logData);
+        log.info("tRPC response", logData);
       }
-    } else {
-      // Non-tRPC errors
-      log.error("Unexpected error", {
-        requestId: ctx.requestId,
-        route: `${type}.${path}`,
-        userId: ctx.session?.user?.id,
-        latencyMs,
-        errorCode: "UNKNOWN",
-        ip,
-      });
-    }
 
-    throw error;
-  }
+      return result;
+    } catch (error) {
+      const latencyMs = Date.now() - startMs;
+
+      // Handle TRPCError instances
+      if (error instanceof TRPCError) {
+        const logData = {
+          requestId: ctx.requestId,
+          route: `${type}.${path}`,
+          userId: ctx.session?.user?.id,
+          latencyMs,
+          errorCode: error.code,
+          ip,
+        };
+
+        // Auth failures and rate limits at WARN
+        if (error.code === "UNAUTHORIZED" || error.code === "FORBIDDEN") {
+          log.warn("Auth failure", logData);
+        } else if (error.code === "TOO_MANY_REQUESTS") {
+          log.warn("Rate limit hit", logData);
+        } else if (
+          error.code === "INTERNAL_SERVER_ERROR" ||
+          error.code === "TIMEOUT"
+        ) {
+          log.error("tRPC error", { ...logData, message: error.message });
+        } else {
+          log.warn("tRPC error", logData);
+        }
+      } else {
+        // Non-tRPC errors
+        log.error("Unexpected error", {
+          requestId: ctx.requestId,
+          route: `${type}.${path}`,
+          userId: ctx.session?.user?.id,
+          latencyMs,
+          errorCode: "UNKNOWN",
+          ip,
+        });
+      }
+
+      throw error;
+    }
+  });
 });
 
 /**
