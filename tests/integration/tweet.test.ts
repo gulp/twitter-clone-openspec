@@ -242,7 +242,7 @@ describe("tweet router", () => {
       const page2 = await caller.tweet.getUserTweets({
         userId: user.id,
         limit: 2,
-        cursor: page1.nextCursor!,
+        cursor: page1.nextCursor ?? undefined,
       });
 
       expect(page2.items.length).toBe(1);

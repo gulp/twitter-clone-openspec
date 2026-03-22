@@ -50,7 +50,7 @@ describe("feed router", () => {
 
       // Should only include followed user's tweet
       expect(result.items.length).toBe(1);
-      expect(result.items[0].id).toBe(followedTweet.id);
+      expect(result.items[0]!.id).toBe(followedTweet.id);
     });
 
     it("deduplicates original tweet and retweet", async () => {

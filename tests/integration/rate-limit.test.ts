@@ -88,7 +88,7 @@ describe("rate limiting", () => {
 
         // Extract retryAfter from message
         const match = rateLimitError.message.match(/Try again in (\d+) seconds/);
-        if (match) {
+        if (match && match[1]) {
           const retryAfter = parseInt(match[1], 10);
           expect(retryAfter).toBeGreaterThan(0);
           expect(retryAfter).toBeLessThanOrEqual(60);

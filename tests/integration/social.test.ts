@@ -271,14 +271,14 @@ describe("social router", () => {
 
       const caller = createTestContext(user.id);
 
-      const result = await caller.social.getSuggestions({ limit: 20 });
+      const result = await caller.social.getSuggestions();
 
       // Should not include self or already-followed user
-      expect(result.items.map((u) => u.id)).not.toContain(user.id);
-      expect(result.items.map((u) => u.id)).not.toContain(other1.id);
+      expect(result.map((u) => u.id)).not.toContain(user.id);
+      expect(result.map((u) => u.id)).not.toContain(other1.id);
 
       // Should include other2
-      expect(result.items.map((u) => u.id)).toContain(other2.id);
+      expect(result.map((u) => u.id)).toContain(other2.id);
     });
   });
 });

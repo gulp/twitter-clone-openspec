@@ -283,7 +283,7 @@ describe("notification router", () => {
         where: { id: notification.id },
       });
 
-      expect(updated!.read).toBe(true);
+      expect(updated?.read).toBe(true);
     });
   });
 
