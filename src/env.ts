@@ -75,10 +75,31 @@ function validateEnv() {
 }
 
 /**
+ * Memoized validated environment variables.
+ * Validation runs lazily on first access, not at import time.
+ */
+let validatedEnv: z.infer<typeof envSchema> | null = null;
+
+function getValidatedEnv(): z.infer<typeof envSchema> {
+  if (validatedEnv === null) {
+    validatedEnv = validateEnv();
+  }
+  return validatedEnv;
+}
+
+/**
  * Validated and typed environment variables.
  * Import this object throughout the application instead of accessing process.env directly.
+ *
+ * Uses a Proxy to defer validation until first property access.
+ * This allows builds and type-checking to succeed without a full .env file.
  */
-export const env = validateEnv();
+export const env = new Proxy({} as z.infer<typeof envSchema>, {
+  get(_target, prop) {
+    const validated = getValidatedEnv();
+    return validated[prop as keyof typeof validated];
+  },
+});
 
 /**
  * Type-only export for cases where you need the type without triggering validation.
