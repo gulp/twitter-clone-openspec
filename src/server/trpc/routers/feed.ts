@@ -28,7 +28,18 @@ export const feedRouter = createTRPCRouter({
     const userId = ctx.session.user.id;
     const { cursor, limit } = input;
 
-    return await assembleFeed(userId, cursor, limit);
+    try {
+      return await assembleFeed(userId, cursor, limit, ctx.requestId);
+    } catch (error) {
+      // Convert "Invalid cursor" error to BAD_REQUEST
+      if (error instanceof Error && error.message === "Invalid cursor") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid cursor",
+        });
+      }
+      throw error;
+    }
   }),
 
   /**

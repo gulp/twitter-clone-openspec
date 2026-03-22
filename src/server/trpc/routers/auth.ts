@@ -51,13 +51,24 @@ export const authRouter = createTRPCRouter({
   register: publicProcedure.input(registerSchema).mutation(async ({ input, ctx }) => {
     // Rate limit check (5/min per IP, fail closed)
     const ip = getClientIP(ctx.req);
-    const rateLimit = await checkAuthIPRateLimit(ip);
+    try {
+      const rateLimit = await checkAuthIPRateLimit(ip);
 
-    if (!rateLimit.allowed) {
-      throw new TRPCError({
-        code: "TOO_MANY_REQUESTS",
-        message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
-      });
+      if (!rateLimit.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+        });
+      }
+    } catch (error) {
+      // Convert "Rate limiting unavailable" to INTERNAL_SERVER_ERROR
+      if (error instanceof Error && error.message === "Rate limiting unavailable") {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Service temporarily unavailable",
+        });
+      }
+      throw error;
     }
 
     const { email, username, displayName, password } = input;
@@ -132,13 +143,24 @@ export const authRouter = createTRPCRouter({
 
     // Rate limit check (5/min per IP, fail closed)
     const ip = getClientIP(ctx.req);
-    const rateLimit = await checkAuthIPRateLimit(ip);
+    try {
+      const rateLimit = await checkAuthIPRateLimit(ip);
 
-    if (!rateLimit.allowed) {
-      throw new TRPCError({
-        code: "TOO_MANY_REQUESTS",
-        message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
-      });
+      if (!rateLimit.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+        });
+      }
+    } catch (error) {
+      // Convert "Rate limiting unavailable" to INTERNAL_SERVER_ERROR
+      if (error instanceof Error && error.message === "Rate limiting unavailable") {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Service temporarily unavailable",
+        });
+      }
+      throw error;
     }
 
     const { email } = input;
