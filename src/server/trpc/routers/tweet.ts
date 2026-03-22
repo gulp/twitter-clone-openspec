@@ -6,6 +6,7 @@ import { prisma, publicUserSelect } from "../../db";
 import { redis } from "../../redis";
 import { parseMentions, resolveMentions } from "../../services/mention";
 import { createNotification } from "../../services/notification";
+import { publishNewTweet, publishTweetDeleted } from "../../services/sse-publisher";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../index";
 import { validateMediaUrls } from "./media";
 
@@ -163,6 +164,19 @@ export const tweetRouter = createTRPCRouter({
         }
       }
 
+      // Publish new-tweet SSE event to all followers (best-effort, fail-open)
+      // Only publish top-level tweets to home timeline, not replies
+      if (!parentId) {
+        const author = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { username: true },
+        });
+
+        if (author) {
+          await publishNewTweet(userId, tweet.id, author.username);
+        }
+      }
+
       return tweet;
     }),
 
@@ -250,8 +264,8 @@ export const tweetRouter = createTRPCRouter({
         });
       }
 
-      // TODO (E1): Publish tweet_deleted SSE event
-      // This will be implemented in Phase E when SSE publisher is available
+      // Publish tweet_deleted SSE event to all followers (best-effort, fail-open)
+      await publishTweetDeleted(userId, tweetId);
 
       return { success: true };
     }),
