@@ -11,9 +11,15 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Format date as relative time (e.g., "2 hours ago") or specific format
+ * Returns fallback string if date is invalid
  */
 export function formatDate(date: Date | string, formatType?: "monthYear"): string {
   const d = typeof date === "string" ? new Date(date) : date;
+
+  // Guard against Invalid Date
+  if (Number.isNaN(d.getTime())) {
+    return formatType === "monthYear" ? "Invalid date" : "Unknown time";
+  }
 
   if (formatType === "monthYear") {
     return format(d, "MMMM yyyy");
