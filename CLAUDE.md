@@ -132,6 +132,33 @@ npx prisma studio                       # Visual database browser
 docker compose up -d                    # Start PostgreSQL, Redis, MinIO
 ```
 
+## Search & Debug Tools
+
+**Code search** — use the right tool for the job:
+
+- **`mcp__morph-mcp__codebase_search`** — natural-language semantic search across the
+  whole repo. Best for broad questions ("how does feed caching work", "trace the auth
+  flow"). Much faster than iterative grep for exploration.
+- **`Grep` tool** — regex/literal pattern search. Best for exact matches (function names,
+  error codes, import paths).
+- **`ast-grep`** (via Bash) — AST-aware structural search. Finds code patterns regardless
+  of formatting or variable names:
+  ```bash
+  ast-grep run -p 'prisma.$transaction($$$)' -l typescript src/   # all transactions
+  ast-grep run -p 'throw new TRPCError($$$)' -l typescript src/   # all error throws
+  ast-grep run -p 'try { $$$ } catch ($$$) {}' -l typescript src/ # empty catch blocks
+  ast-grep run -p 'useState($$$)' -l tsx src/components/          # all useState calls
+  ```
+
+**Browser verification** — `agent-browser` is a headless browser CLI for verifying UI:
+```bash
+agent-browser open http://localhost:3000/home   # navigate
+agent-browser snapshot -i                        # list interactive elements
+agent-browser screenshot --full                  # full page screenshot
+agent-browser click @ref                         # click element by ref
+agent-browser fill @ref "text"                   # fill input field
+```
+
 ## Verify
 
 Run the slot-aware cached verify wrapper before closing any bead:

@@ -12,9 +12,16 @@ If you discover bugs, gaps, or missing functionality while surveying code,
 
 **Source of truth:** `src/` code > beads > `plans/twitter-clone.md`
 
-**Search tools:** For broad semantic searches (e.g. "how does feed caching work"),
-use `mcp__morph-mcp__codebase_search` — it accepts natural-language questions and
-returns relevant code. Use `Grep` for exact patterns. Do NOT use `ToolSearch`.
+**Search tools (use the right one for the job):**
+
+- **`mcp__morph-mcp__codebase_search`** — natural-language semantic search ("how does
+  feed caching work"). Best for broad exploratory questions. Do NOT use `ToolSearch`.
+- **`Grep`** — regex/literal search for exact patterns (function names, error codes).
+- **`ast-grep`** (via Bash) — AST-aware structural search:
+  ```bash
+  ast-grep run -p 'cacheGet($$$)' -l typescript src/        # all cache reads
+  ast-grep run -p 'throw new TRPCError($$$)' -l typescript src/  # all error throws
+  ```
 
 ## PROHIBITED — shared worktree safety
 
