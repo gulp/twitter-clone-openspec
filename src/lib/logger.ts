@@ -11,13 +11,7 @@ export type LogFields = {
   latencyMs?: number;
 } & Record<string, unknown>;
 
-const REDACTED_KEYS = [
-  "password",
-  "hashedPassword",
-  "token",
-  "access_token",
-  "refresh_token",
-];
+const REDACTED_KEYS = ["password", "hashedPassword", "token", "access_token", "refresh_token"];
 
 /**
  * Redact sensitive fields from log data
@@ -44,7 +38,7 @@ export const log = {
         msg,
         ...redact(data),
         ts: new Date().toISOString(),
-      }),
+      })
     ),
   warn: (msg: string, data?: LogFields) =>
     console.warn(
@@ -53,7 +47,7 @@ export const log = {
         msg,
         ...redact(data),
         ts: new Date().toISOString(),
-      }),
+      })
     ),
   error: (msg: string, data?: LogFields) =>
     console.error(
@@ -62,6 +56,6 @@ export const log = {
         msg,
         ...redact(data),
         ts: new Date().toISOString(),
-      }),
+      })
     ),
 };

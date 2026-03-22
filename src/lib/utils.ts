@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { formatDistanceToNow } from "date-fns";
+import { twMerge } from "tailwind-merge";
 
 /**
  * Merge Tailwind CSS classes with clsx and tailwind-merge
@@ -49,10 +49,11 @@ export function decodeCursor(cursor: string): CursorPayload {
  */
 export function generateUsername(displayName: string, cuid: string): string {
   // Lowercase and strip non-alphanumeric characters
-  const sanitized = (displayName || "user")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .slice(0, 9) || "user";
+  const sanitized =
+    (displayName || "user")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 9) || "user";
 
   // Take first 6 chars of CUID
   const cuidPrefix = cuid.slice(0, 6);

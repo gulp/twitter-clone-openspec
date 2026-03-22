@@ -1,8 +1,8 @@
+import { env } from "@/env";
 import { prisma } from "@/server/db";
 import { redis } from "@/server/redis";
 import { s3 } from "@/server/s3";
 import { HeadBucketCommand } from "@aws-sdk/client-s3";
-import { env } from "@/env";
 import { NextResponse } from "next/server";
 
 /**
@@ -25,11 +25,7 @@ import { NextResponse } from "next/server";
  * }
  */
 export async function GET() {
-  const checks = await Promise.allSettled([
-    checkPostgreSQL(),
-    checkRedis(),
-    checkS3(),
-  ]);
+  const checks = await Promise.allSettled([checkPostgreSQL(), checkRedis(), checkS3()]);
 
   const db = checks[0].status === "fulfilled" && checks[0].value;
   const redisOk = checks[1].status === "fulfilled" && checks[1].value;

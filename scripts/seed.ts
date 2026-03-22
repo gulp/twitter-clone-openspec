@@ -310,7 +310,7 @@ async function seedTweets(users: [{ id: string }, { id: string }, { id: string }
 /**
  * Create follow graph
  */
-async function seedFollows(users: Array<{ id: string }>) {
+async function seedFollows(users: [{ id: string }, { id: string }, { id: string }, { id: string }, { id: string }]) {
   console.log("\n🤝 Creating follow relationships...");
 
   const follows = await Promise.all([
@@ -404,7 +404,7 @@ async function seedFollows(users: Array<{ id: string }>) {
  * Create likes and retweets
  */
 async function seedEngagement(
-  users: Array<{ id: string }>,
+  users: [{ id: string }, { id: string }, { id: string }, { id: string }, { id: string }],
   tweets: Array<{ id: string }>
 ) {
   console.log("\n❤️  Creating engagement (likes & retweets)...");
