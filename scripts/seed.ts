@@ -11,7 +11,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import * as bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -52,7 +52,7 @@ async function clearDatabase() {
 async function seedUsers() {
   console.log("\n👤 Creating users...");
 
-  const hashedPassword = await bcrypt.hash("password123", 10);
+  const hashedPassword = await bcryptjs.hash("password123", 10);
 
   const users = await Promise.all([
     prisma.user.create({
