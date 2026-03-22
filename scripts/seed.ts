@@ -108,7 +108,9 @@ async function seedUsers() {
   ]);
 
   console.log(`✓ Created ${users.length} users`);
-  users.forEach((u) => console.log(`  - ${u.username} (${u.email})`));
+  for (const u of users) {
+    console.log(`  - ${u.username} (${u.email})`);
+  }
 
   return users;
 }
