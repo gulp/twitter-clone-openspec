@@ -67,19 +67,21 @@ export function Dropdown({ trigger, items, align = "right", className }: Dropdow
 
   return (
     <div ref={dropdownRef} className={cn("relative inline-block", className)}>
-      <button
-        type="button"
+      {/* Render trigger directly — avoid wrapping in <button> to prevent nested buttons */}
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleTriggerKeyDown}
         className="flex items-center"
       >
         {trigger}
-      </button>
+      </div>
 
       {isOpen && (
         <div
           className={cn(
-            "absolute mt-2 w-56 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50",
+            "absolute mt-2 w-56 rounded-lg bg-[#15202B] shadow-lg ring-1 ring-[#38444d] focus:outline-none z-50",
             align === "right" ? "right-0" : "left-0"
           )}
           role="menu"
@@ -93,8 +95,10 @@ export function Dropdown({ trigger, items, align = "right", className }: Dropdow
                 onClick={() => handleItemClick(item)}
                 onKeyDown={(e) => handleKeyDown(e, item)}
                 className={cn(
-                  "flex items-center w-full px-4 py-2 text-sm text-left transition-colors focus:outline-none focus:bg-gray-100",
-                  item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:bg-gray-100"
+                  "flex items-center w-full px-4 py-2 text-sm text-left transition-colors focus:outline-none",
+                  item.danger
+                    ? "text-red-400 hover:bg-red-500/10"
+                    : "text-[#E7E9EA] hover:bg-[#1d2935]"
                 )}
                 role="menuitem"
               >

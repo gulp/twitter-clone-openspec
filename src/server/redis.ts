@@ -239,7 +239,11 @@ export async function sessionDel(jti: string, requestId?: string): Promise<void>
  */
 export async function sseAddConnection(userId: string, connectionId: string, requestId?: string): Promise<void> {
   try {
-    await redis.sadd(`sse:connections:${userId}`, connectionId);
+    const key = `sse:connections:${userId}`;
+    await redis.sadd(key, connectionId);
+    // Set expiry so stale connections are cleaned up after server crashes.
+    // Refreshed on every heartbeat (30s) via sseRefreshConnectionTTL.
+    await redis.expire(key, 120);
   } catch (error) {
     log.warn("Redis operation failed", {
       feature: "sse",
@@ -284,6 +288,23 @@ export async function sseGetConnections(userId: string, requestId?: string): Pro
       requestId,
     });
     return [];
+  }
+}
+
+/**
+ * SSE connection tracking — fail open.
+ * Refresh TTL on the connection set (called from heartbeat).
+ */
+export async function sseRefreshConnectionTTL(userId: string, requestId?: string): Promise<void> {
+  try {
+    await redis.expire(`sse:connections:${userId}`, 120);
+  } catch (error) {
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseRefreshConnectionTTL",
+      error: error instanceof Error ? error.message : String(error),
+      requestId,
+    });
   }
 }
 

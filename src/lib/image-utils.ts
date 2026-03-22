@@ -20,8 +20,13 @@ export async function resizeImage(
       canvas.width = targetWidth;
       canvas.height = targetHeight;
 
-      // Draw image scaled to target dimensions
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      // Cover-crop: scale to fill target, then center-crop the overflow
+      const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
+      const scaledW = img.width * scale;
+      const scaledH = img.height * scale;
+      const offsetX = (targetWidth - scaledW) / 2;
+      const offsetY = (targetHeight - scaledH) / 2;
+      ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
 
       canvas.toBlob(
         (blob) => {

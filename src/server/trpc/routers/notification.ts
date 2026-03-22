@@ -37,6 +37,7 @@ export const notificationRouter = createTRPCRouter({
             id: true,
             content: true,
             deleted: true,
+            author: { select: { username: true } },
           },
         },
       },
@@ -51,7 +52,7 @@ export const notificationRouter = createTRPCRouter({
     // Redact content of deleted tweets (I5: deleted tweets must not leak content)
     const items = notifications.map((n) => ({
       ...n,
-      tweet: n.tweet?.deleted ? { id: n.tweet.id, content: "", deleted: true } : n.tweet,
+      tweet: n.tweet?.deleted ? { id: n.tweet.id, content: "", deleted: true, author: n.tweet.author } : n.tweet,
     }));
 
     return {

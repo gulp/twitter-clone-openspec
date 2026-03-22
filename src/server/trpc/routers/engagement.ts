@@ -48,6 +48,14 @@ export const engagementRouter = createTRPCRouter({
         });
       }
 
+      // Self-like prevention (I6)
+      if (tweet.authorId === userId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot like your own tweet",
+        });
+      }
+
       try {
         // Transaction: create Like + increment likeCount (I3)
         await prisma.$transaction([

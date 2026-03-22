@@ -2,7 +2,7 @@
 
 import { trpc } from "@/lib/trpc";
 import { Heart, MessageCircle, Repeat2, Share } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dropdown } from "../ui/dropdown";
 import { cn } from "../ui/utils";
 
@@ -29,11 +29,16 @@ export function EngagementButtons({
   onReply,
   className,
 }: EngagementButtonsProps) {
-  // Optimistic state
+  // Optimistic state — sync from server when props change (e.g. after query invalidation)
   const [hasLiked, setHasLiked] = useState(initialHasLiked);
   const [hasRetweeted, setHasRetweeted] = useState(initialHasRetweeted);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [retweetCount, setRetweetCount] = useState(initialRetweetCount);
+
+  useEffect(() => { setHasLiked(initialHasLiked); }, [initialHasLiked]);
+  useEffect(() => { setHasRetweeted(initialHasRetweeted); }, [initialHasRetweeted]);
+  useEffect(() => { setLikeCount(initialLikeCount); }, [initialLikeCount]);
+  useEffect(() => { setRetweetCount(initialRetweetCount); }, [initialRetweetCount]);
 
   const utils = trpc.useUtils();
 

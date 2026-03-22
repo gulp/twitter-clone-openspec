@@ -89,9 +89,10 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        // Pre-computed dummy hash for timing-safe comparison when user not found
-        // Using bcrypt hash of "dummy_password_for_timing_safety"
-        const DUMMY_HASH = "$2a$12$LQDW7KYN5Z5kqX9Z8qZ0Z.LQDW7KYN5Z5kqX9Z8qZ0ZLQDW7KYN5Z";
+        // Pre-computed dummy hash for timing-safe comparison when user not found.
+        // Generated via: bcrypt.hashSync("dummy_password_timing_safe", 12)
+        // Must be a VALID bcrypt hash so bcrypt.compare takes ~250ms (same as real).
+        const DUMMY_HASH = "$2a$12$VXIHqUNtBxGWRT0B.s95a.5bCKcQ66EXUoyCIV76EzF3H4uF/xDiq";
 
         // Always run bcrypt.compare to prevent timing oracle
         // Use dummy hash if user not found
@@ -261,28 +262,41 @@ export const authOptions: NextAuthOptions = {
         await sessionSet(token.jti, token.sub as string, 30 * 24 * 60 * 60);
       }
 
-      // On token refresh (trigger === "update"): validate session is still valid
+      // On every non-signin request: validate session is still valid
       if (trigger === "update" || !user) {
-        // Check Redis allow-list
         const jti = token.jti as string | undefined;
         if (!jti) {
-          // No jti → invalid token
           return {};
         }
 
+        // Always check sessionVersion from DB to catch logoutAll invalidation.
+        // Redis is checked first as a fast path — if the key is missing, the
+        // session was explicitly deleted. But even if Redis has the key, we
+        // still verify sessionVersion to ensure logoutAll is enforced.
         const redisSession = await sessionGet(jti);
 
-        // If Redis says session doesn't exist, fall back to DB sessionVersion check
-        // (Redis failure policy: fail open, fall back to DB)
         if (redisSession === null) {
-          // Validate sessionVersion from DB
+          // Session not in Redis — either expired, deleted, or Redis failure.
+          // Fall back to DB sessionVersion check.
           const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
             select: { sessionVersion: true },
           });
 
           if (!dbUser || dbUser.sessionVersion !== token.sv) {
-            // sessionVersion mismatch → session invalidated
+            return {};
+          }
+        } else {
+          // Session exists in Redis — still verify sessionVersion hasn't
+          // been incremented by logoutAll since the JWT was issued.
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { sessionVersion: true },
+          });
+
+          if (!dbUser || dbUser.sessionVersion !== token.sv) {
+            // logoutAll was called — delete the stale Redis session too
+            await sessionDel(jti).catch(() => {});
             return {};
           }
         }

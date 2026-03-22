@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface EditProfileModalProps {
   isOpen: boolean;
@@ -23,6 +23,16 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
   const [bio, setBio] = useState(user.bio || "");
   const [avatarUrls, setAvatarUrls] = useState<string[]>(user.avatarUrl ? [user.avatarUrl] : []);
   const [bannerUrls, setBannerUrls] = useState<string[]>(user.bannerUrl ? [user.bannerUrl] : []);
+
+  // Reset form state when modal opens with potentially updated user data
+  useEffect(() => {
+    if (isOpen) {
+      setDisplayName(user.displayName);
+      setBio(user.bio || "");
+      setAvatarUrls(user.avatarUrl ? [user.avatarUrl] : []);
+      setBannerUrls(user.bannerUrl ? [user.bannerUrl] : []);
+    }
+  }, [isOpen, user.displayName, user.bio, user.avatarUrl, user.bannerUrl]);
 
   const utils = trpc.useUtils();
 

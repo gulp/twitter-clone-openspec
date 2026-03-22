@@ -37,6 +37,7 @@ interface NotificationCardProps {
       id: string;
       content: string;
       deleted: boolean;
+      author: { username: string };
     } | null;
   };
 }
@@ -105,8 +106,8 @@ export function NotificationCard({ notification }: NotificationCardProps) {
       // Navigate to actor's profile
       router.push(`/${notification.actor.username}`);
     } else if (notification.tweet && !notification.tweet.deleted) {
-      // Navigate to tweet detail page
-      router.push(`/${notification.actor.username}/status/${notification.tweet.id}`);
+      // Navigate to tweet detail page (use tweet author, not notification actor)
+      router.push(`/${notification.tweet.author.username}/status/${notification.tweet.id}`);
     } else if (!notification.tweet) {
       // Follow notification without tweet - go to actor profile
       router.push(`/${notification.actor.username}`);

@@ -1,7 +1,7 @@
 import { env } from "@/env";
 import { log } from "@/lib/logger";
 import { authOptions } from "@/server/auth";
-import { redis, sseAddConnection, sseGetConnections, sseRemoveConnection } from "@/server/redis";
+import { redis, sseAddConnection, sseGetConnections, sseRefreshConnectionTTL, sseRemoveConnection } from "@/server/redis";
 import Redis from "ioredis";
 import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
@@ -164,7 +164,9 @@ export async function GET(req: NextRequest) {
           try {
             controller.enqueue(encoder.encode(": heartbeat\n\n"));
 
-            // Log SSE connection count on heartbeat
+            // Refresh Redis TTL so stale connections auto-expire on crash
+            sseRefreshConnectionTTL(userId).catch(() => {});
+
             log.info("SSE heartbeat", {
               userId,
               activeConnections: activeConnections.size,

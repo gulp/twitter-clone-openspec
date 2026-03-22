@@ -7,7 +7,7 @@ export const usernameSchema = z
   .max(15)
   .regex(/^[a-zA-Z0-9_]+$/);
 
-export const passwordSchema = z.string().min(8);
+export const passwordSchema = z.string().min(8).max(72); // bcrypt truncates at 72 bytes
 
 export const displayNameSchema = z.string().min(1).max(50);
 
