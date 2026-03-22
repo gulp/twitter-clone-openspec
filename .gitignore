@@ -3,8 +3,17 @@ node_modules/
 dist/
 *.db
 .env
+.env.local
 e2e/results/
 e2e/screenshots/
 playwright-report/
 test-results/
 .DS_Store
+
+# Agent swarm
+.verify-cache/
+.logs/
+.claude/scheduled_tasks.lock
+.claude/ralph-loop.local.md
+loop-ui
+storage.sqlite3
