@@ -387,8 +387,8 @@ async function cacheFeedPage(
 
     if (!currentVersion) {
       // Initialize version counter
-      await cacheIncr(versionKey, requestId);
-      currentVersion = "1";
+      const newVersion = await cacheIncr(versionKey, requestId);
+      currentVersion = newVersion ? newVersion.toString() : "1";
     }
 
     const cursorHash = parsedCursor ? hashCursor(parsedCursor) : "first";
