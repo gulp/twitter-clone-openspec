@@ -21,7 +21,7 @@ import { useEffect, useRef } from "react";
  * Protected by NextAuth session - redirects to login if unauthenticated.
  */
 export default function HomePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const utils = trpc.useUtils();
   const feedContainerRef = useRef<HTMLDivElement>(null);
