@@ -22,20 +22,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 interface SSEHookReturn {
   newTweetCount: number;
-  latestNotification: Notification | null;
   resetTweetCount: () => void;
   isConnected: boolean;
   isFallback: boolean;
-}
-
-interface Notification {
-  id: string;
-  type: string;
-  actorId: string;
-  recipientId: string;
-  tweetId: string | null;
-  read: boolean;
-  createdAt: string;
 }
 
 export function useSSE(): SSEHookReturn {
@@ -43,7 +32,6 @@ export function useSSE(): SSEHookReturn {
   const queryClient = useQueryClient();
 
   const [newTweetCount, setNewTweetCount] = useState(0);
-  const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
 
@@ -129,8 +117,7 @@ export function useSSE(): SSEHookReturn {
       // Handle notification events
       es.addEventListener("notification", (event: MessageEvent) => {
         try {
-          const data = JSON.parse(event.data);
-          setLatestNotification(data.notification);
+          JSON.parse(event.data); // Validate JSON
 
           // Invalidate notification queries to refetch
           // tRPC wraps keys in nested arrays: [["notification", "list"], ...]
@@ -236,7 +223,7 @@ export function useSSE(): SSEHookReturn {
       console.error("[SSE] Connection error:", error);
       setIsConnected(false);
     }
-  }, [status, session, cleanup, queryClient]);
+  }, [status, session?.user?.id, cleanup, queryClient]);
 
   // Connect on mount for authenticated users
   useEffect(() => {
@@ -251,7 +238,6 @@ export function useSSE(): SSEHookReturn {
 
   return {
     newTweetCount,
-    latestNotification,
     resetTweetCount,
     isConnected,
     isFallback,
