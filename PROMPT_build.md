@@ -89,8 +89,8 @@ br show $TASK_ID --json | jq '.[0] | {description, acceptance_criteria, comments
 **The title is NOT the spec.** Read the description, acceptance criteria, AND comments.
 Comments often contain corrections that override the original.
 
-**Read the relevant openspec.** Check `openspec/specs/<capability>/spec.md` and
-`openspec/design.md` for architecture decisions, exact error messages, and validation rules.
+**Read the relevant specs.** Check `specs/` for cross-cutting patterns and
+`plans/twitter-clone.md` for architecture decisions, exact error messages, and validation rules.
 
 Print every acceptance criterion and deliverable as a numbered checklist:
 
@@ -165,7 +165,7 @@ Read every file you created or modified with **fresh eyes**. Look for:
 - Bugs, off-by-one errors, incorrect edge cases
 - Placeholder or stub code that slipped through
 - Exposed `hashedPassword` in any API response
-- Missing error messages that differ from the openspec
+- Missing error messages that differ from the specs
 
 Scan for violations:
 

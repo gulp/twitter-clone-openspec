@@ -10,7 +10,7 @@ subtopic, write it well, and exit.
 If you discover bugs, gaps, or missing functionality while surveying code,
 **file beads** for them and report to the coordinator.
 
-**Source of truth:** `src/` code > beads > `plans/twitter-clone.md` > (ignore `openspec/`)
+**Source of truth:** `src/` code > beads > `plans/twitter-clone.md`
 
 ## PROHIBITED — shared worktree safety
 
@@ -182,7 +182,7 @@ done
 ```
 
 Fix any broken references. Also verify:
-- No references to `openspec/` in your spec files
+- No references to removed legacy directories
 - Each file has all 5 sections (What, Where, How It Works, Invariants, Gotchas)
 - `specs/INDEX.md` is updated with your files
 

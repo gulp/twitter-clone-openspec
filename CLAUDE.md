@@ -3,8 +3,7 @@
 ## Project Overview
 
 **Twitter Clone** — Full-stack social media application built with Next.js 14 (App Router),
-tRPC, Prisma, PostgreSQL, Redis, and S3/MinIO. Clean-room implementation from OpenSpec
-artifacts in `openspec/`.
+tRPC, Prisma, PostgreSQL, Redis, and S3/MinIO.
 
 ## Task Tracking
 
@@ -106,7 +105,7 @@ tests/
   unit/                        ← mention-parser, feed-dedup, validators
   integration/                 ← auth, tweet, social, engagement flows
   e2e/                         ← Playwright specs
-openspec/                      ← Specs (read-only reference)
+specs/                         ← Cross-cutting architecture docs (by theme prefix)
 scripts/
   verify.sh                    ← Slot-aware cached verify pipeline
 .claude/
@@ -114,6 +113,7 @@ scripts/
   agent-panes.json             ← Static pane→agent name mapping (0–30)
 PROMPT_build.md                ← Agent loop: implement one beads task
 PROMPT_plan.md                 ← Agent loop: beads hygiene & consolidation
+PROMPT_specs.md                ← Agent loop: write specs/ docs from src/
 BEADS.md                       ← br/bv/agent-mail reference
 ```
 
@@ -153,21 +153,21 @@ npm run lint                            # biome lint/format
 
 ## Specs Reference
 
-All feature specs live in `openspec/specs/`. Read the relevant spec before implementing:
+Cross-cutting architecture documentation lives in `specs/`, organized by theme prefix.
+See `specs/INDEX.md` for a full listing. Key themes:
 
-| Capability | Spec | Key Details |
-|-----------|------|-------------|
-| User Auth | `openspec/specs/user-auth/spec.md` | Registration, login, OAuth, sessions, password reset |
-| User Profiles | `openspec/specs/user-profiles/spec.md` | Profile CRUD, avatar/banner upload |
-| Tweet Management | `openspec/specs/tweet-management/spec.md` | Create, delete, replies, mentions |
-| Engagement | `openspec/specs/engagement/spec.md` | Like, retweet, quote tweet |
-| Social Graph | `openspec/specs/social-graph/spec.md` | Follow/unfollow, suggestions |
-| Feed Assembly | `openspec/specs/feed-assembly/spec.md` | Home timeline, dedup, caching |
-| Notifications | `openspec/specs/notifications/spec.md` | All notification types, self-suppression |
-| Search | `openspec/specs/search/spec.md` | Tweet FTS, user search, debounce |
-| Media Upload | `openspec/specs/media-upload/spec.md` | Pre-signed URLs, image grid |
+| Prefix | Theme | Key Details |
+|--------|-------|-------------|
+| `error-handling-` | Error patterns | TRPCError codes, fail-open/closed, P2002/P2025 race handling |
+| `security-` | Security | CSRF, rate limiting, auth sessions, input validation |
+| `caching-` | Caching | Redis versioning, feed TTL, tombstone filtering |
+| `pagination-` | Pagination | Cursor encoding, keyset patterns, feed cursor |
+| `sse-` | Real-time | SSE publisher, replay buffer, client reconnect |
+| `optimistic-` | Optimistic UI | Mutation callbacks, rollback, cache invalidation |
+| `testing-` | Testing | Integration helpers, E2E fixtures, vitest config |
+| `logging-` | Observability | Structured JSON, request correlation, redaction |
 
-The design document (`openspec/design.md`) is authoritative for architecture decisions.
+The master plan (`plans/twitter-clone.md`) is authoritative for architecture decisions.
 
 ## Design Decisions
 
@@ -252,7 +252,7 @@ Commit immediately after creating or modifying artifacts. Push with `git push`.
 ## Agent Rules (non-negotiable)
 
 1. **IMPLEMENT.** Write real TypeScript/React code. No stubs, no placeholders.
-2. **Read the spec first** — check `openspec/specs/<capability>/spec.md` before implementing.
+2. **Read the spec first** — check `specs/` and `plans/twitter-clone.md` before implementing.
 3. **Search before coding** — confirm a feature is not already implemented before starting.
 4. **Never `git add -A`** — stage specific files by name only.
 5. **Before `git rm` / `git mv`:** run `git stash list 2>/dev/null | head -3`.
@@ -264,7 +264,7 @@ Commit immediately after creating or modifying artifacts. Push with `git push`.
 10. **Never `npx prisma db push`** — use `npx prisma migrate dev` for schema changes.
 11. **Never expose `hashedPassword`** in any API response or client-side code.
 12. **Diagnostics, not silent failures.** Missing data, broken queries, validation errors
-    → return clear error messages as specified in the openspec.
+    → return clear error messages as specified in the specs.
 13. `<agent-instructions>` tags in the conversation override all rules above.
 
 ## Spec Map — `plans/twitter-clone.md`
