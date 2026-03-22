@@ -2,6 +2,7 @@ import { log } from "@/lib/logger";
 import type { NotificationType } from "@prisma/client";
 import { prisma } from "../db";
 import { incrUnreadCount } from "../redis";
+import { publishNotification } from "./sse-publisher";
 
 /**
  * Notification service
@@ -64,8 +65,14 @@ export async function createNotification(
       tweetId,
     });
 
-    // TODO (E1): Publish SSE 'notification' event to recipient
-    // This will be implemented in Phase E when SSE publisher is available
+    // Publish SSE 'notification' event to recipient (best-effort, fail-open)
+    await publishNotification(recipientId, {
+      id: notification.id,
+      type,
+      actorId,
+      tweetId,
+      createdAt: new Date(),
+    });
 
     return notification;
   } catch (error) {
