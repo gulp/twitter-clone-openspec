@@ -1,7 +1,7 @@
+import { updateProfileSchema } from "@/lib/validators";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma, publicUserSelect, selfUserSelect } from "../../db";
-import { updateProfileSchema } from "@/lib/validators";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../index";
 import { validateMediaUrls } from "./media";
 
@@ -66,32 +66,30 @@ export const userRouter = createTRPCRouter({
    * - Validates avatar/banner URLs match S3 bucket origin
    * - Returns updated profile with selfUserSelect (I2 — includes email for own profile)
    */
-  updateProfile: protectedProcedure
-    .input(updateProfileSchema)
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-      const { displayName, bio, avatarUrl, bannerUrl } = input;
+  updateProfile: protectedProcedure.input(updateProfileSchema).mutation(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id;
+    const { displayName, bio, avatarUrl, bannerUrl } = input;
 
-      // Validate avatar/banner URLs if provided
-      if (avatarUrl) {
-        validateMediaUrls([avatarUrl], userId, "avatar");
-      }
-      if (bannerUrl) {
-        validateMediaUrls([bannerUrl], userId, "banner");
-      }
+    // Validate avatar/banner URLs if provided
+    if (avatarUrl) {
+      validateMediaUrls([avatarUrl], userId, "avatar");
+    }
+    if (bannerUrl) {
+      validateMediaUrls([bannerUrl], userId, "banner");
+    }
 
-      // Update user profile
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          ...(displayName !== undefined && { displayName }),
-          ...(bio !== undefined && { bio }),
-          ...(avatarUrl !== undefined && { avatarUrl }),
-          ...(bannerUrl !== undefined && { bannerUrl }),
-        },
-        select: selfUserSelect,
-      });
+    // Update user profile
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(displayName !== undefined && { displayName }),
+        ...(bio !== undefined && { bio }),
+        ...(avatarUrl !== undefined && { avatarUrl }),
+        ...(bannerUrl !== undefined && { bannerUrl }),
+      },
+      select: selfUserSelect,
+    });
 
-      return updatedUser;
-    }),
+    return updatedUser;
+  }),
 });

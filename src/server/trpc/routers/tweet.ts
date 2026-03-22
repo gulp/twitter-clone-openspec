@@ -1,5 +1,5 @@
 import { tweetContentSchema } from "@/lib/validators";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma, publicUserSelect } from "../../db";
