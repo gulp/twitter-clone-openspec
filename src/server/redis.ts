@@ -1,4 +1,5 @@
 import { env } from "@/env";
+import { log } from "@/lib/logger";
 import Redis from "ioredis";
 
 /**
@@ -32,13 +33,16 @@ if (env.NODE_ENV !== "production") {
  * Cache GET wrapper — fail open.
  * Returns null on Redis failure (falls through to PostgreSQL query).
  */
-export async function cacheGet(key: string): Promise<string | null> {
+export async function cacheGet(key: string, requestId?: string): Promise<string | null> {
   try {
     return await redis.get(key);
   } catch (error) {
-    console.warn("[REDIS] cacheGet failed (fail open):", {
+    log.warn("Redis operation failed", {
+      feature: "cache",
+      operation: "GET",
       key,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return null;
   }
@@ -48,7 +52,7 @@ export async function cacheGet(key: string): Promise<string | null> {
  * Cache SET wrapper — fail open.
  * No-op on Redis failure (cache write is best-effort).
  */
-export async function cacheSet(key: string, value: string, ttlSeconds?: number): Promise<void> {
+export async function cacheSet(key: string, value: string, ttlSeconds?: number, requestId?: string): Promise<void> {
   try {
     if (ttlSeconds) {
       await redis.setex(key, ttlSeconds, value);
@@ -56,10 +60,13 @@ export async function cacheSet(key: string, value: string, ttlSeconds?: number):
       await redis.set(key, value);
     }
   } catch (error) {
-    console.warn("[REDIS] cacheSet failed (fail open):", {
+    log.warn("Redis operation failed", {
+      feature: "cache",
+      operation: "SET",
       key,
       ttlSeconds,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -68,13 +75,16 @@ export async function cacheSet(key: string, value: string, ttlSeconds?: number):
  * Cache DEL wrapper — fail open.
  * No-op on Redis failure (cache invalidation is best-effort).
  */
-export async function cacheDel(key: string): Promise<void> {
+export async function cacheDel(key: string, requestId?: string): Promise<void> {
   try {
     await redis.del(key);
   } catch (error) {
-    console.warn("[REDIS] cacheDel failed (fail open):", {
+    log.warn("Redis operation failed", {
+      feature: "cache",
+      operation: "DEL",
       key,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -83,13 +93,16 @@ export async function cacheDel(key: string): Promise<void> {
  * Increment wrapper — fail open.
  * Returns null on Redis failure (caller should fall back to DB query).
  */
-export async function cacheIncr(key: string): Promise<number | null> {
+export async function cacheIncr(key: string, requestId?: string): Promise<number | null> {
   try {
     return await redis.incr(key);
   } catch (error) {
-    console.warn("[REDIS] cacheIncr failed (fail open):", {
+    log.warn("Redis operation failed", {
+      feature: "cache",
+      operation: "INCR",
       key,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return null;
   }
@@ -107,7 +120,8 @@ export async function authRateLimitCheck(
   scope: string,
   identifier: string,
   limit: number,
-  windowSeconds: number
+  windowSeconds: number,
+  requestId?: string
 ): Promise<{ allowed: boolean; remaining: number }> {
   const key = `rate:${scope}:${identifier}`;
   const now = Date.now();
@@ -154,10 +168,12 @@ export async function authRateLimitCheck(
     };
   } catch (error) {
     // FAIL CLOSED: reject request on Redis failure
-    console.error("[REDIS] authRateLimitCheck failed (fail closed):", {
+    log.error("Redis operation failed", {
+      feature: "rate-limit",
+      operation: "authRateLimitCheck",
       scope,
-      identifier,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     throw new Error("Rate limiting unavailable");
   }
@@ -167,13 +183,15 @@ export async function authRateLimitCheck(
  * Session allow-list wrapper — fail open with DB fallback.
  * Returns null on Redis failure (caller falls back to JWT signature + sessionVersion DB check).
  */
-export async function sessionGet(jti: string): Promise<string | null> {
+export async function sessionGet(jti: string, requestId?: string): Promise<string | null> {
   try {
     return await redis.get(`session:jti:${jti}`);
   } catch (error) {
-    console.warn("[REDIS] sessionGet failed (fail open, DB fallback):", {
-      jti,
+    log.warn("Redis operation failed", {
+      feature: "auth",
+      operation: "sessionGet",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return null;
   }
@@ -183,14 +201,16 @@ export async function sessionGet(jti: string): Promise<string | null> {
  * Session SET wrapper — fail open.
  * No-op on Redis failure (session allow-list is best-effort performance optimization).
  */
-export async function sessionSet(jti: string, data: string, ttlSeconds: number): Promise<void> {
+export async function sessionSet(jti: string, data: string, ttlSeconds: number, requestId?: string): Promise<void> {
   try {
     await redis.setex(`session:jti:${jti}`, ttlSeconds, data);
   } catch (error) {
-    console.warn("[REDIS] sessionSet failed (fail open):", {
-      jti,
+    log.warn("Redis operation failed", {
+      feature: "auth",
+      operation: "sessionSet",
       ttlSeconds,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -199,13 +219,15 @@ export async function sessionSet(jti: string, data: string, ttlSeconds: number):
  * Session DEL wrapper — fail open.
  * No-op on Redis failure (session invalidation falls back to sessionVersion check).
  */
-export async function sessionDel(jti: string): Promise<void> {
+export async function sessionDel(jti: string, requestId?: string): Promise<void> {
   try {
     await redis.del(`session:jti:${jti}`);
   } catch (error) {
-    console.warn("[REDIS] sessionDel failed (fail open):", {
-      jti,
+    log.warn("Redis operation failed", {
+      feature: "auth",
+      operation: "sessionDel",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -215,14 +237,15 @@ export async function sessionDel(jti: string): Promise<void> {
  * Add a connection ID to the set of active SSE connections for a user.
  * No-op on Redis failure.
  */
-export async function sseAddConnection(userId: string, connectionId: string): Promise<void> {
+export async function sseAddConnection(userId: string, connectionId: string, requestId?: string): Promise<void> {
   try {
     await redis.sadd(`sse:connections:${userId}`, connectionId);
   } catch (error) {
-    console.warn("[REDIS] sseAddConnection failed (fail open):", {
-      userId,
-      connectionId,
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseAddConnection",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -232,14 +255,15 @@ export async function sseAddConnection(userId: string, connectionId: string): Pr
  * Remove a connection ID from the set of active SSE connections.
  * No-op on Redis failure.
  */
-export async function sseRemoveConnection(userId: string, connectionId: string): Promise<void> {
+export async function sseRemoveConnection(userId: string, connectionId: string, requestId?: string): Promise<void> {
   try {
     await redis.srem(`sse:connections:${userId}`, connectionId);
   } catch (error) {
-    console.warn("[REDIS] sseRemoveConnection failed (fail open):", {
-      userId,
-      connectionId,
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseRemoveConnection",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -249,13 +273,15 @@ export async function sseRemoveConnection(userId: string, connectionId: string):
  * Get all active SSE connection IDs for a user.
  * Returns empty array on Redis failure.
  */
-export async function sseGetConnections(userId: string): Promise<string[]> {
+export async function sseGetConnections(userId: string, requestId?: string): Promise<string[]> {
   try {
     return await redis.smembers(`sse:connections:${userId}`);
   } catch (error) {
-    console.warn("[REDIS] sseGetConnections failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseGetConnections",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return [];
   }
@@ -266,14 +292,16 @@ export async function sseGetConnections(userId: string): Promise<string[]> {
  * Get unread notification count from Redis cache.
  * Returns null on Redis failure (caller should fall back to DB COUNT(*)).
  */
-export async function getUnreadCount(userId: string): Promise<number | null> {
+export async function getUnreadCount(userId: string, requestId?: string): Promise<number | null> {
   try {
     const count = await redis.get(`notification:unread:${userId}`);
     return count ? Number.parseInt(count, 10) : null;
   } catch (error) {
-    console.warn("[REDIS] getUnreadCount failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "unread",
+      operation: "getUnreadCount",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return null;
   }
@@ -284,14 +312,16 @@ export async function getUnreadCount(userId: string): Promise<number | null> {
  * Set unread notification count in Redis cache.
  * No-op on Redis failure.
  */
-export async function setUnreadCount(userId: string, count: number): Promise<void> {
+export async function setUnreadCount(userId: string, count: number, requestId?: string): Promise<void> {
   try {
     await redis.set(`notification:unread:${userId}`, count.toString());
   } catch (error) {
-    console.warn("[REDIS] setUnreadCount failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "unread",
+      operation: "setUnreadCount",
       count,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -301,13 +331,15 @@ export async function setUnreadCount(userId: string, count: number): Promise<voi
  * Increment unread notification count.
  * No-op on Redis failure.
  */
-export async function incrUnreadCount(userId: string): Promise<void> {
+export async function incrUnreadCount(userId: string, requestId?: string): Promise<void> {
   try {
     await redis.incr(`notification:unread:${userId}`);
   } catch (error) {
-    console.warn("[REDIS] incrUnreadCount failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "unread",
+      operation: "incrUnreadCount",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -317,7 +349,7 @@ export async function incrUnreadCount(userId: string): Promise<void> {
  * Decrement unread notification count.
  * No-op on Redis failure.
  */
-export async function decrUnreadCount(userId: string): Promise<void> {
+export async function decrUnreadCount(userId: string, requestId?: string): Promise<void> {
   try {
     // Use Lua to floor at 0 — DECR alone can go negative if count is already 0
     const lua = `
@@ -330,9 +362,11 @@ export async function decrUnreadCount(userId: string): Promise<void> {
     `;
     await redis.eval(lua, 1, `notification:unread:${userId}`);
   } catch (error) {
-    console.warn("[REDIS] decrUnreadCount failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "unread",
+      operation: "decrUnreadCount",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -342,13 +376,15 @@ export async function decrUnreadCount(userId: string): Promise<void> {
  * Get next monotonic sequence number for user's SSE stream.
  * Returns null on Redis failure (caller should generate local sequence).
  */
-export async function sseNextSeq(userId: string): Promise<number | null> {
+export async function sseNextSeq(userId: string, requestId?: string): Promise<number | null> {
   try {
     return await redis.incr(`sse:seq:${userId}`);
   } catch (error) {
-    console.warn("[REDIS] sseNextSeq failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseNextSeq",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return null;
   }
@@ -360,16 +396,18 @@ export async function sseNextSeq(userId: string): Promise<number | null> {
  * Buffer is capped at 200 entries via LTRIM.
  * No-op on Redis failure.
  */
-export async function sseAddToReplay(userId: string, eventData: string): Promise<void> {
+export async function sseAddToReplay(userId: string, eventData: string, requestId?: string): Promise<void> {
   try {
     const key = `sse:replay:${userId}`;
     await redis.lpush(key, eventData);
     await redis.ltrim(key, 0, 199); // Keep max 200 entries
     await redis.expire(key, 300); // 5-minute TTL
   } catch (error) {
-    console.warn("[REDIS] sseAddToReplay failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseAddToReplay",
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -379,7 +417,7 @@ export async function sseAddToReplay(userId: string, eventData: string): Promise
  * Get events from replay buffer since a given sequence number.
  * Returns empty array on Redis failure.
  */
-export async function sseGetReplay(userId: string, sinceSeq: number): Promise<string[]> {
+export async function sseGetReplay(userId: string, sinceSeq: number, requestId?: string): Promise<string[]> {
   try {
     const key = `sse:replay:${userId}`;
     const events = await redis.lrange(key, 0, -1);
@@ -395,10 +433,12 @@ export async function sseGetReplay(userId: string, sinceSeq: number): Promise<st
       }
     });
   } catch (error) {
-    console.warn("[REDIS] sseGetReplay failed (fail open):", {
-      userId,
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseGetReplay",
       sinceSeq,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return [];
   }

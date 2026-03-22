@@ -1,4 +1,5 @@
 import { env } from "@/env";
+import { log } from "@/lib/logger";
 import { authOptions } from "@/server/auth";
 import { redis, sseAddConnection, sseGetConnections, sseRemoveConnection } from "@/server/redis";
 import Redis from "ioredis";
@@ -161,6 +162,12 @@ export async function GET(req: NextRequest) {
 
           try {
             controller.enqueue(encoder.encode(": heartbeat\n\n"));
+
+            // Log SSE connection count on heartbeat
+            log.info("SSE heartbeat", {
+              userId,
+              activeConnections: activeConnections.size,
+            });
           } catch (error) {
             // Write failed - connection broken
             cleanup();

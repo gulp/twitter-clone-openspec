@@ -84,19 +84,30 @@ export interface FeedResult {
 export async function assembleFeed(
   userId: string,
   cursor?: string,
-  limit = 20
+  limit = 20,
+  requestId?: string
 ): Promise<FeedResult> {
   // Parse cursor if provided
   const parsedCursor = cursor ? parseFeedCursor(cursor) : null;
 
   // Try Redis-cached feed
-  const cachedResult = await tryGetCachedFeed(userId, parsedCursor);
+  const cachedResult = await tryGetCachedFeed(userId, parsedCursor, requestId);
   if (cachedResult) {
+    log.info("Feed cache hit", {
+      userId,
+      cacheHit: true,
+      requestId,
+    });
     return cachedResult;
   }
 
   // Cache miss or Redis unavailable — fetch from PostgreSQL
-  return await fetchFeedFromDB(userId, parsedCursor, limit);
+  log.info("Feed cache miss", {
+    userId,
+    cacheHit: false,
+    requestId,
+  });
+  return await fetchFeedFromDB(userId, parsedCursor, limit, requestId);
 }
 
 /**
@@ -106,12 +117,13 @@ export async function assembleFeed(
  */
 async function tryGetCachedFeed(
   userId: string,
-  parsedCursor: FeedCursor | null
+  parsedCursor: FeedCursor | null,
+  requestId?: string
 ): Promise<FeedResult | null> {
   try {
     // Get current feed version
     const versionKey = `feed:version:${userId}`;
-    const currentVersion = await cacheGet(versionKey);
+    const currentVersion = await cacheGet(versionKey, requestId);
 
     if (!currentVersion) {
       // No version set — cache miss
@@ -122,7 +134,7 @@ async function tryGetCachedFeed(
     const cursorHash = parsedCursor ? hashCursor(parsedCursor) : "first";
     const cacheKey = `feed:${userId}:v:${currentVersion}:page:${cursorHash}`;
 
-    const cached = await cacheGet(cacheKey);
+    const cached = await cacheGet(cacheKey, requestId);
     if (!cached) {
       // Cache miss
       return null;
@@ -132,7 +144,7 @@ async function tryGetCachedFeed(
     const cachedFeed = JSON.parse(cached) as FeedResult;
 
     // Filter against tombstones:tweets set
-    const tombstones = await getTombstones();
+    const tombstones = await getTombstones(requestId);
     const filtered = cachedFeed.items.filter((item) => !tombstones.has(item.id));
 
     return {
@@ -143,6 +155,7 @@ async function tryGetCachedFeed(
     log.warn("Failed to get cached feed (fail open)", {
       userId,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return null;
   }
@@ -154,7 +167,8 @@ async function tryGetCachedFeed(
 async function fetchFeedFromDB(
   userId: string,
   parsedCursor: FeedCursor | null,
-  limit: number
+  limit: number,
+  requestId?: string
 ): Promise<FeedResult> {
   // Acquire SETNX lock (best-effort, fail-open)
   const lockKey = `feed:${userId}:rebuilding`;
@@ -167,6 +181,7 @@ async function fetchFeedFromDB(
     log.warn("Failed to acquire feed rebuild lock (fail open)", {
       userId,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 
@@ -195,7 +210,7 @@ async function fetchFeedFromDB(
 
   // Cache the result (best-effort, fail-open)
   if (acquiredLock) {
-    await cacheFeedPage(userId, parsedCursor, result);
+    await cacheFeedPage(userId, parsedCursor, result, requestId);
   }
 
   return result;
@@ -361,27 +376,29 @@ async function hydrateFeedItems(
 async function cacheFeedPage(
   userId: string,
   parsedCursor: FeedCursor | null,
-  result: FeedResult
+  result: FeedResult,
+  requestId?: string
 ): Promise<void> {
   try {
     // Get current version (or initialize to 1)
     const versionKey = `feed:version:${userId}`;
-    let currentVersion = await cacheGet(versionKey);
+    let currentVersion = await cacheGet(versionKey, requestId);
 
     if (!currentVersion) {
       // Initialize version counter
-      await cacheIncr(versionKey);
+      await cacheIncr(versionKey, requestId);
       currentVersion = "1";
     }
 
     const cursorHash = parsedCursor ? hashCursor(parsedCursor) : "first";
     const cacheKey = `feed:${userId}:v:${currentVersion}:page:${cursorHash}`;
 
-    await cacheSet(cacheKey, JSON.stringify(result), 60);
+    await cacheSet(cacheKey, JSON.stringify(result), 60, requestId);
   } catch (error) {
     log.warn("Failed to cache feed page (fail open)", {
       userId,
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
   }
 }
@@ -389,13 +406,14 @@ async function cacheFeedPage(
 /**
  * getTombstones — Get set of deleted tweet IDs from Redis
  */
-async function getTombstones(): Promise<Set<string>> {
+async function getTombstones(requestId?: string): Promise<Set<string>> {
   try {
     const tombstones = await redis.smembers("tombstones:tweets");
     return new Set(tombstones);
   } catch (error) {
     log.warn("Failed to get tombstones (fail open)", {
       error: error instanceof Error ? error.message : String(error),
+      requestId,
     });
     return new Set();
   }
