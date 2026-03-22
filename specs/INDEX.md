@@ -38,3 +38,4 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-lua-atomicity.md](caching-lua-atomicity.md) — Lua scripts for atomic rate limiting and floored unread count decrement
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
+- [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
