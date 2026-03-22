@@ -11,7 +11,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -116,7 +116,7 @@ async function seedUsers() {
 /**
  * Create fixture tweets
  */
-async function seedTweets(users: Array<{ id: string }>) {
+async function seedTweets(users: [{ id: string }, { id: string }, { id: string }, { id: string }, { id: string }]) {
   console.log("\n📝 Creating tweets...");
 
   // Standalone tweets (1-10)
