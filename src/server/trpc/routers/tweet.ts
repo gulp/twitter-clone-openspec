@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma, publicUserSelect } from "../../db";
 import { redis } from "../../redis";
+import { bumpFeedVersionForFollowers } from "../../services/feed";
 import { parseMentions, resolveMentions } from "../../services/mention";
 import { createNotification } from "../../services/notification";
 import { publishNewTweet, publishTweetDeleted } from "../../services/sse-publisher";
@@ -175,6 +176,9 @@ export const tweetRouter = createTRPCRouter({
         if (author) {
           await publishNewTweet(userId, tweet.id, author.username);
         }
+
+        // Bump feed version for all followers (invalidates cached home timelines)
+        await bumpFeedVersionForFollowers(userId);
       }
 
       return tweet;

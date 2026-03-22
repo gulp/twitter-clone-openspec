@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma, publicUserSelect } from "../../db";
-import { cacheIncr } from "../../redis";
+import { bumpFeedVersionForFollowers } from "../../services/feed";
 import { createNotification } from "../../services/notification";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../index";
 import { validateMediaUrls } from "./media";
@@ -189,7 +189,7 @@ export const engagementRouter = createTRPCRouter({
         });
 
         // Bump feed version for retweeter's followers
-        await bumpFeedVersion(userId);
+        await bumpFeedVersionForFollowers(userId);
 
         return { success: true };
       } catch (error) {
@@ -247,7 +247,7 @@ export const engagementRouter = createTRPCRouter({
       ]);
 
       // Bump feed version for retweeter's followers
-      await bumpFeedVersion(userId);
+      await bumpFeedVersionForFollowers(userId);
 
       return { success: true };
     }),
@@ -475,15 +475,4 @@ function parseLikeCursor(cursor: string): { userId: string; tweetId: string } {
     });
   }
   return { userId, tweetId };
-}
-
-/**
- * bumpFeedVersion — Increment feed version counter for a user
- *
- * Called on retweet/undoRetweet to invalidate cached home timeline.
- * Uses Redis INCR for atomic monotonic increment.
- */
-async function bumpFeedVersion(userId: string): Promise<void> {
-  const key = `feed:version:${userId}`;
-  await cacheIncr(key);
 }
