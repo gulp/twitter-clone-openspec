@@ -19,12 +19,12 @@ export const appRouter = createTRPCRouter({
   engagement: engagementRouter,
   media: mediaRouter,
   notification: notificationRouter,
+  search: searchRouter,
   social: socialRouter,
   tweet: tweetRouter,
   user: userRouter,
   // Sub-routers will be added here as they are implemented:
   // feed: feedRouter,
-  // search: searchRouter,
 });
 
 /**
