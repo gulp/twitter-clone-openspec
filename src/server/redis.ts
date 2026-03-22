@@ -311,3 +311,19 @@ export async function incrUnreadCount(userId: string): Promise<void> {
     });
   }
 }
+
+/**
+ * Unread notification count — fail open.
+ * Decrement unread notification count.
+ * No-op on Redis failure.
+ */
+export async function decrUnreadCount(userId: string): Promise<void> {
+  try {
+    await redis.decr(`notification:unread:${userId}`);
+  } catch (error) {
+    console.warn("[REDIS] decrUnreadCount failed (fail open):", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
