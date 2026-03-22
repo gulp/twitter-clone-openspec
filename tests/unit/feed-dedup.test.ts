@@ -18,21 +18,26 @@ import { describe, expect, it } from "vitest";
 describe("Feed deduplication logic (SQL contract)", () => {
   it("should deduplicate same tweet appearing as original and retweet", () => {
     // Simulates DISTINCT ON behavior:
+    // SQL: DISTINCT ON (tweetId) ... ORDER BY tweetId, effectiveAt DESC
+    // This keeps the FIRST row for each tweetId after sorting
     // Input: [
+    //   { tweetId: 't1', effectiveAt: '2024-01-01T11:00', retweeterId: 'u2' },  ← first after sort
     //   { tweetId: 't1', effectiveAt: '2024-01-01T10:00', retweeterId: null },
-    //   { tweetId: 't1', effectiveAt: '2024-01-01T11:00', retweeterId: 'u2' },
     // ]
-    // Expected: Keep the MOST RECENT (effectiveAt DESC) which is the retweet
+    // Expected: Keep the retweet (most recent effectiveAt)
 
     const feedItems = [
       { tweetId: "t1", effectiveAt: new Date("2024-01-01T11:00"), retweeterId: "u2" },
       { tweetId: "t1", effectiveAt: new Date("2024-01-01T10:00"), retweeterId: null },
     ];
 
-    // Simulate DISTINCT ON (tweetId) ORDER BY tweetId, effectiveAt DESC
-    const deduped = Array.from(
-      new Map(feedItems.map((item) => [item.tweetId, item])).values()
-    );
+    // Simulate DISTINCT ON: already sorted DESC, so first item wins
+    const seen = new Set<string>();
+    const deduped = feedItems.filter((item) => {
+      if (seen.has(item.tweetId)) return false;
+      seen.add(item.tweetId);
+      return true;
+    });
 
     expect(deduped).toHaveLength(1);
     expect(deduped[0]).toEqual({
@@ -43,16 +48,20 @@ describe("Feed deduplication logic (SQL contract)", () => {
   });
 
   it("should show most recent retweet when multiple retweets exist", () => {
-    // Input: Multiple retweets of same tweet
+    // Input: Multiple retweets of same tweet (already sorted DESC)
     const feedItems = [
       { tweetId: "t1", effectiveAt: new Date("2024-01-01T12:00"), retweeterId: "u3" },
       { tweetId: "t1", effectiveAt: new Date("2024-01-01T11:00"), retweeterId: "u2" },
       { tweetId: "t1", effectiveAt: new Date("2024-01-01T10:00"), retweeterId: null },
     ];
 
-    const deduped = Array.from(
-      new Map(feedItems.map((item) => [item.tweetId, item])).values()
-    );
+    // Simulate DISTINCT ON: first item wins
+    const seen = new Set<string>();
+    const deduped = feedItems.filter((item) => {
+      if (seen.has(item.tweetId)) return false;
+      seen.add(item.tweetId);
+      return true;
+    });
 
     expect(deduped).toHaveLength(1);
     expect(deduped[0]).toEqual({
@@ -68,9 +77,13 @@ describe("Feed deduplication logic (SQL contract)", () => {
       { tweetId: "t2", effectiveAt: new Date("2024-01-01T09:00"), retweeterId: null },
     ];
 
-    const deduped = Array.from(
-      new Map(feedItems.map((item) => [item.tweetId, item])).values()
-    );
+    // Simulate DISTINCT ON: no duplicates, so all items kept
+    const seen = new Set<string>();
+    const deduped = feedItems.filter((item) => {
+      if (seen.has(item.tweetId)) return false;
+      seen.add(item.tweetId);
+      return true;
+    });
 
     expect(deduped).toHaveLength(2);
     expect(deduped[0].tweetId).toBe("t1");
@@ -84,15 +97,19 @@ describe("Feed deduplication logic (SQL contract)", () => {
       retweeterId: string | null;
     }> = [];
 
-    const deduped = Array.from(
-      new Map(feedItems.map((item) => [item.tweetId, item])).values()
-    );
+    // Simulate DISTINCT ON: empty input = empty output
+    const seen = new Set<string>();
+    const deduped = feedItems.filter((item) => {
+      if (seen.has(item.tweetId)) return false;
+      seen.add(item.tweetId);
+      return true;
+    });
 
     expect(deduped).toEqual([]);
   });
 
   it("should handle mixed original and retweeted content", () => {
-    // Feed with both original tweets and retweets, some duplicated
+    // Feed with both original tweets and retweets, some duplicated (sorted DESC)
     const feedItems = [
       { tweetId: "t1", effectiveAt: new Date("2024-01-01T14:00"), retweeterId: "u3" },
       { tweetId: "t2", effectiveAt: new Date("2024-01-01T13:00"), retweeterId: null },
@@ -100,21 +117,31 @@ describe("Feed deduplication logic (SQL contract)", () => {
       { tweetId: "t3", effectiveAt: new Date("2024-01-01T11:00"), retweeterId: null },
     ];
 
-    const deduped = Array.from(
-      new Map(feedItems.map((item) => [item.tweetId, item])).values()
-    );
+    // Simulate DISTINCT ON: first occurrence wins
+    const seen = new Set<string>();
+    const deduped = feedItems.filter((item) => {
+      if (seen.has(item.tweetId)) return false;
+      seen.add(item.tweetId);
+      return true;
+    });
 
     expect(deduped).toHaveLength(3);
-    // t1 should be the most recent retweet (u3)
+    // t1 should be the most recent retweet (u3, first in list)
     const t1Item = deduped.find((item) => item.tweetId === "t1");
     expect(t1Item).toBeDefined();
-    expect(t1Item?.retweeterId).toBe("u3");
+    if (t1Item) {
+      expect(t1Item.retweeterId).toBe("u3");
+    }
     // t2 and t3 should be original (no retweeter)
     const t2Item = deduped.find((item) => item.tweetId === "t2");
     expect(t2Item).toBeDefined();
-    expect(t2Item?.retweeterId).toBeNull();
+    if (t2Item) {
+      expect(t2Item.retweeterId).toBeNull();
+    }
     const t3Item = deduped.find((item) => item.tweetId === "t3");
     expect(t3Item).toBeDefined();
-    expect(t3Item?.retweeterId).toBeNull();
+    if (t3Item) {
+      expect(t3Item.retweeterId).toBeNull();
+    }
   });
 });
