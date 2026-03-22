@@ -1,6 +1,7 @@
 import { env } from "@/env";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { MAX_MEDIA_SIZE_BYTES } from "@/lib/constants";
 
 /**
  * S3 client singleton.
@@ -33,6 +34,11 @@ if (env.NODE_ENV !== "production") {
  * Generate a pre-signed PUT URL for client-side uploads.
  * URL expires in 10 minutes.
  *
+ * NOTE: 5MB size limit must be enforced by:
+ * 1. Client-side validation before upload
+ * 2. S3 bucket policy (MaximumObjectSize condition)
+ * Pre-signed PUT URLs don't support Content-Length restrictions directly.
+ *
  * @param key - S3 object key (file path within bucket)
  * @param contentType - MIME type (e.g., "image/jpeg")
  * @returns Pre-signed URL for PUT upload
@@ -42,6 +48,7 @@ export async function getUploadUrl(key: string, contentType: string): Promise<st
     Bucket: env.S3_BUCKET,
     Key: key,
     ContentType: contentType,
+    ContentLength: MAX_MEDIA_SIZE_BYTES, // Hint for S3, enforced by bucket policy
   });
 
   const signedUrl = await getSignedUrl(s3, command, {

@@ -10,10 +10,10 @@ import { notificationRouter } from "./routers/notification";
  * Sub-routers will be added in subsequent phases.
  */
 export const appRouter = createTRPCRouter({
+  auth: authRouter,
   media: mediaRouter,
   notification: notificationRouter,
   // Sub-routers will be added here as they are implemented:
-  // auth: authRouter,
   // user: userRouter,
   // tweet: tweetRouter,
   // feed: feedRouter,
