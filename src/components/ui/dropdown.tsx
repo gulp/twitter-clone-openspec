@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { cn } from "./utils";
 
 export interface DropdownItem {
@@ -58,17 +58,29 @@ export function Dropdown({ trigger, items, align = "right", className }: Dropdow
     }
   };
 
+  const handleTriggerKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      setIsOpen(!isOpen);
+    }
+  };
+
   return (
     <div ref={dropdownRef} className={cn("relative inline-block", className)}>
-      <div onClick={() => setIsOpen(!isOpen)} role="button" tabIndex={0}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={handleTriggerKeyDown}
+        className="flex items-center"
+      >
         {trigger}
-      </div>
+      </button>
 
       {isOpen && (
         <div
           className={cn(
             "absolute mt-2 w-56 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50",
-            align === "right" ? "right-0" : "left-0",
+            align === "right" ? "right-0" : "left-0"
           )}
           role="menu"
           aria-orientation="vertical"
@@ -77,11 +89,12 @@ export function Dropdown({ trigger, items, align = "right", className }: Dropdow
             {items.map((item) => (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => handleItemClick(item)}
                 onKeyDown={(e) => handleKeyDown(e, item)}
                 className={cn(
                   "flex items-center w-full px-4 py-2 text-sm text-left transition-colors focus:outline-none focus:bg-gray-100",
-                  item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:bg-gray-100",
+                  item.danger ? "text-red-600 hover:bg-red-50" : "text-gray-700 hover:bg-gray-100"
                 )}
                 role="menuitem"
               >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 export interface InfiniteScrollProps {
   children: ReactNode;
@@ -42,7 +42,7 @@ export function InfiniteScroll({
       {
         threshold,
         rootMargin: "100px",
-      },
+      }
     );
 
     observer.observe(sentinel);

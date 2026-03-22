@@ -22,13 +22,15 @@ export function Avatar({ src, alt = "User avatar", size = "md", className }: Ava
   const shouldShowPlaceholder = !src || imageError;
 
   return (
-    <div className={cn("relative rounded-full overflow-hidden bg-gray-200 flex-shrink-0", sizeStyles[size], className)}>
+    <div
+      className={cn(
+        "relative rounded-full overflow-hidden bg-gray-200 flex-shrink-0",
+        sizeStyles[size],
+        className
+      )}
+    >
       {shouldShowPlaceholder ? (
-        <img
-          src="/placeholder-avatar.png"
-          alt={alt}
-          className="w-full h-full object-cover"
-        />
+        <img src="/placeholder-avatar.png" alt={alt} className="w-full h-full object-cover" />
       ) : (
         <img
           src={src}

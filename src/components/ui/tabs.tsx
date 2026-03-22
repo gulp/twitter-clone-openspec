@@ -25,12 +25,13 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => onChange(tab.id)}
                 className={cn(
                   "py-4 px-6 text-center border-b-2 font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
                   isActive
                     ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300",
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
@@ -40,9 +41,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
           })}
         </nav>
       </div>
-      <div className="mt-4">
-        {tabs.find((tab) => tab.id === activeTab)?.content}
-      </div>
+      <div className="mt-4">{tabs.find((tab) => tab.id === activeTab)?.content}</div>
     </div>
   );
 }

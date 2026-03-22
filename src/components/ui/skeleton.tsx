@@ -17,10 +17,5 @@ export function Skeleton({ className, width, height }: SkeletonProps) {
     style.height = typeof height === "number" ? `${height}px` : height;
   }
 
-  return (
-    <div
-      className={cn("animate-pulse bg-gray-200 rounded", className)}
-      style={style}
-    />
-  );
+  return <div className={cn("animate-pulse bg-gray-200 rounded", className)} style={style} />;
 }
