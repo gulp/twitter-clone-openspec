@@ -24,7 +24,8 @@ export interface SearchResultsProps {
 export function SearchResults({ query }: SearchResultsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") || "tweets";
+  const tabParam = searchParams.get("tab");
+  const activeTab = tabParam === "tweets" || tabParam === "people" ? tabParam : "tweets";
 
   // Fetch tweet results
   const tweetsQuery = trpc.search.tweets.useInfiniteQuery(
