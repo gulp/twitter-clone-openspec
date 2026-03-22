@@ -7,6 +7,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "-apple-system", "sans-serif"],
+        manrope: ["var(--font-manrope)", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
         brand: {
