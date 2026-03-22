@@ -22,7 +22,7 @@ export const s3 =
       accessKeyId: env.S3_ACCESS_KEY,
       secretAccessKey: env.S3_SECRET_KEY,
     },
-    forcePathStyle: env.NODE_ENV === "development", // Required for MinIO
+    forcePathStyle: env.NODE_ENV !== "production", // Required for MinIO (dev + test)
   });
 
 if (env.NODE_ENV !== "production") {

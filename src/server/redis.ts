@@ -121,8 +121,8 @@ export async function authRateLimitCheck(
       return { allowed: false, remaining: 0 };
     }
 
-    // Add current request
-    await redis.zadd(key, now, `${now}`);
+    // Add current request (use timestamp + random suffix to avoid member collision)
+    await redis.zadd(key, now, `${now}:${Math.random().toString(36).slice(2, 8)}`);
     await redis.expire(key, windowSeconds);
 
     return { allowed: true, remaining: limit - count - 1 };
