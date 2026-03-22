@@ -304,6 +304,7 @@ export const tweetRouter = createTRPCRouter({
               id: true,
               content: true,
               mediaUrls: true,
+              deleted: true,
               author: {
                 select: {
                   username: true,
@@ -354,11 +355,23 @@ export const tweetRouter = createTRPCRouter({
         hasRetweeted = !!retweet;
       }
 
-      // Remove deleted field from response
-      const { deleted: _, ...tweetData } = tweet;
+      // Remove deleted field from response and redact deleted quoted tweets (I5)
+      const { deleted: _, quotedTweet: rawQuotedTweet, ...tweetData } = tweet;
+
+      const quotedTweet = rawQuotedTweet?.deleted
+        ? null
+        : rawQuotedTweet
+        ? {
+            id: rawQuotedTweet.id,
+            content: rawQuotedTweet.content,
+            mediaUrls: rawQuotedTweet.mediaUrls,
+            author: rawQuotedTweet.author,
+          }
+        : null;
 
       return {
         ...tweetData,
+        quotedTweet,
         hasLiked,
         hasRetweeted,
       };
@@ -407,6 +420,7 @@ export const tweetRouter = createTRPCRouter({
               id: true,
               content: true,
               mediaUrls: true,
+              deleted: true,
               author: {
                 select: {
                   username: true,
@@ -450,12 +464,27 @@ export const tweetRouter = createTRPCRouter({
         }
       }
 
-      // Annotate replies with engagement state
-      const items = replies.map((reply) => ({
-        ...reply,
-        hasLiked: hasLikedSet.has(reply.id),
-        hasRetweeted: hasRetweetedSet.has(reply.id),
-      }));
+      // Annotate replies with engagement state and redact deleted quoted tweets (I5)
+      const items = replies.map((reply) => {
+        const quotedTweet =
+          reply.quotedTweet?.deleted
+            ? null
+            : reply.quotedTweet
+            ? ({
+                id: reply.quotedTweet.id,
+                content: reply.quotedTweet.content,
+                mediaUrls: reply.quotedTweet.mediaUrls,
+                author: reply.quotedTweet.author,
+              } as const)
+            : null;
+
+        return {
+          ...reply,
+          quotedTweet,
+          hasLiked: hasLikedSet.has(reply.id),
+          hasRetweeted: hasRetweetedSet.has(reply.id),
+        };
+      });
 
       return {
         items,

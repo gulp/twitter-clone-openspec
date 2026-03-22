@@ -54,6 +54,11 @@ export function EngagementButtons({
       setHasLiked(false);
       setLikeCount((prev) => prev - 1);
     },
+    onSuccess: () => {
+      // Invalidate tweet queries to sync engagement counts
+      utils.tweet.getById.invalidate({ tweetId });
+      utils.tweet.getReplies.invalidate();
+    },
   });
 
   const unlikeMutation = trpc.engagement.unlike.useMutation({
@@ -66,6 +71,11 @@ export function EngagementButtons({
       // Rollback on error
       setHasLiked(true);
       setLikeCount((prev) => prev + 1);
+    },
+    onSuccess: () => {
+      // Invalidate tweet queries to sync engagement counts
+      utils.tweet.getById.invalidate({ tweetId });
+      utils.tweet.getReplies.invalidate();
     },
   });
 
@@ -81,7 +91,10 @@ export function EngagementButtons({
       setRetweetCount((prev) => prev - 1);
     },
     onSuccess: () => {
+      // Invalidate tweet queries to sync engagement counts
       utils.feed.home.invalidate();
+      utils.tweet.getById.invalidate({ tweetId });
+      utils.tweet.getReplies.invalidate();
     },
   });
 
@@ -97,11 +110,15 @@ export function EngagementButtons({
       setRetweetCount((prev) => prev + 1);
     },
     onSuccess: () => {
+      // Invalidate tweet queries to sync engagement counts
       utils.feed.home.invalidate();
+      utils.tweet.getById.invalidate({ tweetId });
+      utils.tweet.getReplies.invalidate();
     },
   });
 
   const handleLike = () => {
+    if (likeMutation.isPending || unlikeMutation.isPending) return;
     if (hasLiked) {
       unlikeMutation.mutate({ tweetId });
     } else {
@@ -110,6 +127,7 @@ export function EngagementButtons({
   };
 
   const handleRetweet = () => {
+    if (retweetMutation.isPending || undoRetweetMutation.isPending) return;
     if (hasRetweeted) {
       undoRetweetMutation.mutate({ tweetId });
     } else {
@@ -133,7 +151,7 @@ export function EngagementButtons({
         // User cancelled or error
       }
     } else {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(url).catch(() => {});
       // TODO: Show toast notification
     }
   };
