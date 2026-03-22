@@ -146,25 +146,37 @@ export function useSSE(): SSEHookReturn {
           const { tweetId } = data;
 
           // Remove tweet from all feed caches (handles infinite query pagination)
-          queryClient.setQueriesData({ queryKey: ["feed"] }, (oldData: any) => {
+          queryClient.setQueriesData({ queryKey: ["feed"] }, (oldData: unknown) => {
             if (!oldData) return oldData;
 
             // Handle paginated data structure
-            if (oldData.pages) {
+            if (
+              typeof oldData === "object" &&
+              oldData !== null &&
+              "pages" in oldData &&
+              Array.isArray((oldData as { pages: unknown }).pages)
+            ) {
               return {
                 ...oldData,
-                pages: oldData.pages.map((page: any) => ({
+                pages: (oldData as { pages: { items?: { id: string }[] }[] }).pages.map((page) => ({
                   ...page,
-                  items: page.items?.filter((item: any) => item.id !== tweetId) ?? page.items,
+                  items: page.items?.filter((item) => item.id !== tweetId) ?? page.items,
                 })),
               };
             }
 
             // Handle single page data
-            if (oldData.items) {
+            if (
+              typeof oldData === "object" &&
+              oldData !== null &&
+              "items" in oldData &&
+              Array.isArray((oldData as { items: unknown }).items)
+            ) {
               return {
                 ...oldData,
-                items: oldData.items.filter((item: any) => item.id !== tweetId),
+                items: (oldData as { items: { id: string }[] }).items.filter(
+                  (item) => item.id !== tweetId
+                ),
               };
             }
 
@@ -172,22 +184,32 @@ export function useSSE(): SSEHookReturn {
           });
 
           // Update tweet caches (mark as deleted or remove from replies)
-          queryClient.setQueriesData({ queryKey: ["tweet"] }, (oldData: any) => {
+          queryClient.setQueriesData({ queryKey: ["tweet"] }, (oldData: unknown) => {
             if (!oldData) return oldData;
 
             // Handle paginated replies
-            if (oldData.pages) {
+            if (
+              typeof oldData === "object" &&
+              oldData !== null &&
+              "pages" in oldData &&
+              Array.isArray((oldData as { pages: unknown }).pages)
+            ) {
               return {
                 ...oldData,
-                pages: oldData.pages.map((page: any) => ({
+                pages: (oldData as { pages: { items?: { id: string }[] }[] }).pages.map((page) => ({
                   ...page,
-                  items: page.items?.filter((item: any) => item.id !== tweetId) ?? page.items,
+                  items: page.items?.filter((item) => item.id !== tweetId) ?? page.items,
                 })),
               };
             }
 
             // Handle single tweet - mark as deleted if it's the deleted one
-            if (oldData.id === tweetId) {
+            if (
+              typeof oldData === "object" &&
+              oldData !== null &&
+              "id" in oldData &&
+              (oldData as { id: string }).id === tweetId
+            ) {
               return { ...oldData, deleted: true };
             }
 
