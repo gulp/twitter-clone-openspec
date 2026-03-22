@@ -37,6 +37,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-feed-assembly.md](caching-feed-assembly.md) — Fan-out-on-read with DISTINCT ON deduplication, versioned caching, tombstone filtering, SETNX locking, batch hydration
 - [caching-lua-atomicity.md](caching-lua-atomicity.md) — Lua scripts for atomic rate limiting and floored unread count decrement
 - [caching-data-structure-selection.md](caching-data-structure-selection.md) — Choosing STRING vs SET vs ZSET vs LIST for different caching patterns with performance characteristics
+- [caching-wrapper-functions.md](caching-wrapper-functions.md) — Typed Redis wrappers with fail-open/fail-closed policies, structured logging, requestId correlation, Lua atomicity
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
