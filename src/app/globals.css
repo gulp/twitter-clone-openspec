@@ -1,0 +1,284 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Twitter/X Clone — Design System
+ *
+ * Dark-first, refined. Inspired by X's density and Linear's polish.
+ * Every shadow, every border, every transition is intentional.
+ */
+
+@layer base {
+  :root {
+    /* Brand */
+    --color-brand: 29 161 242; /* #1DA1F2 — Twitter Blue */
+    --color-brand-hover: 26 145 218; /* Slightly darker on hover */
+    --color-brand-active: 23 130 196; /* Press state */
+    --color-brand-muted: 29 161 242; /* For backgrounds at low opacity */
+
+    /* Semantic — Light mode */
+    --color-bg-primary: 255 255 255;
+    --color-bg-secondary: 247 249 249;
+    --color-bg-tertiary: 239 243 244;
+    --color-bg-elevated: 255 255 255;
+    --color-bg-overlay: 0 0 0;
+
+    --color-border-primary: 239 243 244;
+    --color-border-secondary: 207 217 222;
+    --color-border-focus: 29 161 242;
+
+    --color-text-primary: 15 20 25;
+    --color-text-secondary: 83 100 113;
+    --color-text-tertiary: 139 152 165;
+    --color-text-inverse: 255 255 255;
+    --color-text-brand: 29 161 242;
+
+    --color-danger: 249 24 128;
+    --color-danger-hover: 220 20 110;
+    --color-success: 0 186 124;
+    --color-warning: 255 173 31;
+
+    /* Engagement */
+    --color-like: 249 24 128;
+    --color-retweet: 0 186 124;
+    --color-reply: 29 161 242;
+
+    /* Surfaces */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --shadow-overlay: 0 0 24px rgba(0, 0, 0, 0.15);
+
+    /* Layout */
+    --sidebar-width: 275px;
+    --right-sidebar-width: 350px;
+    --content-max-width: 600px;
+    --nav-height: 53px;
+
+    /* Motion */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
+  }
+
+  .dark {
+    --color-bg-primary: 0 0 0;
+    --color-bg-secondary: 22 24 28;
+    --color-bg-tertiary: 32 35 39;
+    --color-bg-elevated: 22 24 28;
+    --color-bg-overlay: 91 112 131;
+
+    --color-border-primary: 47 51 54;
+    --color-border-secondary: 56 68 77;
+    --color-border-focus: 29 161 242;
+
+    --color-text-primary: 231 233 234;
+    --color-text-secondary: 113 118 123;
+    --color-text-tertiary: 83 100 113;
+    --color-text-inverse: 15 20 25;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+    --shadow-overlay: 0 0 24px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Base resets */
+  * {
+    border-color: rgb(var(--color-border-primary));
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: rgb(var(--color-bg-primary));
+    color: rgb(var(--color-text-primary));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Scrollbar styling — thin, unobtrusive */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-border-secondary));
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--color-text-tertiary));
+  }
+
+  /* Focus ring — accessibility with style */
+  *:focus-visible {
+    outline: 2px solid rgb(var(--color-brand));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Selection color */
+  ::selection {
+    background-color: rgb(var(--color-brand) / 0.3);
+    color: rgb(var(--color-text-primary));
+  }
+}
+
+@layer components {
+  /* Tweet divider — the signature thin border */
+  .tweet-divider {
+    border-bottom: 1px solid rgb(var(--color-border-primary));
+  }
+
+  /* Hover card surface */
+  .surface-hover {
+    transition: background-color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .surface-hover:hover {
+    background-color: rgb(var(--color-bg-secondary));
+  }
+
+  /* Engagement button base */
+  .engagement-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    color: rgb(var(--color-text-secondary));
+    transition: all var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .engagement-btn:hover {
+    background-color: rgb(var(--color-brand) / 0.1);
+    color: rgb(var(--color-brand));
+  }
+
+  .engagement-btn.like:hover {
+    background-color: rgb(var(--color-like) / 0.1);
+    color: rgb(var(--color-like));
+  }
+
+  .engagement-btn.retweet:hover {
+    background-color: rgb(var(--color-retweet) / 0.1);
+    color: rgb(var(--color-retweet));
+  }
+
+  /* Compose button glow */
+  .compose-glow {
+    box-shadow: 0 0 0 0 rgb(var(--color-brand) / 0), var(--shadow-sm);
+    transition: box-shadow var(--duration-normal) var(--ease-out-expo);
+  }
+
+  .compose-glow:hover {
+    box-shadow: 0 0 20px rgb(var(--color-brand) / 0.15), var(--shadow-md);
+  }
+
+  /* Skeleton shimmer animation */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-bg-tertiary)) 0%,
+      rgb(var(--color-bg-secondary)) 50%,
+      rgb(var(--color-bg-tertiary)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Fade in animation */
+  .fade-in {
+    animation: fadeIn var(--duration-normal) var(--ease-out-expo) forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Staggered children */
+  .stagger-children > * {
+    animation: fadeIn var(--duration-normal) var(--ease-out-expo) forwards;
+    opacity: 0;
+  }
+
+  .stagger-children > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger-children > *:nth-child(2) {
+    animation-delay: 50ms;
+  }
+  .stagger-children > *:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  .stagger-children > *:nth-child(4) {
+    animation-delay: 150ms;
+  }
+  .stagger-children > *:nth-child(5) {
+    animation-delay: 200ms;
+  }
+
+  /* Like heart pop */
+  .like-pop {
+    animation: likePop var(--duration-fast) var(--ease-out-expo);
+  }
+
+  @keyframes likePop {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.3);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+}
+
+@layer utilities {
+  .text-brand {
+    color: rgb(var(--color-brand));
+  }
+
+  .bg-brand {
+    background-color: rgb(var(--color-brand));
+  }
+
+  .bg-brand-hover:hover {
+    background-color: rgb(var(--color-brand-hover));
+  }
+
+  .border-brand {
+    border-color: rgb(var(--color-brand));
+  }
+}
