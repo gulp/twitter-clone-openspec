@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
             origin: origin ?? "(missing)",
             route: pathname,
             ts: new Date().toISOString(),
-          }),
+          })
         );
 
         return new NextResponse("Forbidden", { status: 403 });
@@ -86,7 +86,5 @@ function getAllowedOrigins(): string[] {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
