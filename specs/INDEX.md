@@ -42,3 +42,4 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [optimistic-ui-mutation-pattern.md](optimistic-ui-mutation-pattern.md) — tRPC mutation lifecycle (onMutate/onError/onSuccess), local state sync, rollback pattern, query invalidation
 - [testing-integration-helpers.md](testing-integration-helpers.md) — Test data factories, tRPC caller creation, database/Redis cleanup, unique IP generation, log capture for assertions
 - [testing-e2e-page-objects.md](testing-e2e-page-objects.md) — Page Object pattern for E2E tests, fixture integration, data-testid selectors, action/assertion separation
+- [logging-request-correlation.md](logging-request-correlation.md) — UUIDv4 requestId propagation via AsyncLocalStorage from tRPC context through Prisma/Redis for distributed tracing
