@@ -1,0 +1,176 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  username       String    @unique
+  displayName    String
+  bio            String    @default("")
+  avatarUrl      String    @default("")
+  bannerUrl      String    @default("")
+  hashedPassword String?   // null for OAuth-only users
+  sessionVersion Int       @default(0)  // incremented on password reset / logout-all
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Counts (denormalized)
+  followerCount  Int       @default(0)
+  followingCount Int       @default(0)
+  tweetCount     Int       @default(0)
+
+  // Relations
+  tweets         Tweet[]   @relation("AuthoredTweets")
+  likes          Like[]
+  retweets       Retweet[]
+  followers      Follow[]  @relation("FollowedBy")  // users who follow this user
+  following      Follow[]  @relation("Follows")      // users this user follows
+  notifications  Notification[] @relation("Recipient")
+  actedNotifications Notification[] @relation("Actor")
+  accounts       Account[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Tweet {
+  id            String    @id @default(cuid())
+  content       String    @db.VarChar(280)
+  authorId      String
+  parentId      String?   // reply-to
+  quoteTweetId  String?   // quote tweet
+  mediaUrls     String[]  // array of S3 URLs
+  deleted       Boolean   @default(false)
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  // Counts (denormalized)
+  likeCount     Int       @default(0)
+  retweetCount  Int       @default(0)
+  replyCount    Int       @default(0)
+
+  // Relations
+  author        User      @relation("AuthoredTweets", fields: [authorId], references: [id])
+  parent        Tweet?    @relation("Replies", fields: [parentId], references: [id])
+  replies       Tweet[]   @relation("Replies")
+  quotedTweet   Tweet?    @relation("QuoteTweets", fields: [quoteTweetId], references: [id])
+  quotedBy      Tweet[]   @relation("QuoteTweets")
+  likes         Like[]
+  retweets      Retweet[]
+  notifications Notification[]
+
+  @@index([authorId, deleted, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([parentId])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("Follows", fields: [followerId], references: [id])
+  following   User     @relation("FollowedBy", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Like {
+  userId    String
+  tweetId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  tweet     Tweet    @relation(fields: [tweetId], references: [id])
+
+  @@id([userId, tweetId])
+  @@index([tweetId])
+}
+
+model Retweet {
+  userId    String
+  tweetId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  tweet     Tweet    @relation(fields: [tweetId], references: [id])
+
+  @@id([userId, tweetId])
+  @@index([tweetId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipientId String
+  type        NotificationType
+  actorId     String
+  tweetId     String?
+  dedupeKey   String?          @unique  // deterministic key to prevent duplicate notifications
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  recipient   User             @relation("Recipient", fields: [recipientId], references: [id])
+  actor       User             @relation("Actor", fields: [actorId], references: [id])
+  tweet       Tweet?           @relation(fields: [tweetId], references: [id])
+
+  @@index([recipientId, createdAt(sort: Desc)])
+  @@index([recipientId, read, createdAt(sort: Desc)])
+}
+
+enum NotificationType {
+  LIKE
+  RETWEET
+  FOLLOW
+  REPLY
+  MENTION
+  QUOTE_TWEET
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique  // SHA-256 hash of the raw token
+  userId    String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([tokenHash])
+  @@index([userId, expiresAt])
+}
+
+// NextAuth OAuth account linking
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
