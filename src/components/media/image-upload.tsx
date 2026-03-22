@@ -2,6 +2,7 @@
 
 import { ALLOWED_MIME_TYPES, MAX_MEDIA_SIZE_BYTES } from "@/lib/constants";
 import { trpc } from "@/lib/trpc";
+import { resizeImage } from "@/lib/image-utils";
 import { type ReactNode, useRef, useState } from "react";
 
 export interface ImageUploadProps {
@@ -9,6 +10,7 @@ export interface ImageUploadProps {
   onChange: (urls: string[]) => void;
   maxImages?: number;
   trigger?: ReactNode;
+  purpose?: "tweet" | "avatar" | "banner";
 }
 
 interface UploadingFile {
@@ -19,35 +21,57 @@ interface UploadingFile {
   error?: string;
 }
 
-export function ImageUpload({ urls, onChange, maxImages = 4, trigger }: ImageUploadProps) {
+export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = "tweet" }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const getUploadUrlMutation = trpc.media.getUploadUrl.useMutation();
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const processFiles = async (files: File[]) => {
+    setValidationError(null);
+
     if (files.length === 0) return;
 
     const remainingSlots = maxImages - urls.length - uploadingFiles.length;
+    if (remainingSlots <= 0) {
+      setValidationError(`Maximum ${maxImages} image${maxImages > 1 ? "s" : ""} allowed`);
+      return;
+    }
+
     const filesToUpload = files.slice(0, remainingSlots);
 
-    // Validate files
+    // Validate and resize files
     const validFiles: File[] = [];
     for (const file of filesToUpload) {
       // Check file type
       if (!ALLOWED_MIME_TYPES.includes(file.type as any)) {
-        alert(`File ${file.name} has unsupported type. Only JPEG, PNG, GIF, and WebP are allowed.`);
+        setValidationError(`Unsupported format. Only JPEG, PNG, GIF, and WebP are allowed.`);
         continue;
       }
 
       // Check file size
       if (file.size > MAX_MEDIA_SIZE_BYTES) {
-        alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+        setValidationError(`File too large. Maximum size is 5MB.`);
         continue;
       }
 
-      validFiles.push(file);
+      // Resize based on purpose
+      let processedFile = file;
+      try {
+        if (purpose === "avatar") {
+          processedFile = await resizeImage(file, 400, 400);
+        } else if (purpose === "banner") {
+          processedFile = await resizeImage(file, 1500, 500);
+        }
+      } catch (error) {
+        console.error("Resize failed:", error);
+        setValidationError("Failed to process image");
+        continue;
+      }
+
+      validFiles.push(processedFile);
     }
 
     // Create preview URLs and upload
@@ -65,7 +89,7 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger }: ImageUpl
         const { uploadUrl, publicUrl } = await getUploadUrlMutation.mutateAsync({
           filename: file.name,
           contentType: file.type,
-          purpose: "tweet",
+          purpose,
         });
 
         // Upload file to S3
@@ -92,11 +116,42 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger }: ImageUpl
         );
       }
     }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
 
     // Clear input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    await processFiles(files);
   };
 
   const uploadToS3 = async (
@@ -179,8 +234,20 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger }: ImageUpl
         className="hidden"
       />
 
+      {validationError && (
+        <div className="mb-2 text-sm text-red-400 bg-red-500/10 border border-red-500/50 rounded px-3 py-2">
+          {validationError}
+        </div>
+      )}
+
       {showPreviews && (
-        <div className="grid grid-cols-2 gap-2">
+        <div
+          className="grid grid-cols-2 gap-2"
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
           {/* Uploaded images */}
           {urls.map((url, index) => (
             <div key={url} className="relative aspect-square rounded-lg overflow-hidden bg-[#192734] border border-[#38444d]">
@@ -253,7 +320,15 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger }: ImageUpl
           {canAddMore && (
             <button
               onClick={handleTriggerClick}
-              className="aspect-square rounded-lg border-2 border-dashed border-[#38444d] flex items-center justify-center transition-colors hover:border-[#1DA1F2] hover:bg-[#1DA1F2]/5 text-[#71767B] hover:text-[#1DA1F2]"
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className={`aspect-square rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${
+                isDragging
+                  ? "border-[#1DA1F2] bg-[#1DA1F2]/10 text-[#1DA1F2]"
+                  : "border-[#38444d] hover:border-[#1DA1F2] hover:bg-[#1DA1F2]/5 text-[#71767B] hover:text-[#1DA1F2]"
+              }`}
             >
               <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="12" y1="5" x2="12" y2="19" />

@@ -102,6 +102,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
               urls={bannerUrls}
               onChange={setBannerUrls}
               maxImages={1}
+              purpose="banner"
               trigger={
                 <button
                   type="button"
@@ -149,6 +150,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
                 urls={avatarUrls}
                 onChange={setAvatarUrls}
                 maxImages={1}
+                purpose="avatar"
                 trigger={
                   <button
                     type="button"
