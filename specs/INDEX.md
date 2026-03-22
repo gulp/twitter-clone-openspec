@@ -39,3 +39,4 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
+- [optimistic-ui-mutation-pattern.md](optimistic-ui-mutation-pattern.md) — tRPC mutation lifecycle (onMutate/onError/onSuccess), local state sync, rollback pattern, query invalidation
