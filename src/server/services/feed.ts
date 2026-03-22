@@ -406,7 +406,7 @@ async function getTombstones(): Promise<Set<string>> {
  */
 function parseFeedCursor(cursor: string): FeedCursor {
   try {
-    const decoded = Buffer.from(cursor, "base64").toString("utf-8");
+    const decoded = Buffer.from(cursor, "base64url").toString("utf-8");
     const parsed = JSON.parse(decoded);
     return {
       effectiveAt: new Date(parsed.effectiveAt),
@@ -425,7 +425,7 @@ function encodeFeedCursor(cursor: FeedCursor): string {
     effectiveAt: cursor.effectiveAt.toISOString(),
     tweetId: cursor.tweetId,
   });
-  return Buffer.from(json, "utf-8").toString("base64");
+  return Buffer.from(json, "utf-8").toString("base64url");
 }
 
 /**
