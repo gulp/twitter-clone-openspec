@@ -2,6 +2,7 @@
 
 import { TweetCard } from "@/components/tweet/tweet-card";
 import { TweetComposer } from "@/components/tweet/tweet-composer";
+import { EngagementButtons } from "@/components/tweet/engagement-buttons";
 import { trpc } from "@/lib/trpc";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
