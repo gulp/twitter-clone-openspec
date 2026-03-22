@@ -6,7 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "./db";
-import { sessionGet, sessionSet } from "./redis";
+import { sessionDel, sessionGet, sessionSet } from "./redis";
 
 /**
  * Extend NextAuth types to include userId in session.
@@ -70,20 +70,26 @@ export const authOptions: NextAuthOptions = {
     /**
      * GoogleProvider — OAuth sign-in
      */
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
-      allowDangerousEmailAccountLinking: true,
-    }),
+    // Only register OAuth providers when credentials are configured
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: env.GOOGLE_CLIENT_ID,
+            clientSecret: env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
 
-    /**
-     * GitHubProvider — OAuth sign-in
-     */
-    GitHubProvider({
-      clientId: env.GITHUB_CLIENT_ID ?? "",
-      clientSecret: env.GITHUB_CLIENT_SECRET ?? "",
-      allowDangerousEmailAccountLinking: true,
-    }),
+    ...(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET
+      ? [
+          GitHubProvider({
+            clientId: env.GITHUB_CLIENT_ID,
+            clientSecret: env.GITHUB_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     /**
@@ -173,7 +179,6 @@ export const authOptions: NextAuthOptions = {
      */
     async signOut({ token }) {
       if (token?.jti) {
-        const { sessionDel } = await import("./redis");
         await sessionDel(token.jti as string);
       }
     },
