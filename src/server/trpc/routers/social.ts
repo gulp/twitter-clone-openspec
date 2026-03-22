@@ -161,6 +161,14 @@ export const socialRouter = createTRPCRouter({
         if (error && typeof error === "object" && "code" in error && error.code === "P2025") {
           return { success: true };
         }
+
+        // Log unexpected errors before re-throwing
+        log.error("Failed to unfollow user", {
+          followerId,
+          followingId,
+          error: error instanceof Error ? error.message : String(error),
+          requestId: ctx.requestId,
+        });
         throw error;
       }
 
