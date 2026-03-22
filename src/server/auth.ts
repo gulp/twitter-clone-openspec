@@ -1,10 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { env } from "@/env";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { type NextAuthOptions } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import { randomUUID } from "node:crypto";
 import { prisma } from "./db";
 import { sessionGet, sessionSet } from "./redis";
 
