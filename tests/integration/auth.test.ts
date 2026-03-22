@@ -248,24 +248,22 @@ describe("auth router", () => {
 
   describe("rate limiting", () => {
     it("enforces rate limits on register", async () => {
-      const caller = createTestContext();
-
-      // The rate limit is 5 requests per minute per IP
-      // Since all test requests come from 127.0.0.1, we test this by making
-      // multiple requests quickly
+      // Use same IP for all requests in this test to trigger rate limit
+      const sharedIp = "192.168.1.100";
 
       const logs = new LogCapture();
       logs.start();
 
-      // Make 5 successful registration attempts (should all succeed if unique)
+      // Make 6 registration attempts with same IP (limit is 5 per minute)
       const promises = [];
       for (let i = 0; i < 6; i++) {
+        const caller = createTestContext(undefined, sharedIp);
         promises.push(
           caller.auth
             .register({
-              email: `user${i}@example.com`,
-              username: `user${i}`,
-              displayName: `User ${i}`,
+              email: `ratelimit${i}@example.com`,
+              username: `ratelimit${i}`,
+              displayName: `Rate Limit ${i}`,
               password: "password123",
             })
             .catch((err) => err)
