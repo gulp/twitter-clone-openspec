@@ -137,6 +137,7 @@ export function TweetCard({
           {/* Engagement buttons */}
           <EngagementButtons
             tweetId={tweet.id}
+            authorUsername={tweet.author.username}
             replyCount={tweet.replyCount}
             retweetCount={tweet.retweetCount}
             likeCount={tweet.likeCount}

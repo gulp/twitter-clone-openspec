@@ -292,6 +292,7 @@ export default function TweetDetailPage() {
         <div className="py-2 border-b border-[#38444d]">
           <EngagementButtons
             tweetId={tweet.id}
+            authorUsername={tweet.author.username}
             replyCount={tweet.replyCount}
             retweetCount={tweet.retweetCount}
             likeCount={tweet.likeCount}

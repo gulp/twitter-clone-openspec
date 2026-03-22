@@ -1,9 +1,9 @@
 "use client";
 
+import { ImageUpload } from "@/components/media/image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
-import { ImageUpload } from "@/components/media/image-upload";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 
@@ -38,7 +38,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
 
     updateProfileMutation.mutate({
       displayName: displayName.trim() || undefined,
-      bio: bio.trim() || undefined,
+      bio: bio.trim(),
       avatarUrl: avatarUrls[0] || undefined,
       bannerUrl: bannerUrls[0] || undefined,
     });
@@ -63,7 +63,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
             className="text-[#E7E9EA] hover:bg-[#1d2935] rounded-full p-2 transition-colors duration-200"
             aria-label="Close"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <svg role="img" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M7.414 6l5.586 5.586L18.586 6 20 7.414 14.414 13 20 18.586 18.586 20 13 14.414 7.414 20 6 18.586 11.586 13 6 7.414 7.414 6z" />
             </svg>
           </button>
@@ -109,7 +109,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
                   className="p-3 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all duration-200 backdrop-blur-sm"
                   aria-label={bannerUrls[0] ? "Change banner" : "Add banner"}
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg role="img" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 15.414l-3-3-5 5-3-3-3 3V18.5c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-3.086zM9.75 7C8.784 7 8 7.784 8 8.75s.784 1.75 1.75 1.75 1.75-.784 1.75-1.75S10.716 7 9.75 7z" />
                   </svg>
                 </button>
@@ -123,7 +123,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
                 className="p-3 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all duration-200 backdrop-blur-sm"
                 aria-label="Remove banner"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <svg role="img" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M7.414 6l5.586 5.586L18.586 6 20 7.414 14.414 13 20 18.586 18.586 20 13 14.414 7.414 20 6 18.586 11.586 13 6 7.414 7.414 6z" />
                 </svg>
               </button>
@@ -135,10 +135,14 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
         <div className="relative px-4 -mt-16 mb-4">
           <div className="relative w-28 h-28 rounded-full overflow-hidden ring-4 ring-[#15202B] bg-[#192734] group">
             {avatarUrls[0] ? (
-              <img src={avatarUrls[0]} alt="Avatar preview" className="w-full h-full object-cover" />
+              <img
+                src={avatarUrls[0]}
+                alt="Avatar preview"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-[#71767B] bg-[#192734]">
-                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
+                <svg role="img" aria-label="Default avatar" className="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
               </div>
@@ -157,7 +161,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
                     className="p-2 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all duration-200 backdrop-blur-sm"
                     aria-label={avatarUrls[0] ? "Change avatar" : "Add avatar"}
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <svg role="img" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM19 15.414l-3-3-5 5-3-3-3 3V18.5c0 .276.224.5.5.5h13c.276 0 .5-.224.5-.5v-3.086zM9.75 7C8.784 7 8 7.784 8 8.75s.784 1.75 1.75 1.75 1.75-.784 1.75-1.75S10.716 7 9.75 7z" />
                     </svg>
                   </button>

@@ -4,7 +4,7 @@ import { SearchInput } from "@/components/search/search-input";
 import { SearchResults } from "@/components/search/search-results";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 /**
  * Search page with tweet and user search
@@ -26,9 +26,13 @@ function SearchPageContent() {
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const debouncedQuery = useDebounce(query, 300);
 
+  // Track searchParams in a ref to avoid re-triggering the URL update effect
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+
   // Update URL when debounced query changes
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParamsRef.current.toString());
 
     if (debouncedQuery) {
       params.set("q", debouncedQuery);
@@ -37,20 +41,14 @@ function SearchPageContent() {
     }
 
     // Preserve tab parameter if it exists
-    const currentTab = searchParams.get("tab");
+    const currentTab = searchParamsRef.current.get("tab");
     if (currentTab) {
       params.set("tab", currentTab);
     }
 
     const newUrl = params.toString() ? `/search?${params.toString()}` : "/search";
     router.replace(newUrl);
-  }, [debouncedQuery, router, searchParams]);
-
-  // Sync local state with URL on mount and URL changes
-  useEffect(() => {
-    const urlQuery = searchParams.get("q") || "";
-    setQuery(urlQuery);
-  }, [searchParams]);
+  }, [debouncedQuery, router]);
 
   return (
     <div className="min-h-screen bg-[#0F1419]">

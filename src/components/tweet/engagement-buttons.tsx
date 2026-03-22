@@ -8,6 +8,7 @@ import { cn } from "../ui/utils";
 
 export interface EngagementButtonsProps {
   tweetId: string;
+  authorUsername?: string;
   likeCount: number;
   retweetCount: number;
   replyCount: number;
@@ -19,6 +20,7 @@ export interface EngagementButtonsProps {
 
 export function EngagementButtons({
   tweetId,
+  authorUsername,
   likeCount: initialLikeCount,
   retweetCount: initialRetweetCount,
   replyCount,
@@ -116,7 +118,9 @@ export function EngagementButtons({
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/status/${tweetId}`;
+    const url = authorUsername
+      ? `${window.location.origin}/${authorUsername}/status/${tweetId}`
+      : `${window.location.origin}/status/${tweetId}`;
     if (navigator.share) {
       try {
         await navigator.share({ url });

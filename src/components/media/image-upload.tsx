@@ -1,8 +1,8 @@
 "use client";
 
 import { ALLOWED_MIME_TYPES, MAX_MEDIA_SIZE_BYTES } from "@/lib/constants";
-import { trpc } from "@/lib/trpc";
 import { resizeImage } from "@/lib/image-utils";
+import { trpc } from "@/lib/trpc";
 import { type ReactNode, useRef, useState } from "react";
 
 export interface ImageUploadProps {
@@ -21,8 +21,16 @@ interface UploadingFile {
   error?: string;
 }
 
-export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = "tweet" }: ImageUploadProps) {
+export function ImageUpload({
+  urls,
+  onChange,
+  maxImages = 4,
+  trigger,
+  purpose = "tweet",
+}: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const urlsRef = useRef(urls);
+  urlsRef.current = urls;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -46,7 +54,7 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
     const validFiles: File[] = [];
     for (const file of filesToUpload) {
       // Check file type
-      if (!ALLOWED_MIME_TYPES.includes(file.type as any)) {
+      if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
         setValidationError(`Unsupported format. Only JPEG, PNG, GIF, and WebP are allowed.`);
         continue;
       }
@@ -79,10 +87,7 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
       const fileId = Math.random().toString(36).substring(7);
       const preview = URL.createObjectURL(file);
 
-      setUploadingFiles((prev) => [
-        ...prev,
-        { id: fileId, file, preview, progress: 0 },
-      ]);
+      setUploadingFiles((prev) => [...prev, { id: fileId, file, preview, progress: 0 }]);
 
       try {
         // Get pre-signed upload URL
@@ -94,13 +99,11 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
 
         // Upload file to S3
         await uploadToS3(uploadUrl, file, (progress) => {
-          setUploadingFiles((prev) =>
-            prev.map((f) => (f.id === fileId ? { ...f, progress } : f))
-          );
+          setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
         });
 
-        // Add to uploaded URLs
-        onChange([...urls, publicUrl]);
+        // Add to uploaded URLs — use ref for current value to avoid stale closure
+        onChange([...urlsRef.current, publicUrl]);
 
         // Remove from uploading
         setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId));
@@ -250,14 +253,25 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
         >
           {/* Uploaded images */}
           {urls.map((url, index) => (
-            <div key={url} className="relative aspect-square rounded-lg overflow-hidden bg-[#192734] border border-[#38444d]">
+            <div
+              key={url}
+              className="relative aspect-square rounded-lg overflow-hidden bg-[#192734] border border-[#38444d]"
+            >
               <img src={url} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
               <button
+                type="button"
                 onClick={() => handleRemove(url)}
                 className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white transition-colors hover:bg-black/90"
                 aria-label="Remove image"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  role="img"
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -267,9 +281,16 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
 
           {/* Uploading files */}
           {uploadingFiles.map((file) => (
-            <div key={file.id} className="relative aspect-square rounded-lg overflow-hidden bg-[#192734] border border-[#38444d]">
-              <img src={file.preview} alt="Uploading" className="w-full h-full object-cover opacity-50" />
-              
+            <div
+              key={file.id}
+              className="relative aspect-square rounded-lg overflow-hidden bg-[#192734] border border-[#38444d]"
+            >
+              <img
+                src={file.preview}
+                alt="Uploading"
+                className="w-full h-full object-cover opacity-50"
+              />
+
               {/* Progress bar */}
               {!file.error && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -280,7 +301,9 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
                         style={{ width: `${file.progress}%` }}
                       />
                     </div>
-                    <p className="text-white text-sm text-center mt-2 font-mono">{file.progress}%</p>
+                    <p className="text-white text-sm text-center mt-2 font-mono">
+                      {file.progress}%
+                    </p>
                   </div>
                 </div>
               )}
@@ -291,6 +314,7 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
                   <div className="text-center px-4">
                     <p className="text-red-400 text-sm mb-2">{file.error}</p>
                     <button
+                      type="button"
                       onClick={() => handleRemoveUploading(file.id)}
                       className="text-white text-sm underline hover:no-underline"
                     >
@@ -307,7 +331,13 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
                   className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white transition-colors hover:bg-black/90"
                   aria-label="Cancel upload"
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -319,6 +349,7 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
           {/* Add more button */}
           {canAddMore && (
             <button
+              type="button"
               onClick={handleTriggerClick}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
@@ -329,8 +360,16 @@ export function ImageUpload({ urls, onChange, maxImages = 4, trigger, purpose = 
                   ? "border-[#1DA1F2] bg-[#1DA1F2]/10 text-[#1DA1F2]"
                   : "border-[#38444d] hover:border-[#1DA1F2] hover:bg-[#1DA1F2]/5 text-[#71767B] hover:text-[#1DA1F2]"
               }`}
+              aria-label="Add more images"
             >
-              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                role="img"
+                className="w-8 h-8"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>

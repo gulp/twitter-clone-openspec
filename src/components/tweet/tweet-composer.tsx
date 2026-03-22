@@ -127,7 +127,7 @@ export function TweetComposer({
             rows={3}
           />
 
-          {/* Image upload preview */}
+          {/* Image upload preview grid — shown when uploads exist */}
           {mediaUrls.length > 0 && (
             <div className="mt-3">
               <ImageUpload
@@ -141,23 +141,25 @@ export function TweetComposer({
           {/* Actions bar */}
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#38444d]">
             <div className="flex items-center gap-1">
-              {/* Media button */}
-              <ImageUpload
-                urls={mediaUrls}
-                onChange={setMediaUrls}
-                maxImages={4}
-                trigger={
-                  <button
-                    type="button"
-                    className="p-2 rounded-full transition-colors hover:bg-[#1DA1F2]/10 text-[#1DA1F2]"
-                    aria-label="Add media"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM8 11.5c0-1.381-1.119-2.5-2.5-2.5S3 10.119 3 11.5 4.119 14 5.5 14 8 12.881 8 11.5z" />
-                    </svg>
-                  </button>
-                }
-              />
+              {/* Media button — hidden when uploads exist (preview grid has its own "add more") */}
+              {mediaUrls.length === 0 && (
+                <ImageUpload
+                  urls={mediaUrls}
+                  onChange={setMediaUrls}
+                  maxImages={4}
+                  trigger={
+                    <button
+                      type="button"
+                      className="p-2 rounded-full transition-colors hover:bg-[#1DA1F2]/10 text-[#1DA1F2]"
+                      aria-label="Add media"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13zM8 11.5c0-1.381-1.119-2.5-2.5-2.5S3 10.119 3 11.5 4.119 14 5.5 14 8 12.881 8 11.5z" />
+                      </svg>
+                    </button>
+                  }
+                />
+              )}
             </div>
 
             <div className="flex items-center gap-3">
