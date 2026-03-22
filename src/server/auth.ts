@@ -6,7 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-import { prisma } from "./db";
+import { basePrisma, prisma } from "./db";
 import { sessionDel, sessionGet, sessionSet } from "./redis";
 
 /**
@@ -41,7 +41,7 @@ declare module "next-auth/jwt" {
  * If any check fails, session is invalid.
  */
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(basePrisma),
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
