@@ -369,9 +369,16 @@ describe("schema invariants", () => {
     });
 
     it("soft-deleted tweets excluded from feed", async () => {
-      const { user } = await createTestUser();
-      const tweet1 = await createTestTweet(user.id, { content: "Live tweet" });
-      const tweet2 = await createTestTweet(user.id, { content: "Deleted tweet" });
+      const { user: viewer } = await createTestUser();
+      const { user: author } = await createTestUser();
+
+      // Viewer must follow author for tweets to appear in home feed
+      await prisma.follow.create({
+        data: { followerId: viewer.id, followingId: author.id },
+      });
+
+      const tweet1 = await createTestTweet(author.id, { content: "Live tweet" });
+      const tweet2 = await createTestTweet(author.id, { content: "Deleted tweet" });
 
       // Soft delete tweet2
       await prisma.tweet.update({
@@ -382,7 +389,7 @@ describe("schema invariants", () => {
         },
       });
 
-      const caller = createTestContext(user.id);
+      const caller = createTestContext(viewer.id);
 
       // Home feed should only show live tweet
       const feed = await caller.feed.home({ limit: 10 });
