@@ -68,16 +68,14 @@ export function UserList({
   }
 
   return (
-    <InfiniteScroll
-      onLoadMore={onLoadMore || (() => {})}
-      hasMore={hasMore}
-      className="divide-y divide-[#38444d]"
-    >
-      {users.map((user) => (
-        <UserListItem key={user.id} user={user} showFollowButton={showFollowButton} />
-      ))}
-      {isLoading && <UserListItemSkeleton />}
-    </InfiniteScroll>
+    <div className="divide-y divide-[#38444d]">
+      <InfiniteScroll onLoadMore={onLoadMore || (() => {})} hasMore={hasMore}>
+        {users.map((user) => (
+          <UserListItem key={user.id} user={user} showFollowButton={showFollowButton} />
+        ))}
+        {isLoading && <UserListItemSkeleton />}
+      </InfiniteScroll>
+    </div>
   );
 }
 

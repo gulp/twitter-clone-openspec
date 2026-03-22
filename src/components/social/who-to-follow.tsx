@@ -29,7 +29,7 @@ export function WhoToFollow() {
 
   // Filter out followed/hidden users, show top 3
   const visibleSuggestions = (suggestions || [])
-    .filter((user) => !hiddenUserIds.has(user.id))
+    .filter((user: { id: string }) => !hiddenUserIds.has(user.id))
     .slice(0, 3);
 
   // Hide suggestion when user follows them
@@ -60,7 +60,13 @@ export function WhoToFollow() {
       <h2 className="text-[#E7E9EA] text-xl font-bold px-4 py-3">Who to follow</h2>
 
       <div className="divide-y divide-[#38444d]">
-        {visibleSuggestions.map((user) => (
+        {visibleSuggestions.map((user: {
+          id: string;
+          username: string;
+          displayName: string;
+          avatarUrl: string | null;
+          bio: string | null;
+        }) => (
           <SuggestionCard key={user.id} user={user} onFollow={handleFollow} />
         ))}
       </div>
