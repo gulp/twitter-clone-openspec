@@ -1,5 +1,6 @@
 import { env } from "@/env";
 import { MAX_MEDIA_SIZE_BYTES } from "@/lib/constants";
+import { log } from "@/lib/logger";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -43,19 +44,30 @@ if (env.NODE_ENV !== "production") {
  * @param contentType - MIME type (e.g., "image/jpeg")
  * @returns Pre-signed URL for PUT upload
  */
-export async function getUploadUrl(key: string, contentType: string): Promise<string> {
-  const command = new PutObjectCommand({
-    Bucket: env.S3_BUCKET,
-    Key: key,
-    ContentType: contentType,
-    ContentLength: MAX_MEDIA_SIZE_BYTES, // Hint for S3, enforced by bucket policy
-  });
+export async function getUploadUrl(key: string, contentType: string, requestId?: string): Promise<string> {
+  try {
+    const command = new PutObjectCommand({
+      Bucket: env.S3_BUCKET,
+      Key: key,
+      ContentType: contentType,
+      ContentLength: MAX_MEDIA_SIZE_BYTES, // Hint for S3, enforced by bucket policy
+    });
 
-  const signedUrl = await getSignedUrl(s3, command, {
-    expiresIn: 600, // 10 minutes
-  });
+    const signedUrl = await getSignedUrl(s3, command, {
+      expiresIn: 600, // 10 minutes
+    });
 
-  return signedUrl;
+    return signedUrl;
+  } catch (error) {
+    log.error("Failed to generate S3 pre-signed URL", {
+      feature: "media",
+      key,
+      contentType,
+      error: error instanceof Error ? error.message : String(error),
+      requestId,
+    });
+    throw new Error("Failed to generate upload URL");
+  }
 }
 
 /**

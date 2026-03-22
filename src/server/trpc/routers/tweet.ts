@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 import { tweetContentSchema } from "@/lib/validators";
 import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
@@ -262,9 +263,11 @@ export const tweetRouter = createTRPCRouter({
         await redis.sadd("tombstones:tweets", tweetId);
         await redis.expire("tombstones:tweets", 60);
       } catch (error) {
-        console.warn("[REDIS] Failed to add tweet to tombstones (fail open):", {
+        log.warn("Failed to add tweet to tombstones (fail open)", {
+          feature: "tombstones",
           tweetId,
           error: error instanceof Error ? error.message : String(error),
+          requestId: ctx.requestId,
         });
       }
 

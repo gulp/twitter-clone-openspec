@@ -50,7 +50,7 @@ export const mediaRouter = createTRPCRouter({
       const key = `${purpose}/${userId}/${fileId}.${ext}`;
 
       // Generate pre-signed PUT URL with 10 minute expiry and 5MB size limit
-      const uploadUrl = await getUploadUrl(key, contentType);
+      const uploadUrl = await getUploadUrl(key, contentType, ctx.requestId);
 
       // Generate public URL for the uploaded file
       const publicUrl = getPublicUrl(key);

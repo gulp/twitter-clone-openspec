@@ -1,3 +1,4 @@
+import { log } from "@/lib/logger";
 import { redis } from "../redis";
 
 /**
@@ -99,7 +100,8 @@ export async function checkRateLimit(
 
     if (failClosed) {
       // FAIL CLOSED: reject request on Redis failure (security-critical paths)
-      console.error("[RATE_LIMITER] Redis failure (fail closed):", {
+      log.error("Rate limiter Redis failure (fail closed)", {
+        feature: "rate-limit",
         scope,
         identifier,
         error: errorMessage,
@@ -108,7 +110,8 @@ export async function checkRateLimit(
     }
 
     // FAIL OPEN: allow request on Redis failure (graceful degradation)
-    console.warn("[RATE_LIMITER] Redis failure (fail open):", {
+    log.warn("Rate limiter Redis failure (fail open)", {
+      feature: "rate-limit",
       scope,
       identifier,
       error: errorMessage,

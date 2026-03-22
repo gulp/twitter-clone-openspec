@@ -1,4 +1,5 @@
 import { env } from "@/env";
+import { log } from "@/lib/logger";
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 
@@ -40,12 +41,18 @@ async function getTransporter(): Promise<Transporter> {
       },
     });
 
-    console.log("[EMAIL] Using configured SMTP transport");
+    log.info("Email service initialized", {
+      mode: "production",
+      smtpHost: env.SMTP_HOST,
+    });
     return transporter;
   }
 
   // Development mode: use Ethereal test account
-  console.log("[EMAIL] SMTP not configured, creating Ethereal test account...");
+  log.info("Email service initializing", {
+    mode: "development",
+    message: "Creating Ethereal test account",
+  });
 
   try {
     const testAccount = await nodemailer.createTestAccount();
@@ -60,14 +67,17 @@ async function getTransporter(): Promise<Transporter> {
       },
     });
 
-    console.log("[EMAIL] Ethereal test account created:", {
+    log.info("Email service initialized", {
+      mode: "development",
       user: testAccount.user,
       previewUrl: "https://ethereal.email/messages",
     });
 
     return transporter;
   } catch (error) {
-    console.error("[EMAIL] Failed to create Ethereal test account:", error);
+    log.error("Failed to create Ethereal test account", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     throw new Error("Email service unavailable");
   }
 }
@@ -101,14 +111,14 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
         `,
       });
 
-      console.log("[EMAIL] Password reset email sent:", {
+      log.info("Password reset email sent", {
         to,
         messageId: info.messageId,
         previewUrl: nodemailer.getTestMessageUrl(info) || undefined,
       });
     } catch (error) {
       // Log error but do not throw — email sending is best-effort
-      console.error("[EMAIL] Failed to send password reset email:", {
+      log.error("Failed to send password reset email", {
         to,
         error: error instanceof Error ? error.message : String(error),
       });

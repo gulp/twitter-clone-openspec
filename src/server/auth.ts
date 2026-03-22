@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { env } from "@/env";
+import { log } from "@/lib/logger";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
@@ -160,14 +161,14 @@ export const authOptions: NextAuthOptions = {
           (profile as { email_verified?: boolean; verified_email?: boolean })?.verified_email;
 
         if (!email) {
-          console.error("[AUTH] OAuth sign-in rejected: no email provided", {
+          log.warn("OAuth sign-in rejected: no email provided", {
             provider: account.provider,
           });
           return false;
         }
 
         if (!emailVerified) {
-          console.error("[AUTH] OAuth sign-in rejected: email not verified", {
+          log.warn("OAuth sign-in rejected: email not verified", {
             provider: account.provider,
             email,
           });
@@ -214,7 +215,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
 
-          console.log("[AUTH] OAuth auto-created user:", {
+          log.info("OAuth auto-created user", {
             provider: account.provider,
             email,
             username,
@@ -222,7 +223,7 @@ export const authOptions: NextAuthOptions = {
 
           return true;
         } catch (error) {
-          console.error("[AUTH] Failed to auto-create OAuth user:", {
+          log.error("Failed to auto-create OAuth user", {
             provider: account.provider,
             email,
             error: error instanceof Error ? error.message : String(error),
