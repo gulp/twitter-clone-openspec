@@ -319,7 +319,16 @@ export async function incrUnreadCount(userId: string): Promise<void> {
  */
 export async function decrUnreadCount(userId: string): Promise<void> {
   try {
-    await redis.decr(`notification:unread:${userId}`);
+    // Use Lua to floor at 0 — DECR alone can go negative if count is already 0
+    const lua = `
+      local key = KEYS[1]
+      local val = redis.call('GET', key)
+      if val and tonumber(val) > 0 then
+        return redis.call('DECR', key)
+      end
+      return 0
+    `;
+    await redis.eval(lua, 1, `notification:unread:${userId}`);
   } catch (error) {
     console.warn("[REDIS] decrUnreadCount failed (fail open):", {
       userId,
