@@ -1,7 +1,8 @@
 "use client";
 
+import { NotificationBell } from "@/components/notification/notification-bell";
 import { cn } from "@/lib/utils";
-import { Bell, Home, Search, User } from "lucide-react";
+import { Home, Search, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,13 +36,6 @@ export function SidebarNav() {
         label: "Search",
         icon: Search,
         isActive: pathname.startsWith("/search"),
-      },
-      {
-        href: "/notifications",
-        label: "Notifications",
-        icon: Bell,
-        isActive: pathname === "/notifications",
-        showBadge: false, // TODO: Connect to unread count
       },
       {
         href: username ? `/${username}` : "/profile",
@@ -101,13 +95,6 @@ export function SidebarNav() {
                     )}
                     aria-hidden="true"
                   />
-
-                  {/* Notification badge */}
-                  {item.showBadge && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[rgb(var(--color-brand))] text-[10px] font-bold text-white">
-                      3
-                    </span>
-                  )}
                 </div>
 
                 {/* Label */}
@@ -121,6 +108,11 @@ export function SidebarNav() {
             </li>
           );
         })}
+
+        {/* Notifications with bell icon and unread badge */}
+        <li>
+          <NotificationBell />
+        </li>
       </ul>
 
       {/* Compose tweet button */}
