@@ -439,27 +439,27 @@ async function seedEngagement(
     throw new Error(`Expected at least 20 tweets, got ${tweets.length}`);
   }
 
-  // Likes (using ! after validation - TS doesn't track runtime checks)
+  // Likes (validated arrays - using type assertions)
   const likes = await Promise.all([
     // Multiple users like tweet1
     prisma.like.create({
       data: {
-        userId: users[1]?.id,
-        tweetId: tweets[0]?.id,
+        userId: users[1]?.id as string,
+        tweetId: tweets[0]?.id as string,
         createdAt: createTimestamp(180),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[2]?.id,
-        tweetId: tweets[0]?.id,
+        userId: users[2]?.id as string,
+        tweetId: tweets[0]?.id as string,
         createdAt: createTimestamp(185),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[3]?.id,
-        tweetId: tweets[0]?.id,
+        userId: users[3]?.id as string,
+        tweetId: tweets[0]?.id as string,
         createdAt: createTimestamp(190),
       },
     }),
@@ -467,15 +467,15 @@ async function seedEngagement(
     // User1 likes some tweets
     prisma.like.create({
       data: {
-        userId: users[0]?.id,
-        tweetId: tweets[1]?.id,
+        userId: users[0]?.id as string,
+        tweetId: tweets[1]?.id as string,
         createdAt: createTimestamp(195),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[0]?.id,
-        tweetId: tweets[2]?.id,
+        userId: users[0]?.id as string,
+        tweetId: tweets[2]?.id as string,
         createdAt: createTimestamp(200),
       },
     }),
@@ -483,15 +483,15 @@ async function seedEngagement(
     // More scattered likes
     prisma.like.create({
       data: {
-        userId: users[4]?.id,
-        tweetId: tweets[3]?.id,
+        userId: users[4]?.id as string,
+        tweetId: tweets[3]?.id as string,
         createdAt: createTimestamp(205),
       },
     }),
     prisma.like.create({
       data: {
-        userId: users[1]?.id,
-        tweetId: tweets[5]?.id,
+        userId: users[1]?.id as string,
+        tweetId: tweets[5]?.id as string,
         createdAt: createTimestamp(210),
       },
     }),
@@ -502,8 +502,8 @@ async function seedEngagement(
     // User2 retweets tweet1
     prisma.retweet.create({
       data: {
-        userId: users[1]?.id,
-        tweetId: tweets[0]?.id,
+        userId: users[1]?.id as string,
+        tweetId: tweets[0]?.id as string,
         createdAt: createTimestamp(215),
       },
     }),
@@ -511,8 +511,8 @@ async function seedEngagement(
     // User3 retweets tweet1
     prisma.retweet.create({
       data: {
-        userId: users[2]?.id,
-        tweetId: tweets[0]?.id,
+        userId: users[2]?.id as string,
+        tweetId: tweets[0]?.id as string,
         createdAt: createTimestamp(220),
       },
     }),
@@ -520,8 +520,8 @@ async function seedEngagement(
     // User1 retweets tweet2
     prisma.retweet.create({
       data: {
-        userId: users[0]?.id,
-        tweetId: tweets[1]?.id,
+        userId: users[0]?.id as string,
+        tweetId: tweets[1]?.id as string,
         createdAt: createTimestamp(225),
       },
     }),
@@ -529,8 +529,8 @@ async function seedEngagement(
     // User4 retweets tweet3
     prisma.retweet.create({
       data: {
-        userId: users[3]?.id,
-        tweetId: tweets[2]?.id,
+        userId: users[3]?.id as string,
+        tweetId: tweets[2]?.id as string,
         createdAt: createTimestamp(230),
       },
     }),
