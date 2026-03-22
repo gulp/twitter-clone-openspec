@@ -1,12 +1,13 @@
 import { tweetContentSchema } from "@/lib/validators";
+import { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma, publicUserSelect } from "../../db";
 import { redis } from "../../redis";
-import { validateMediaUrls } from "./media";
-import { createNotification } from "../../services/notification";
 import { parseMentions, resolveMentions } from "../../services/mention";
+import { createNotification } from "../../services/notification";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../index";
+import { validateMediaUrls } from "./media";
 
 /**
  * Tweet router
@@ -81,7 +82,7 @@ export const tweetRouter = createTRPCRouter({
       const mentionedUserIds = await resolveMentions(mentionedUsernames);
 
       // Transaction: create tweet + increment counts (I3)
-      const operations: any[] = [
+      const operations: Prisma.PrismaPromise<unknown>[] = [
         prisma.tweet.create({
           data: {
             content: content?.trim() || "",
@@ -117,7 +118,20 @@ export const tweetRouter = createTRPCRouter({
         );
       }
 
-      const [tweet] = await prisma.$transaction(operations);
+      const [tweetResult] = await prisma.$transaction(operations);
+
+      // Type assertion: first operation is tweet.create with known select
+      const tweet = tweetResult as {
+        id: string;
+        content: string;
+        authorId: string;
+        parentId: string | null;
+        mediaUrls: string[];
+        createdAt: Date;
+        likeCount: number;
+        retweetCount: number;
+        replyCount: number;
+      };
 
       // Fire MENTION notifications (self-suppression handled in createNotification)
       await Promise.all(
@@ -199,7 +213,7 @@ export const tweetRouter = createTRPCRouter({
       }
 
       // Transaction: soft-delete + decrement counts (I3)
-      const operations: any[] = [
+      const operations: Prisma.PrismaPromise<unknown>[] = [
         prisma.tweet.update({
           where: { id: tweetId },
           data: {
