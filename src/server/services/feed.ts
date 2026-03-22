@@ -194,11 +194,12 @@ async function fetchFeedFromDB(
   // Determine nextCursor
   let nextCursor: string | null = null;
   if (hydratedItems.length > limit) {
-    const nextItem = hydratedItems.pop();
-    if (nextItem) {
+    hydratedItems.pop(); // Remove the peek item
+    const lastItem = hydratedItems[hydratedItems.length - 1];
+    if (lastItem) {
       nextCursor = encodeFeedCursor({
-        effectiveAt: nextItem.effectiveAt,
-        tweetId: nextItem.id,
+        effectiveAt: lastItem.effectiveAt,
+        tweetId: lastItem.id,
       });
     }
   }
@@ -227,7 +228,7 @@ async function fetchFeedItemsFromDB(
   limit: number
 ): Promise<Array<{ tweetId: string; effectiveAt: Date; retweeterId: string | null }>> {
   const cursorWhere = parsedCursor
-    ? Prisma.sql`AND (feed_items."effectiveAt", feed_items."tweetId") < (${parsedCursor.effectiveAt}, ${parsedCursor.tweetId})`
+    ? Prisma.sql`WHERE ("effectiveAt", "tweetId") < (${parsedCursor.effectiveAt}, ${parsedCursor.tweetId})`
     : Prisma.empty;
 
   const sql = Prisma.sql`
@@ -255,10 +256,10 @@ async function fetchFeedItemsFromDB(
     deduped AS (
       SELECT DISTINCT ON ("tweetId") *
       FROM feed_items
-      ${cursorWhere}
       ORDER BY "tweetId", "effectiveAt" DESC, "retweeterId" DESC NULLS LAST
     )
     SELECT * FROM deduped
+    ${cursorWhere}
     ORDER BY "effectiveAt" DESC, "tweetId" DESC
     LIMIT ${limit + 1};
   `;

@@ -165,5 +165,66 @@ describe("feed router", () => {
       // Should not include deleted tweet
       expect(result.items.length).toBe(0);
     });
+
+    it("prevents cross-page duplicates when tweet appears via original and retweet", async () => {
+      // Regression test for tw-3ta: cursor filter must apply AFTER deduplication
+      // to prevent a tweet from appearing on multiple pages
+      const { user: viewer } = await createTestUser();
+      const { user: author } = await createTestUser();
+      const { user: retweeter } = await createTestUser();
+
+      // Follow both author and retweeter
+      await prisma.follow.createMany({
+        data: [
+          { followerId: viewer.id, followingId: author.id },
+          { followerId: viewer.id, followingId: retweeter.id },
+        ],
+      });
+
+      // Create 3 tweets by author (to create pagination)
+      // Add small delays to ensure distinct timestamps for deterministic ordering
+      const tweet1 = await createTestTweet(author.id, { content: "Tweet 1" });
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const tweet2 = await createTestTweet(author.id, { content: "Tweet 2" });
+      await new Promise(resolve => setTimeout(resolve, 10));
+      const tweet3 = await createTestTweet(author.id, { content: "Tweet 3" });
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // Retweet tweet2 (making it appear in feed twice: as original and retweet)
+      await prisma.retweet.create({
+        data: {
+          userId: retweeter.id,
+          tweetId: tweet2.id,
+        },
+      });
+
+      const caller = createTestContext(viewer.id);
+
+      // Get first page with limit=2
+      const page1 = await caller.feed.home({ limit: 2 });
+      expect(page1.items.length).toBe(2);
+
+      // Get second page
+      const page2 = await caller.feed.home({
+        limit: 2,
+        cursor: page1.nextCursor!,
+      });
+
+      // Collect all tweet IDs across both pages
+      const allTweetIds = [
+        ...page1.items.map((item) => item.id),
+        ...page2.items.map((item) => item.id),
+      ];
+
+      // Critical assertion: no tweet should appear on multiple pages
+      const uniqueTweetIds = new Set(allTweetIds);
+      expect(uniqueTweetIds.size).toBe(allTweetIds.length);
+
+      // Verify we got all 3 tweets exactly once
+      expect(uniqueTweetIds.size).toBe(3);
+      expect(uniqueTweetIds.has(tweet1.id)).toBe(true);
+      expect(uniqueTweetIds.has(tweet2.id)).toBe(true);
+      expect(uniqueTweetIds.has(tweet3.id)).toBe(true);
+    });
   });
 });
