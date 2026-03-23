@@ -17,6 +17,7 @@ export const userRouter = createTRPCRouter({
    * getByUsername — Get user profile by username
    *
    * - Public endpoint (anyone can view profiles)
+   * - Case-insensitive matching (e.g. 'Alice' matches 'alice')
    * - Returns 404 if user not found
    * - Includes isFollowing boolean for authenticated users
    * - Uses publicUserSelect (I1 — never expose email or hashedPassword)
@@ -26,8 +27,14 @@ export const userRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const { username } = input;
 
-      const user = await prisma.user.findUnique({
-        where: { username },
+      // Case-insensitive lookup
+      const user = await prisma.user.findFirst({
+        where: {
+          username: {
+            equals: username,
+            mode: "insensitive",
+          },
+        },
         select: publicUserSelect,
       });
 

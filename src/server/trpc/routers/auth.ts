@@ -86,9 +86,14 @@ export const authRouter = createTRPCRouter({
       });
     }
 
-    // Check username uniqueness
-    const existingUsername = await prisma.user.findUnique({
-      where: { username },
+    // Check username uniqueness (case-insensitive)
+    const existingUsername = await prisma.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: "insensitive",
+        },
+      },
       select: { id: true },
     });
 

@@ -38,21 +38,20 @@ export function parseMentions(text: string): string[] {
  * @returns Array of user IDs for users that exist
  *
  * Non-existent users are silently ignored.
+ * Case-insensitive matching (e.g. @JohnDoe matches username 'johndoe').
  */
 export async function resolveMentions(usernames: string[]): Promise<string[]> {
   if (usernames.length === 0) {
     return [];
   }
 
-  // Normalize to lowercase — usernames are stored lowercase but
-  // @mentions in tweets may use mixed case (e.g. @JohnDoe → johndoe)
-  const normalized = usernames.map((u) => u.toLowerCase());
-
-  // Query database for matching usernames
+  // Query database for matching usernames (case-insensitive)
+  // Prisma mode:'insensitive' works with PostgreSQL ILIKE
   const users = await prisma.user.findMany({
     where: {
       username: {
-        in: normalized,
+        in: usernames,
+        mode: "insensitive",
       },
     },
     select: {

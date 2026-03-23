@@ -211,6 +211,7 @@ The master plan (`plans/twitter-clone.md`) is authoritative for architecture dec
 ## Design Decisions
 
 - **IDs:** CUID via `@default(cuid())` — URL-safe, roughly time-ordered.
+- **Usernames:** Case-insensitive matching (Twitter-style). Display case is preserved in the database, but all username lookups (profile access, @mentions, registration uniqueness checks) use Prisma `mode: 'insensitive'`. Example: user registers as "AliceUser", can be mentioned with @aliceuser, @ALICEUSER, or @AliceUser.
 - **Pagination:** Cursor-based everywhere. `{ cursor?: string; limit?: number }` in, `{ items: T[]; nextCursor: string | null }` out. Default limit 20.
 - **Engagement counts:** Denormalized columns on Tweet (`likeCount`, `retweetCount`, `replyCount`) and User (`followerCount`, `followingCount`, `tweetCount`). Updated in same Prisma transaction as relationship.
 - **Soft deletes:** Tweets use `deleted: boolean`, never hard-deleted.
