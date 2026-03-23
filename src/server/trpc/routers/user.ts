@@ -74,12 +74,12 @@ export const userRouter = createTRPCRouter({
     if (avatarUrl) {
       validateMediaUrls([avatarUrl], userId, "avatar");
     }
-    // Normalize empty bio to null for consistency
-    const normalizedBio = bio === "" ? null : bio;
-
     if (bannerUrl) {
       validateMediaUrls([bannerUrl], userId, "banner");
     }
+
+    // Normalize empty bio to null for consistency
+    const normalizedBio = bio === "" ? null : bio;
 
     // Update user profile
     const updatedUser = await prisma.user.update({

@@ -98,7 +98,6 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
           type="submit"
           variant="primary"
           size="sm"
-          onClick={handleSubmit}
           loading={updateProfileMutation.isPending}
           disabled={
             updateProfileMutation.isPending ||
