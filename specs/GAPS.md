@@ -21,7 +21,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Quote tweet design decisions — covered in engagement-quote-tweet-design.md
 - [x] JSON parsing safety — covered in caching-json-parsing-safety.md
 - [x] User select patterns (§1.13) — covered in security-user-select-patterns.md
-- [ ] Batch engagement state checks (§1.16) — Promise.all + Set pattern implemented (feed.ts:119-131, search.ts:183-201) but no dedicated spec. Plan lines 358-365.
+- [x] Batch engagement state checks (§1.16) — covered in engagement-batch-state-check.md
 - [x] Full-text search implementation (§1.11) — covered in search-full-text-implementation.md
 - [ ] Fire-and-forget async patterns — void (async () => {})() used inconsistently (email.ts:94-126, sse-publisher.ts:120-161, api/sse/route.ts). No policy doc defining when acceptable vs requires proper error handling.
 - [ ] Silent .catch() error suppression policy — engagement-buttons.tsx:154, auth.ts:288 sessionDel, api/sse/route.ts:66-67 cleanup use silent suppression. No spec defining when acceptable vs requires logging.
@@ -46,6 +46,11 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Media URL validation and orphan handling — covered in error-handling-subsystem-failure-policies.md
 
 ## Medium (patterns, consistency, edge cases)
+- [ ] Error log level stratification — tRPC error handler (trpc/index.ts:93-130) tiers logging by error code: UNAUTHORIZED/FORBIDDEN at WARN, INTERNAL_SERVER_ERROR/TIMEOUT at ERROR, others at INFO; rationale and policy not documented
+- [ ] Email service initialization guard — singleton initPromise pattern (email.ts:33-34) prevents concurrent nodemailer initialization; concurrency guard strategy not documented
+- [ ] SSE publisher batch concurrency — followers batched in 1000-item chunks with semaphore limiting 50 concurrent publishes (sse-publisher.ts:125-158); batch size and concurrency limit rationale not documented
+- [ ] Query latency threshold — slow query detection at 500ms (db.ts:35-77); threshold justification and sampling strategy not documented
+- [ ] Media validation strategy — S3 key ownership validation (media.ts:108-145) enforces {purpose}/{userId}/ prefix; key structure rules and validation pattern not consolidated in single spec
 - [ ] IP extraction patterns duplication — duplicate logic in middleware (index.ts:61-64) and auth router (auth.ts:23-28), header precedence (x-forwarded-for → x-real-ip → unknown) not documented
 - [ ] Rate limiting integration — which procedures use which limits, failClosed flag usage in practice not documented (rate-limiter.ts:20-25)
 - [ ] Search input sanitization edge cases — SQL wildcard stripping before length validation causes empty string edge case (search.ts:24-51)
