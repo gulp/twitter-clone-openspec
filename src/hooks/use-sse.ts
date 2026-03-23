@@ -29,7 +29,7 @@ interface SSEHookReturn {
 }
 
 export function useSSE(): SSEHookReturn {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const queryClient = useQueryClient();
 
   const [newTweetCount, setNewTweetCount] = useState(0);
@@ -70,7 +70,7 @@ export function useSSE(): SSEHookReturn {
 
   const connect = useCallback(() => {
     // Skip if not authenticated
-    if (status !== "authenticated" || !session?.user) {
+    if (status !== "authenticated") {
       return;
     }
 
@@ -252,7 +252,7 @@ export function useSSE(): SSEHookReturn {
         connect();
       }, delay);
     }
-  }, [status, session?.user?.id, cleanup, queryClient]);
+  }, [status, cleanup, queryClient]);
 
   // Start periodic SSE retry when in fallback mode
   const startFallbackRetry = useCallback(() => {
