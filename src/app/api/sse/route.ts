@@ -46,13 +46,16 @@ const activeConnections = new Set<{
 
 // SIGTERM handler for graceful shutdown
 let shutdownInitiated = false;
-process.once("SIGTERM", () => {
+process.once("SIGTERM", async () => {
   shutdownInitiated = true;
   console.log("[SSE] SIGTERM received, draining connections");
 
   // Send server_restart event to all active connections
   for (const conn of activeConnections) {
     try {
+      // Remove connection from Redis before closing
+      await sseRemoveConnection(conn.userId, conn.connectionId).catch(() => {});
+
       conn.controller.enqueue(sigtermEncoder.encode("event: server_restart\ndata: {}\n\n"));
       conn.controller.close();
     } catch (error) {
@@ -63,7 +66,7 @@ process.once("SIGTERM", () => {
   activeConnections.clear();
 
   // Shutdown shared subscriber
-  shutdownSSESubscriber().catch((error) => {
+  await shutdownSSESubscriber().catch((error) => {
     console.error("[SSE] Failed to shutdown subscriber:", error);
   });
 });
