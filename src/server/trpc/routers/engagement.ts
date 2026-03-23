@@ -1,5 +1,5 @@
-import { paginationSchema, tweetContentSchema } from "@/lib/validators";
 import { log } from "@/lib/logger";
+import { paginationSchema, tweetContentSchema } from "@/lib/validators";
 import type { Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -582,13 +582,13 @@ export const engagementRouter = createTRPCRouter({
         const quotedTweet = rawQuotedTweet?.deleted
           ? null
           : rawQuotedTweet
-          ? {
-              id: rawQuotedTweet.id,
-              content: rawQuotedTweet.content,
-              mediaUrls: rawQuotedTweet.mediaUrls,
-              author: rawQuotedTweet.author,
-            }
-          : null;
+            ? {
+                id: rawQuotedTweet.id,
+                content: rawQuotedTweet.content,
+                mediaUrls: rawQuotedTweet.mediaUrls,
+                author: rawQuotedTweet.author,
+              }
+            : null;
 
         return {
           ...tweetData,

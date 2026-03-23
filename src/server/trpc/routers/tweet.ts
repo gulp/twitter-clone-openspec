@@ -392,13 +392,13 @@ export const tweetRouter = createTRPCRouter({
       const quotedTweet = rawQuotedTweet?.deleted
         ? null
         : rawQuotedTweet
-        ? {
-            id: rawQuotedTweet.id,
-            content: rawQuotedTweet.content,
-            mediaUrls: rawQuotedTweet.mediaUrls,
-            author: rawQuotedTweet.author,
-          }
-        : null;
+          ? {
+              id: rawQuotedTweet.id,
+              content: rawQuotedTweet.content,
+              mediaUrls: rawQuotedTweet.mediaUrls,
+              author: rawQuotedTweet.author,
+            }
+          : null;
 
       return {
         ...tweetData,
@@ -497,10 +497,9 @@ export const tweetRouter = createTRPCRouter({
 
       // Annotate replies with engagement state and redact deleted quoted tweets (I5)
       const items = replies.map((reply) => {
-        const quotedTweet =
-          reply.quotedTweet?.deleted
-            ? null
-            : reply.quotedTweet
+        const quotedTweet = reply.quotedTweet?.deleted
+          ? null
+          : reply.quotedTweet
             ? ({
                 id: reply.quotedTweet.id,
                 content: reply.quotedTweet.content,
@@ -617,13 +616,13 @@ export const tweetRouter = createTRPCRouter({
         const quotedTweet = rawQuotedTweet?.deleted
           ? null
           : rawQuotedTweet
-          ? {
-              id: rawQuotedTweet.id,
-              content: rawQuotedTweet.content,
-              mediaUrls: rawQuotedTweet.mediaUrls,
-              author: rawQuotedTweet.author,
-            }
-          : null;
+            ? {
+                id: rawQuotedTweet.id,
+                content: rawQuotedTweet.content,
+                mediaUrls: rawQuotedTweet.mediaUrls,
+                author: rawQuotedTweet.author,
+              }
+            : null;
 
         return {
           ...tweetData,
@@ -733,13 +732,13 @@ export const tweetRouter = createTRPCRouter({
         const quotedTweet = rawQuotedTweet?.deleted
           ? null
           : rawQuotedTweet
-          ? {
-              id: rawQuotedTweet.id,
-              content: rawQuotedTweet.content,
-              mediaUrls: rawQuotedTweet.mediaUrls,
-              author: rawQuotedTweet.author,
-            }
-          : null;
+            ? {
+                id: rawQuotedTweet.id,
+                content: rawQuotedTweet.content,
+                mediaUrls: rawQuotedTweet.mediaUrls,
+                author: rawQuotedTweet.author,
+              }
+            : null;
 
         return {
           ...replyData,
