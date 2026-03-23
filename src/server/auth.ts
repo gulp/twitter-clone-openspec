@@ -270,36 +270,21 @@ export const authOptions: NextAuthOptions = {
           return {};
         }
 
-        // Always check sessionVersion from DB to catch logoutAll invalidation.
-        // Redis is checked first as a fast path — if the key is missing, the
-        // session was explicitly deleted. But even if Redis has the key, we
-        // still verify sessionVersion to ensure logoutAll is enforced.
+        // Check Redis allow-list as a fast path, then always verify
+        // sessionVersion from DB to catch logoutAll invalidation.
         const redisSession = await sessionGet(jti);
 
-        if (redisSession === null) {
-          // Session not in Redis — either expired, deleted, or Redis failure.
-          // Fall back to DB sessionVersion check.
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.sub },
-            select: { sessionVersion: true },
-          });
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { sessionVersion: true },
+        });
 
-          if (!dbUser || dbUser.sessionVersion !== token.sv) {
-            return {};
-          }
-        } else {
-          // Session exists in Redis — still verify sessionVersion hasn't
-          // been incremented by logoutAll since the JWT was issued.
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.sub },
-            select: { sessionVersion: true },
-          });
-
-          if (!dbUser || dbUser.sessionVersion !== token.sv) {
-            // logoutAll was called — delete the stale Redis session too
+        if (!dbUser || dbUser.sessionVersion !== token.sv) {
+          // Session invalid — clean up stale Redis entry if present
+          if (redisSession !== null) {
             await sessionDel(jti).catch(() => {});
-            return {};
           }
+          return {};
         }
       }
 

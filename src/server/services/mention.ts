@@ -44,11 +44,15 @@ export async function resolveMentions(usernames: string[]): Promise<string[]> {
     return [];
   }
 
+  // Normalize to lowercase — usernames are stored lowercase but
+  // @mentions in tweets may use mixed case (e.g. @JohnDoe → johndoe)
+  const normalized = usernames.map((u) => u.toLowerCase());
+
   // Query database for matching usernames
   const users = await prisma.user.findMany({
     where: {
       username: {
-        in: usernames,
+        in: normalized,
       },
     },
     select: {
