@@ -249,7 +249,7 @@ The CUID prefix (6 chars) provides uniqueness without retry logic. OAuth users h
 
 **OAuth email verification required:** Both Google and GitHub OAuth flows reject sign-ins if the provider didn't verify the email. This prevents attackers from creating accounts with arbitrary email addresses via OAuth.
 
-**NextAuth allowDangerousEmailAccountLinking:** Set to `true` to allow users with existing credentials accounts to link OAuth providers with the same verified email. Without this, OAuth sign-in would fail if a credentials account already exists for that email.
+**NextAuth allowDangerousEmailAccountLinking:** Set to `false` (removed from provider configs) to prevent automatic account linking. This prevents account takeover attacks where an attacker controls an OAuth account with a victim's email. Users with existing credentials accounts must use password authentication; OAuth is only available for new account creation with verified emails.
 
 **Transaction for password reset:** The password update and token marking must be atomic. If the password update succeeds but marking the token as used fails, the token could be reused. The transaction ensures both operations commit together or roll back together.
 

@@ -116,6 +116,11 @@ export const authOptions: NextAuthOptions = {
 
     /**
      * GoogleProvider — OAuth sign-in
+     *
+     * allowDangerousEmailAccountLinking removed for security:
+     * - Prevents account takeover via unverified OAuth emails
+     * - Users with existing credentials accounts must use password auth
+     * - New users can still sign up via OAuth (if email is verified)
      */
     // Only register OAuth providers when credentials are configured
     ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
@@ -123,7 +128,6 @@ export const authOptions: NextAuthOptions = {
           GoogleProvider({
             clientId: env.GOOGLE_CLIENT_ID,
             clientSecret: env.GOOGLE_CLIENT_SECRET,
-            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -133,7 +137,6 @@ export const authOptions: NextAuthOptions = {
           GitHubProvider({
             clientId: env.GITHUB_CLIENT_ID,
             clientSecret: env.GITHUB_CLIENT_SECRET,
-            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
