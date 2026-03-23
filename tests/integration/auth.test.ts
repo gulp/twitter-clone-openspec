@@ -181,6 +181,79 @@ describe("auth router", () => {
       });
       expect(token!.used).toBe(true);
     });
+
+    it("prevents concurrent completeReset race condition", async () => {
+      const { user } = await createTestUser({
+        email: "raceuser@example.com",
+      });
+
+      // Create a password reset token manually
+      const crypto = await import("node:crypto");
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+      await prisma.passwordResetToken.create({
+        data: {
+          tokenHash,
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+          used: false,
+        },
+      });
+
+      const caller = createTestContext();
+
+      // Fire two concurrent completeReset requests with different passwords
+      const [result1, result2] = await Promise.allSettled([
+        caller.auth.completeReset({
+          token: rawToken,
+          password: "password-from-first-request",
+        }),
+        caller.auth.completeReset({
+          token: rawToken,
+          password: "password-from-second-request",
+        }),
+      ]);
+
+      // Exactly one should succeed, one should fail with BAD_REQUEST
+      const succeeded = [result1, result2].filter((r) => r.status === "fulfilled");
+      const failed = [result1, result2].filter((r) => r.status === "rejected");
+
+      expect(succeeded.length).toBe(1);
+      expect(failed.length).toBe(1);
+
+      // The failed request should throw TRPCError with BAD_REQUEST
+      const failedResult = failed[0] as PromiseRejectedResult;
+      expect(failedResult.reason).toBeInstanceOf(TRPCError);
+      expect((failedResult.reason as TRPCError).code).toBe("BAD_REQUEST");
+
+      // Verify only one password was set (the winning request's password)
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: user.id },
+      });
+
+      // Check which password won
+      const firstPasswordValid = await bcrypt.compare(
+        "password-from-first-request",
+        updatedUser!.hashedPassword!
+      );
+      const secondPasswordValid = await bcrypt.compare(
+        "password-from-second-request",
+        updatedUser!.hashedPassword!
+      );
+
+      // Exactly one password should be valid
+      expect(firstPasswordValid !== secondPasswordValid).toBe(true);
+
+      // Verify sessionVersion was incremented exactly once
+      expect(updatedUser!.sessionVersion).toBe(1);
+
+      // Verify token was marked as used
+      const token = await prisma.passwordResetToken.findFirst({
+        where: { tokenHash },
+      });
+      expect(token!.used).toBe(true);
+    });
   });
 
   describe("logoutAll", () => {

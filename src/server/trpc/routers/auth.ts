@@ -238,6 +238,9 @@ export const authRouter = createTRPCRouter({
    * Validates token (SHA-256 hash lookup), checks expiry and unused status,
    * updates password, increments sessionVersion (invalidates all sessions),
    * marks token as used.
+   *
+   * Uses SELECT FOR UPDATE to prevent race conditions where two concurrent
+   * requests both pass the used=false check before either marks it used.
    */
   completeReset: publicProcedure.input(resetCompleteSchema).mutation(async ({ input }) => {
     const { token, password } = input;
@@ -245,55 +248,62 @@ export const authRouter = createTRPCRouter({
     // Hash the token to look up in DB
     const tokenHash = createHash("sha256").update(token).digest("hex");
 
-    // Find token record
-    const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { tokenHash },
-      include: { user: { select: { id: true } } },
-    });
-
-    // Validate token exists, not used, and not expired
-    if (!resetToken) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Invalid or expired reset token",
-      });
-    }
-
-    if (resetToken.used) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Reset token has already been used",
-      });
-    }
-
-    if (resetToken.expiresAt < new Date()) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Reset token has expired",
-      });
-    }
-
     // Hash new password (bcrypt cost 12)
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Update user password, increment sessionVersion, mark token as used
-    // Use transaction to ensure atomicity
-    await prisma.$transaction([
-      // Update password and increment sessionVersion (invalidates all sessions)
-      prisma.user.update({
+    // Use transaction with SELECT FOR UPDATE to lock the row and prevent concurrent access
+    await prisma.$transaction(async (tx) => {
+      // Lock the token row with SELECT FOR UPDATE
+      // This prevents concurrent transactions from reading the same state
+      const lockedTokens = await tx.$queryRaw<
+        Array<{ tokenHash: string; userId: string; used: boolean; expiresAt: Date }>
+      >`
+        SELECT "tokenHash", "userId", "used", "expiresAt"
+        FROM "PasswordResetToken"
+        WHERE "tokenHash" = ${tokenHash}
+        FOR UPDATE
+      `;
+
+      if (!lockedTokens || lockedTokens.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid or expired reset token",
+        });
+      }
+
+      const resetToken = lockedTokens[0]!;
+
+      // Check if already used
+      if (resetToken.used) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Reset token has already been used",
+        });
+      }
+
+      // Check if expired
+      if (resetToken.expiresAt < new Date()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Reset token has expired",
+        });
+      }
+
+      // Mark token as used
+      await tx.passwordResetToken.update({
+        where: { tokenHash },
+        data: { used: true },
+      });
+
+      // Update user password and increment sessionVersion (invalidates all sessions)
+      await tx.user.update({
         where: { id: resetToken.userId },
         data: {
           hashedPassword,
           sessionVersion: { increment: 1 },
         },
-      }),
-
-      // Mark token as used
-      prisma.passwordResetToken.update({
-        where: { tokenHash },
-        data: { used: true },
-      }),
-    ]);
+      });
+    });
 
     return {
       message: "Password reset successful. Please log in with your new password.",
