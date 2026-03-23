@@ -18,7 +18,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Unread count cache strategy — covered in caching-unread-count-strategy.md
 - [x] Request correlation flow — covered in logging-request-correlation.md
 - [x] SSE replay buffer exhaustion — covered in sse-replay-buffer-exhaustion.md
-- [ ] Feed cache ignores limit parameter — undocumented behavior in cache key construction
+- [x] Feed cache ignores limit parameter — covered in caching-feed-limit-ignored.md
 - [ ] Tombstone lifecycle — TTL, cleanup strategy, garbage collection not documented
 - [ ] $queryRaw patterns — when to use raw SQL, type casting, DISTINCT ON semantics not documented
 - [x] Lua script atomicity — covered in caching-lua-atomicity.md (I5, G1 mention error handling; detailed coverage in error-handling-redis-failure-policy.md)
