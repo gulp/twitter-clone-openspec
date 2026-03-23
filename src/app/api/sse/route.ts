@@ -9,6 +9,7 @@ import {
 import { shutdownSSESubscriber, sseSubscriberManager } from "@/server/services/sse-subscriber";
 import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
+import { randomUUID } from "node:crypto";
 
 /**
  * SSE endpoint — real-time event streaming for authenticated users.
@@ -76,6 +77,7 @@ export async function GET(req: NextRequest) {
   }
 
   const userId = session.user.id;
+  const requestId = req.headers.get("x-request-id") ?? randomUUID();
 
   // Check if shutting down
   if (shutdownInitiated) {
@@ -94,7 +96,7 @@ export async function GET(req: NextRequest) {
 
   // Atomically check connection limit and add connection (max 5 per user)
   // Prevents race condition where concurrent requests both see count=4 and both proceed
-  const added = await sseAtomicAddConnection(userId, connectionId);
+  const added = await sseAtomicAddConnection(userId, connectionId, requestId);
   if (!added) {
     return new Response('event: error\ndata: {"message":"Too many connections"}\n\n', {
       status: 429,
@@ -153,10 +155,11 @@ export async function GET(req: NextRequest) {
               }
             }
           } catch (error) {
-            console.warn("[SSE] Replay failed:", {
+            log.warn("SSE replay failed", {
               userId,
               lastEventId,
               error: error instanceof Error ? error.message : String(error),
+              requestId,
             });
           }
         }
@@ -169,11 +172,12 @@ export async function GET(req: NextRequest) {
             controller.enqueue(encoder.encode(": heartbeat\n\n"));
 
             // Refresh Redis TTL so stale connections auto-expire on crash
-            sseRefreshConnectionTTL(userId).catch(() => {});
+            sseRefreshConnectionTTL(userId, requestId).catch(() => {});
 
             if (process.env.NODE_ENV === "development") {
               log.info("SSE heartbeat", {
                 userId,
+                requestId,
                 activeConnections: activeConnections.size,
               });
             }
@@ -204,16 +208,18 @@ export async function GET(req: NextRequest) {
               cleanup();
             }
           } catch (error) {
-            console.warn("[SSE] Failed to process message:", {
+            log.warn("SSE failed to process message", {
               userId,
               error: error instanceof Error ? error.message : String(error),
+              requestId,
             });
           }
         });
       } catch (error) {
-        console.error("[SSE] Stream start error:", {
+        log.error("SSE stream start error", {
           userId,
           error: error instanceof Error ? error.message : String(error),
+          requestId,
         });
         cleanup();
       }
@@ -235,7 +241,7 @@ export async function GET(req: NextRequest) {
         }
 
         // Remove from Redis connection tracking
-        sseRemoveConnection(userId, connectionId).catch(() => {});
+        sseRemoveConnection(userId, connectionId, requestId).catch(() => {});
 
         // Remove from SIGTERM tracking
         if (connTracker) activeConnections.delete(connTracker);
@@ -263,7 +269,7 @@ export async function GET(req: NextRequest) {
           unsubscribe();
         }
 
-        sseRemoveConnection(userId, connectionId).catch(() => {});
+        sseRemoveConnection(userId, connectionId, requestId).catch(() => {});
 
         // Remove from SIGTERM tracking
         if (connTracker) {
