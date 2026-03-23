@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma, publicUserSelect } from "../../db";
 import { bumpFeedVersionForFollowers } from "../../services/feed";
 import { createNotification } from "../../services/notification";
+import { publishNewTweet } from "../../services/sse-publisher";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../index";
 import { validateMediaUrls } from "./media";
 
@@ -426,6 +427,19 @@ export const engagementRouter = createTRPCRouter({
           requestId: ctx.requestId,
         });
       }
+
+      // Publish new-tweet SSE event and bump feed version for followers
+      // Quote tweets are top-level tweets that appear in followers' feeds
+      const author = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true },
+      });
+
+      if (author) {
+        await publishNewTweet(userId, tweet.id, author.username);
+      }
+
+      await bumpFeedVersionForFollowers(userId);
 
       return tweet;
     }),

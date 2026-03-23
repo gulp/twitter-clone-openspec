@@ -3,7 +3,7 @@
 Sorted by priority. Checked items are addressed in existing specs.
 
 ## Critical (security, data integrity, auth)
-- [ ] Database CHECK constraints (§1.21) — All four constraints implemented (migration.sql:239-246: User_counts_nonneg, Tweet_counts_nonneg, Tweet_deleted_consistency, Tweet_content_or_media) but not documented in specs. Plan lines 427-442. PRIORITY: data integrity guardrails.
+- [x] Database CHECK constraints (§1.21) — covered in database-check-constraints.md
 - [x] Silent configuration validation — covered in security-env-validation-edge-runtime.md
 - [x] Password reset token race condition — covered in security-password-reset-tokens.md (UPDATED with SELECT FOR UPDATE implementation)
 - [x] Password sanitization rules — covered in security-password-validation.md
