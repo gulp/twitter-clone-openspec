@@ -151,18 +151,29 @@ export function EngagementButtons({
   };
 
   const handleShare = async () => {
-    const url = authorUsername
-      ? `${window.location.origin}/${authorUsername}/status/${tweetId}`
-      : `${window.location.origin}/status/${tweetId}`;
+    if (!authorUsername) {
+      console.error("Cannot share tweet: authorUsername is missing", { tweetId });
+      return;
+    }
+
+    const url = `${window.location.origin}/${authorUsername}/status/${tweetId}`;
+
     if (navigator.share) {
       try {
         await navigator.share({ url });
       } catch (err) {
-        // User cancelled or error
+        // User cancelled or error (AbortError is expected when user cancels)
+        if (err instanceof Error && err.name !== "AbortError") {
+          console.warn("Share failed:", err.message);
+        }
       }
     } else {
-      await navigator.clipboard.writeText(url).catch(() => {});
-      // TODO: Show toast notification
+      try {
+        await navigator.clipboard.writeText(url);
+        // TODO: Show toast notification
+      } catch (err) {
+        console.warn("Clipboard write failed:", err instanceof Error ? err.message : String(err));
+      }
     }
   };
 
