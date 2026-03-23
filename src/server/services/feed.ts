@@ -54,7 +54,7 @@ export interface FeedItem {
     id: string;
     username: string;
     displayName: string;
-    bio: string;
+    bio: string | null;
     avatarUrl: string;
     bannerUrl: string;
     createdAt: Date;
