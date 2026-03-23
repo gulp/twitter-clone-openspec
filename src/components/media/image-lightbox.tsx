@@ -4,14 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface ImageLightboxProps {
   images: string[];
-  initialIndex: number;
+  initialImageUrl: string;
   onClose: () => void;
 }
 
-export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxProps) {
-  const [currentIndex, setCurrentIndex] = useState(
-    Math.max(0, Math.min(initialIndex, images.length - 1))
-  );
+export function ImageLightbox({ images, initialImageUrl, onClose }: ImageLightboxProps) {
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const index = images.indexOf(initialImageUrl);
+    return index >= 0 ? index : 0;
+  });
   const [imageError, setImageError] = useState(false);
   const onCloseRef = useRef(onClose);
 
@@ -20,16 +21,20 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
     onCloseRef.current = onClose;
   }, [onClose]);
 
-  // Close if images becomes empty, otherwise clamp currentIndex
+  // Update currentIndex when images or initialImageUrl changes
   useEffect(() => {
     if (images.length === 0) {
       onCloseRef.current();
       return;
     }
-    if (currentIndex >= images.length) {
-      setCurrentIndex(images.length - 1);
+    const index = images.indexOf(initialImageUrl);
+    if (index >= 0) {
+      setCurrentIndex(index);
+    } else {
+      // Image URL not found, close lightbox
+      onCloseRef.current();
     }
-  }, [images, currentIndex]);
+  }, [images, initialImageUrl]);
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));

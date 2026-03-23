@@ -9,7 +9,7 @@ export interface ImageGridProps {
 
 export function ImageGrid({ images }: ImageGridProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxImageUrl, setLightboxImageUrl] = useState("");
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const handleImageError = (imageUrl: string) => {
@@ -23,8 +23,8 @@ export function ImageGrid({ images }: ImageGridProps) {
     return null;
   }
 
-  const handleImageClick = (index: number) => {
-    setLightboxIndex(index);
+  const handleImageClick = (imageUrl: string) => {
+    setLightboxImageUrl(imageUrl);
     setLightboxOpen(true);
   };
 
@@ -71,7 +71,7 @@ export function ImageGrid({ images }: ImageGridProps) {
         {validImages.map((image, index) => (
           <button
             key={image}
-            onClick={() => handleImageClick(index)}
+            onClick={() => handleImageClick(image)}
             className={`relative ${getImageClass(index)} ${getImageAspect(index)} bg-[#192734] overflow-hidden group`}
           >
             <img
@@ -89,7 +89,7 @@ export function ImageGrid({ images }: ImageGridProps) {
       {lightboxOpen && (
         <ImageLightbox
           images={validImages}
-          initialIndex={lightboxIndex}
+          initialImageUrl={lightboxImageUrl}
           onClose={() => setLightboxOpen(false)}
         />
       )}
