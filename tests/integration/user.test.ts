@@ -4,9 +4,9 @@
  * Tests user profile retrieval and updates.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { env } from "@/env";
 import { prisma } from "@/server/db";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cleanupDatabase, createTestContext, createTestUser } from "./helpers";
 
 describe("user router", () => {
@@ -48,9 +48,9 @@ describe("user router", () => {
     it("returns 404 for non-existent username", async () => {
       const caller = createTestContext();
 
-      await expect(
-        caller.user.getByUsername({ username: "nonexistent" })
-      ).rejects.toThrow("User not found");
+      await expect(caller.user.getByUsername({ username: "nonexistent" })).rejects.toThrow(
+        "User not found"
+      );
     });
 
     it("finds user with case-insensitive username lookup", async () => {

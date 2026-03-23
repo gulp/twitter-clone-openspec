@@ -4,10 +4,10 @@
  * Tests @mention parsing, username resolution, and case-insensitivity.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { prisma } from "@/server/db";
 import { resolveMentions } from "@/server/services/mention";
-import { cleanupDatabase, createTestUser, createTestContext } from "./helpers";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { cleanupDatabase, createTestContext, createTestUser } from "./helpers";
 
 describe("mention resolution", () => {
   beforeEach(async () => {
