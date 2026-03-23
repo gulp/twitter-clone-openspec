@@ -36,8 +36,8 @@ const searchQuerySchema = z
       });
     }
 
-    // Strip SQL wildcards and cap at 50 chars
-    const sanitized = trimmed.replace(/[%_]/g, "").slice(0, 50);
+    // Strip SQL wildcards and ILIKE escape char, cap at 50 chars
+    const sanitized = trimmed.replace(/[%_\\]/g, "").slice(0, 50);
 
     // Enforce minimum normalized length
     if (sanitized.length < 2) {
@@ -63,11 +63,13 @@ const tweetSearchCursorSchema = z
     if (!cursor) return null;
     try {
       const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf-8"));
-      return {
-        rank: parsed.rank as number,
-        ts: new Date(parsed.ts),
-        id: parsed.id as string,
-      };
+      const rank = Number(parsed.rank);
+      const ts = new Date(parsed.ts);
+      const id = String(parsed.id ?? "");
+      if (Number.isNaN(rank) || Number.isNaN(ts.getTime()) || !id) {
+        throw new Error("Invalid cursor fields");
+      }
+      return { rank, ts, id };
     } catch {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -89,10 +91,12 @@ const userSearchCursorSchema = z
     if (!cursor) return null;
     try {
       const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf-8"));
-      return {
-        followerCount: parsed.followerCount as number,
-        id: parsed.id as string,
-      };
+      const followerCount = Number(parsed.followerCount);
+      const id = String(parsed.id ?? "");
+      if (Number.isNaN(followerCount) || !id) {
+        throw new Error("Invalid cursor fields");
+      }
+      return { followerCount, id };
     } catch {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -172,7 +176,7 @@ export const searchRouter = createTRPCRouter({
       let likesMap = new Map<string, boolean>();
       let retweetsMap = new Map<string, boolean>();
 
-      if (ctx.session?.user?.id) {
+      if (ctx.session?.user?.id && tweets.length > 0) {
         const userId = ctx.session.user.id;
         const tweetIds = tweets.map((t) => t.id);
 

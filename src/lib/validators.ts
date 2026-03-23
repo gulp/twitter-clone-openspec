@@ -35,7 +35,7 @@ export const resetRequestSchema = z.object({
 });
 
 export const resetCompleteSchema = z.object({
-  token: z.string(),
+  token: z.string().length(64),
   password: passwordSchema,
 });
 

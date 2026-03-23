@@ -22,7 +22,7 @@ export const userRouter = createTRPCRouter({
    * - Uses publicUserSelect (I1 — never expose email or hashedPassword)
    */
   getByUsername: publicProcedure
-    .input(z.object({ username: z.string() }))
+    .input(z.object({ username: z.string().max(15) }))
     .query(async ({ ctx, input }) => {
       const { username } = input;
 

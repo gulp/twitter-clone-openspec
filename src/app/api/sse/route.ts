@@ -167,10 +167,12 @@ export async function GET(req: NextRequest) {
             // Refresh Redis TTL so stale connections auto-expire on crash
             sseRefreshConnectionTTL(userId).catch(() => {});
 
-            log.info("SSE heartbeat", {
-              userId,
-              activeConnections: activeConnections.size,
-            });
+            if (process.env.NODE_ENV === "development") {
+              log.info("SSE heartbeat", {
+                userId,
+                activeConnections: activeConnections.size,
+              });
+            }
           } catch (error) {
             // Write failed - connection broken
             cleanup();

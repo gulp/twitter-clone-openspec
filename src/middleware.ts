@@ -42,7 +42,7 @@ export function middleware(request: NextRequest) {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://*.amazonaws.com https://*.minio.*",
+    `img-src 'self' data: blob: https://*.amazonaws.com ${process.env.S3_ENDPOINT ?? ""}`.trim(),
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
