@@ -93,12 +93,7 @@ export function ProfileTabs({ userId }: ProfileTabsProps) {
       >
         <div>
           {tweets.map((tweet) => (
-            <TweetCard
-              key={tweet.id}
-              tweet={tweet}
-              hasLiked={false}
-              hasRetweeted={false}
-            />
+            <TweetCard key={tweet.id} tweet={tweet} hasLiked={false} hasRetweeted={false} />
           ))}
         </div>
       </InfiniteScroll>
@@ -121,11 +116,7 @@ export function ProfileTabs({ userId }: ProfileTabsProps) {
                 aria-current={isActive ? "page" : undefined}
               >
                 <span
-                  className={
-                    isActive
-                      ? "text-[#E7E9EA]"
-                      : "text-[#71767B] group-hover:text-[#E7E9EA]"
-                  }
+                  className={isActive ? "text-[#E7E9EA]" : "text-[#71767B] hover:text-[#E7E9EA]"}
                 >
                   {tab.label}
                 </span>
