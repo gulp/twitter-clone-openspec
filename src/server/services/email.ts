@@ -13,6 +13,7 @@ import type { Transporter } from "nodemailer";
  */
 
 let transporter: Transporter | null = null;
+let initPromise: Promise<Transporter> | null = null;
 
 /**
  * Get or create nodemailer transporter.
@@ -29,57 +30,73 @@ async function getTransporter(): Promise<Transporter> {
     return transporter;
   }
 
-  // Production mode: use configured SMTP
-  if (env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS) {
-    transporter = nodemailer.createTransport({
-      host: env.SMTP_HOST,
-      port: Number.parseInt(env.SMTP_PORT, 10),
-      secure: Number.parseInt(env.SMTP_PORT, 10) === 465, // true for 465, false for other ports
-      auth: {
-        user: env.SMTP_USER,
-        pass: env.SMTP_PASS,
-      },
-    });
-
-    log.info("Email service initialized", {
-      mode: "production",
-      smtpHost: env.SMTP_HOST,
-    });
-    return transporter;
+  // Prevent concurrent initialization
+  if (initPromise) {
+    return initPromise;
   }
 
-  // Development mode: use Ethereal test account
-  log.info("Email service initializing", {
-    mode: "development",
-    message: "Creating Ethereal test account",
-  });
+  // Start initialization
+  initPromise = (async () => {
+    try {
+      // Production mode: use configured SMTP
+      if (env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASS) {
+        const smtpPort = Number.parseInt(env.SMTP_PORT, 10);
+        transporter = nodemailer.createTransport({
+          host: env.SMTP_HOST,
+          port: smtpPort,
+          secure: smtpPort === 465, // true for 465, false for other ports
+          auth: {
+            user: env.SMTP_USER,
+            pass: env.SMTP_PASS,
+          },
+        });
 
-  try {
-    const testAccount = await nodemailer.createTestAccount();
+        log.info("Email service initialized", {
+          mode: "production",
+          smtpHost: env.SMTP_HOST,
+        });
+        return transporter;
+      }
 
-    transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
+      // Development mode: use Ethereal test account
+      log.info("Email service initializing", {
+        mode: "development",
+        message: "Creating Ethereal test account",
+      });
+
+      const testAccount = await nodemailer.createTestAccount();
+
+      transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+
+      log.info("Email service initialized", {
+        mode: "development",
         user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
+        previewUrl: "https://ethereal.email/messages",
+      });
 
-    log.info("Email service initialized", {
-      mode: "development",
-      user: testAccount.user,
-      previewUrl: "https://ethereal.email/messages",
-    });
+      return transporter;
+    } catch (error) {
+      log.error("Failed to initialize email service", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Clear failed initialization so next call can retry
+      initPromise = null;
+      throw new Error("Email service unavailable");
+    } finally {
+      // Clear promise after initialization completes (success or failure)
+      initPromise = null;
+    }
+  })();
 
-    return transporter;
-  } catch (error) {
-    log.error("Failed to create Ethereal test account", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    throw new Error("Email service unavailable");
-  }
+  return initPromise;
 }
 
 /**
@@ -97,7 +114,8 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
     try {
       const transport = await getTransporter();
 
-      const info = await transport.sendMail({
+      // Add 30-second timeout to prevent hanging indefinitely
+      const sendPromise = transport.sendMail({
         from: env.EMAIL_FROM ?? '"Twitter Clone" <noreply@twitter-clone.local>',
         to,
         subject: "Reset your password",
@@ -110,6 +128,12 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
           <p>If you did not request a password reset, please ignore this email.</p>
         `,
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Email send timeout after 30s")), 30000)
+      );
+
+      const info = await Promise.race([sendPromise, timeoutPromise]);
 
       log.info("Password reset email sent", {
         to,
