@@ -21,6 +21,7 @@ export const RATE_LIMITS = {
   AUTH_IP: { limit: 5, windowSeconds: 60, failClosed: true }, // 5/min per IP
   TWEET_CREATE: { limit: 30, windowSeconds: 3600, failClosed: false }, // 30/hour per user
   GENERAL_API: { limit: 100, windowSeconds: 60, failClosed: false }, // 100/min per user
+  MEDIA_UPLOAD: { limit: 10, windowSeconds: 3600, failClosed: false }, // 10/hour per user
 } as const;
 
 /**
@@ -151,4 +152,15 @@ export async function checkTweetCreateRateLimit(userId: string): Promise<RateLim
 export async function checkGeneralAPIRateLimit(userId: string): Promise<RateLimitResult> {
   const { limit, windowSeconds, failClosed } = RATE_LIMITS.GENERAL_API;
   return checkRateLimit("api:general", userId, limit, windowSeconds, failClosed);
+}
+
+/**
+ * Check media upload rate limit (10/hour per user, fail open).
+ *
+ * Used for getUploadUrl to prevent S3 pre-signed URL abuse.
+ * Degrades gracefully on Redis failure.
+ */
+export async function checkMediaUploadRateLimit(userId: string): Promise<RateLimitResult> {
+  const { limit, windowSeconds, failClosed } = RATE_LIMITS.MEDIA_UPLOAD;
+  return checkRateLimit("media:upload", userId, limit, windowSeconds, failClosed);
 }

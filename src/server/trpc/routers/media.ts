@@ -4,6 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getPublicUrl, getUploadUrl } from "../../s3";
+import { checkMediaUploadRateLimit } from "../../services/rate-limiter";
 import { createTRPCRouter, protectedProcedure } from "../index";
 
 /**
@@ -33,6 +34,15 @@ export const mediaRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
       const { filename, contentType, purpose } = input;
+
+      // Rate limit check: prevent S3 pre-signed URL abuse (10/hour per user)
+      const rateLimit = await checkMediaUploadRateLimit(userId);
+      if (!rateLimit.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Too many upload requests. Try again in ${rateLimit.retryAfter} seconds.`,
+        });
+      }
 
       // Validate content type
       if (!ALLOWED_MIME_TYPES.includes(contentType as (typeof ALLOWED_MIME_TYPES)[number])) {
