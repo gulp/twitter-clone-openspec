@@ -420,8 +420,24 @@ export const socialRouter = createTRPCRouter({
       LIMIT 10
     `;
 
-    // Map to publicUserSelect shape (exclude mutualCount from response)
-    const result = suggestions.map(({ mutualCount, ...user }) => user);
+    // Batch-check isFollowing (§1.16)
+    let isFollowingSet = new Set<string>();
+    const userIds = suggestions.map((s) => s.id);
+
+    if (userIds.length > 0) {
+      const following = await prisma.follow.findMany({
+        where: { followerId: userId, followingId: { in: userIds } },
+        select: { followingId: true },
+      });
+
+      isFollowingSet = new Set(following.map((f) => f.followingId));
+    }
+
+    // Map to publicUserSelect shape (exclude mutualCount, add isFollowing)
+    const result = suggestions.map(({ mutualCount, ...user }) => ({
+      ...user,
+      isFollowing: isFollowingSet.has(user.id),
+    }));
 
     // Cache for 5 minutes
     await cacheSet(cacheKey, JSON.stringify(result), 300);
