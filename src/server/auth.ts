@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { env } from "@/env";
 import { log } from "@/lib/logger";
+import { generateUsername } from "@/lib/utils";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
@@ -206,16 +207,9 @@ export const authOptions: NextAuthOptions = {
           const cuid = (await import("cuid")).default;
           const userId = cuid();
 
-          // Derive username from OAuth display name
+          // Generate username per §1.6: CUID prefix strategy (zero retries)
           const displayName = user.name || "user";
-          const baseUsername = displayName
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "")
-            .slice(0, 8);
-
-          // Append CUID prefix (first 6 chars) for uniqueness
-          // Total: 8 + 1 + 6 = 15 chars (usernameSchema max)
-          const username = `${baseUsername}_${userId.slice(0, 6)}`;
+          const username = generateUsername(displayName, userId);
 
           // Create user (using the pre-generated CUID as id)
           await prisma.user.create({
