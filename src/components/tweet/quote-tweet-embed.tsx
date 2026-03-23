@@ -2,7 +2,7 @@
 
 import { Avatar } from "@/components/ui/avatar";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface QuoteTweetEmbedProps {
   tweet: {
@@ -19,6 +19,12 @@ export interface QuoteTweetEmbedProps {
 
 export function QuoteTweetEmbed({ tweet }: QuoteTweetEmbedProps) {
   const [mediaError, setMediaError] = useState(false);
+
+  // Reset error state when media URLs change
+  useEffect(() => {
+    setMediaError(false);
+  }, [tweet.mediaUrls]);
+
   return (
     <Link
       href={`/${tweet.author.username}/status/${tweet.id}`}
