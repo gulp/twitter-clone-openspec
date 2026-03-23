@@ -141,8 +141,8 @@ export function useSSE(): SSEHookReturn {
           const data = JSON.parse(event.data);
           const { tweetId } = data;
 
-          if (!tweetId || typeof tweetId !== 'string') {
-            console.warn('[SSE] Invalid tweet_deleted event: missing tweetId');
+          if (!tweetId || typeof tweetId !== "string") {
+            console.warn("[SSE] Invalid tweet_deleted event: missing tweetId");
             return;
           }
 
@@ -262,12 +262,15 @@ export function useSSE(): SSEHookReturn {
     }
 
     // Retry SSE connection after 5 minutes
-    fallbackRetryTimeoutRef.current = setTimeout(() => {
-      // Reset attempts to give fresh 3-attempt window
-      reconnectAttemptsRef.current = 0;
-      setIsFallback(false);
-      connect();
-    }, 5 * 60 * 1000); // 5 minutes
+    fallbackRetryTimeoutRef.current = setTimeout(
+      () => {
+        // Reset attempts to give fresh 3-attempt window
+        reconnectAttemptsRef.current = 0;
+        setIsFallback(false);
+        connect();
+      },
+      5 * 60 * 1000
+    ); // 5 minutes
   }, [connect]);
 
   // Connect on mount for authenticated users
