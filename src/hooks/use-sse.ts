@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *
  * Auto-reconnect with exponential backoff (max 30s).
  * Falls back to polling notification.unreadCount after 3 consecutive failures.
+ * Retries SSE connection every 5 minutes when in fallback mode.
  *
  * The EventSource API automatically sends Last-Event-ID header on reconnect,
  * which the server uses for event replay.
@@ -37,6 +38,7 @@ export function useSSE(): SSEHookReturn {
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fallbackRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
 
   const resetTweetCount = useCallback(() => {
@@ -58,6 +60,11 @@ export function useSSE(): SSEHookReturn {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
+    }
+
+    if (fallbackRetryTimeoutRef.current) {
+      clearTimeout(fallbackRetryTimeoutRef.current);
+      fallbackRetryTimeoutRef.current = null;
     }
   }, []);
 
@@ -93,6 +100,7 @@ export function useSSE(): SSEHookReturn {
         // After 3 consecutive failures, fall back to polling
         if (reconnectAttemptsRef.current >= 3) {
           setIsFallback(true);
+          startFallbackRetry();
           return;
         }
 
@@ -228,6 +236,7 @@ export function useSSE(): SSEHookReturn {
       // After 3 consecutive failures, fall back to polling
       if (reconnectAttemptsRef.current >= 3) {
         setIsFallback(true);
+        startFallbackRetry();
         return;
       }
 
@@ -239,6 +248,22 @@ export function useSSE(): SSEHookReturn {
       }, delay);
     }
   }, [status, session?.user?.id, cleanup, queryClient]);
+
+  // Start periodic SSE retry when in fallback mode
+  const startFallbackRetry = useCallback(() => {
+    // Clear any existing retry timer
+    if (fallbackRetryTimeoutRef.current) {
+      clearTimeout(fallbackRetryTimeoutRef.current);
+    }
+
+    // Retry SSE connection after 5 minutes
+    fallbackRetryTimeoutRef.current = setTimeout(() => {
+      // Reset attempts to give fresh 3-attempt window
+      reconnectAttemptsRef.current = 0;
+      setIsFallback(false);
+      connect();
+    }, 5 * 60 * 1000); // 5 minutes
+  }, [connect]);
 
   // Connect on mount for authenticated users
   useEffect(() => {

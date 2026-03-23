@@ -73,6 +73,28 @@ trpc.notification.unreadCount.useQuery(undefined, {
 
 This ensures clients with restrictive firewalls or proxies that block SSE can still receive notifications, albeit with higher latency.
 
+**Periodic SSE retry:** The hook retries SSE connection every 5 minutes when in fallback mode:
+
+```typescript
+// src/hooks/use-sse.ts:251-267
+const startFallbackRetry = useCallback(() => {
+  // Clear any existing retry timer
+  if (fallbackRetryTimeoutRef.current) {
+    clearTimeout(fallbackRetryTimeoutRef.current);
+  }
+
+  // Retry SSE connection after 5 minutes
+  fallbackRetryTimeoutRef.current = setTimeout(() => {
+    // Reset attempts to give fresh 3-attempt window
+    reconnectAttemptsRef.current = 0;
+    setIsFallback(false);
+    connect();
+  }, 5 * 60 * 1000); // 5 minutes
+}, [connect]);
+```
+
+This allows clients to automatically recover from transient network issues (e.g., moving from corporate wifi that blocks SSE to mobile network) without requiring a page refresh.
+
 ### Connection Limit Enforcement
 
 The server limits each user to 5 concurrent SSE connections:
@@ -242,7 +264,7 @@ Clients reconnect after 2 seconds (with Last-Event-ID replay) while old server p
 
 4. **Exponential backoff capped at 30 seconds.** Client reconnect delay never exceeds 30s. Formula: `Math.min(1000 * 2^attempts, 30000)`.
 
-5. **Polling fallback after 3 failures.** Client switches to 30-second polling of `notification.unreadCount` after 3 consecutive SSE connection failures.
+5. **Polling fallback after 3 failures.** Client switches to 30-second polling of `notification.unreadCount` after 3 consecutive SSE connection failures. Retries SSE every 5 minutes to recover from transient network issues.
 
 6. **Replay buffer is best-effort.** Last-Event-ID replay succeeds only if:
    - Client was offline < 5 minutes
@@ -265,16 +287,14 @@ Clients reconnect after 2 seconds (with Last-Event-ID replay) while old server p
 
 5. **activeConnections Set is in-process only.** SIGTERM handler only drains connections held by the current process. If multiple pods are terminating, each only drains its own. Load balancer must drain traffic before sending SIGTERM.
 
-6. **Polling fallback does not re-attempt SSE.** Once `isFallback=true`, the hook never retries SSE connection until component unmounts and remounts. User must refresh page to re-attempt SSE.
+6. **Last-Event-ID is a string, not a number.** `req.headers.get("Last-Event-ID")` returns a string. Must parse with `parseInt(lastEventId, 10)` and check `!Number.isNaN()`. Leading zeros or non-numeric values will parse as NaN.
 
-7. **Last-Event-ID is a string, not a number.** `req.headers.get("Last-Event-ID")` returns a string. Must parse with `parseInt(lastEventId, 10)` and check `!Number.isNaN()`. Leading zeros or non-numeric values will parse as NaN.
+7. **Replay buffer reversal is required.** Redis `LPUSH` creates newest-first list. Server must `.reverse()` before replaying or clients receive events in wrong order (newest first instead of oldest first).
 
-8. **Replay buffer reversal is required.** Redis `LPUSH` creates newest-first list. Server must `.reverse()` before replaying or clients receive events in wrong order (newest first instead of oldest first).
+8. **Cleanup must be idempotent.** `cleanup()` function is called from multiple places (error handler, cancel handler, SIGTERM handler). Must guard with `if (isClosed) return` to prevent double-close errors.
 
-9. **Cleanup must be idempotent.** `cleanup()` function is called from multiple places (error handler, cancel handler, SIGTERM handler). Must guard with `if (isClosed) return` to prevent double-close errors.
+9. **Connection ID collision is possible.** `Date.now()` + `Math.random().toString(36).slice(2, 9)` has ~1 in 2 billion collision probability per millisecond. For high-traffic users with 5 connections, birthday paradox increases risk. Consider UUIDv7 for production.
 
-10. **Connection ID collision is possible.** `Date.now()` + `Math.random().toString(36).slice(2, 9)` has ~1 in 2 billion collision probability per millisecond. For high-traffic users with 5 connections, birthday paradox increases risk. Consider UUIDv7 for production.
+10. **SIGTERM timeout is not enforced.** Handler sends `server_restart` and closes streams, but does not set a deadline. If some connections are stuck (e.g., slow write buffer flush), they can delay process exit indefinitely. K8s `terminationGracePeriodSeconds` will SIGKILL after timeout.
 
-11. **SIGTERM timeout is not enforced.** Handler sends `server_restart` and closes streams, but does not set a deadline. If some connections are stuck (e.g., slow write buffer flush), they can delay process exit indefinitely. K8s `terminationGracePeriodSeconds` will SIGKILL after timeout.
-
-12. **New connections during shutdown return 503.** After SIGTERM, `shutdownInitiated=true` causes all new SSE requests to return 503 immediately. Client sees this as connection error and triggers reconnect backoff — may cause thundering herd after deployment.
+11. **New connections during shutdown return 503.** After SIGTERM, `shutdownInitiated=true` causes all new SSE requests to return 503 immediately. Client sees this as connection error and triggers reconnect backoff — may cause thundering herd after deployment.
