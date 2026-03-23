@@ -275,6 +275,7 @@ export const searchRouter = createTRPCRouter({
           username: string;
           displayName: string;
           avatarUrl: string | null;
+          bannerUrl: string | null;
           bio: string | null;
           followerCount: number;
           createdAt: Date;
@@ -283,7 +284,7 @@ export const searchRouter = createTRPCRouter({
         }>
       >(
         Prisma.sql`
-          SELECT id, username, "displayName", "avatarUrl", bio, "followerCount",
+          SELECT id, username, "displayName", "avatarUrl", "bannerUrl", bio, "followerCount",
                  "createdAt", "followingCount", "tweetCount"
           FROM "User"
           WHERE (
