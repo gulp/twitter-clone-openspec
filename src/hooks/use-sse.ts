@@ -222,6 +222,21 @@ export function useSSE(): SSEHookReturn {
     } catch (error) {
       console.error("[SSE] Connection error:", error);
       setIsConnected(false);
+
+      reconnectAttemptsRef.current += 1;
+
+      // After 3 consecutive failures, fall back to polling
+      if (reconnectAttemptsRef.current >= 3) {
+        setIsFallback(true);
+        return;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
+      const delay = Math.min(1000 * 2 ** reconnectAttemptsRef.current, 30000);
+
+      reconnectTimeoutRef.current = setTimeout(() => {
+        connect();
+      }, delay);
     }
   }, [status, session?.user?.id, cleanup, queryClient]);
 
