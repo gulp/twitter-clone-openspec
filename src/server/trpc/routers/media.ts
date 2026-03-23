@@ -118,7 +118,8 @@ export function validateMediaUrls(
     });
   }
 
-  const s3PublicUrl = env.S3_PUBLIC_URL;
+  // Normalize trailing slashes to match getPublicUrl behavior
+  const s3PublicUrl = env.S3_PUBLIC_URL.replace(/\/+$/, "");
 
   for (const url of urls) {
     // Verify URL is from our S3 bucket
