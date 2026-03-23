@@ -31,6 +31,16 @@ export interface FeedItem {
   authorId: string;
   parentId: string | null;
   quoteTweetId: string | null;
+  quotedTweet: {
+    id: string;
+    content: string;
+    mediaUrls: string[];
+    author: {
+      username: string;
+      displayName: string;
+      avatarUrl: string;
+    };
+  } | null;
   mediaUrls: string[];
   createdAt: Date;
   likeCount: number;
@@ -307,6 +317,21 @@ async function hydrateFeedItems(
       retweetCount: true,
       replyCount: true,
       author: { select: publicUserSelect },
+      quotedTweet: {
+        select: {
+          id: true,
+          content: true,
+          mediaUrls: true,
+          deleted: true,
+          author: {
+            select: {
+              username: true,
+              displayName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -354,12 +379,25 @@ async function hydrateFeedItems(
       continue;
     }
 
+    // Redact deleted quoted tweets (I5)
+    const quotedTweet = tweet.quotedTweet?.deleted
+      ? null
+      : tweet.quotedTweet
+      ? {
+          id: tweet.quotedTweet.id,
+          content: tweet.quotedTweet.content,
+          mediaUrls: tweet.quotedTweet.mediaUrls,
+          author: tweet.quotedTweet.author,
+        }
+      : null;
+
     hydrated.push({
       id: tweet.id,
       content: tweet.content,
       authorId: tweet.authorId,
       parentId: tweet.parentId,
       quoteTweetId: tweet.quoteTweetId,
+      quotedTweet,
       mediaUrls: tweet.mediaUrls,
       createdAt: tweet.createdAt,
       likeCount: tweet.likeCount,

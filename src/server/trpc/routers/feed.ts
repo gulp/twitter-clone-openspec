@@ -97,6 +97,21 @@ export const feedRouter = createTRPCRouter({
           retweetCount: true,
           replyCount: true,
           author: { select: publicUserSelect },
+          quotedTweet: {
+            select: {
+              id: true,
+              content: true,
+              mediaUrls: true,
+              deleted: true,
+              author: {
+                select: {
+                  username: true,
+                  displayName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -132,12 +147,27 @@ export const feedRouter = createTRPCRouter({
         }
       }
 
-      // Annotate tweets with engagement state
-      const items = tweets.map((tweet) => ({
-        ...tweet,
-        hasLiked: hasLikedSet.has(tweet.id),
-        hasRetweeted: hasRetweetedSet.has(tweet.id),
-      }));
+      // Annotate tweets with engagement state and redact deleted quoted tweets (I5)
+      const items = tweets.map((tweet) => {
+        const { quotedTweet: rawQuotedTweet, ...tweetData } = tweet;
+        const quotedTweet = rawQuotedTweet?.deleted
+          ? null
+          : rawQuotedTweet
+          ? {
+              id: rawQuotedTweet.id,
+              content: rawQuotedTweet.content,
+              mediaUrls: rawQuotedTweet.mediaUrls,
+              author: rawQuotedTweet.author,
+            }
+          : null;
+
+        return {
+          ...tweetData,
+          quotedTweet,
+          hasLiked: hasLikedSet.has(tweet.id),
+          hasRetweeted: hasRetweetedSet.has(tweet.id),
+        };
+      });
 
       return {
         items,
