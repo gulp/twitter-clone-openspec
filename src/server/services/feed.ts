@@ -383,13 +383,13 @@ async function hydrateFeedItems(
     const quotedTweet = tweet.quotedTweet?.deleted
       ? null
       : tweet.quotedTweet
-      ? {
-          id: tweet.quotedTweet.id,
-          content: tweet.quotedTweet.content,
-          mediaUrls: tweet.quotedTweet.mediaUrls,
-          author: tweet.quotedTweet.author,
-        }
-      : null;
+        ? {
+            id: tweet.quotedTweet.id,
+            content: tweet.quotedTweet.content,
+            mediaUrls: tweet.quotedTweet.mediaUrls,
+            author: tweet.quotedTweet.author,
+          }
+        : null;
 
     hydrated.push({
       id: tweet.id,
