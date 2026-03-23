@@ -498,7 +498,7 @@ export const engagementRouter = createTRPCRouter({
         })
         .merge(paginationSchema)
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { userId, cursor, limit } = input;
 
       const likes = await prisma.like.findMany({
@@ -536,8 +536,40 @@ export const engagementRouter = createTRPCRouter({
         nextCursor = nextItem ? `${nextItem.userId}:${nextItem.tweetId}` : null;
       }
 
+      // If authenticated: batch-check hasLiked/hasRetweeted
+      let hasLikedSet = new Set<string>();
+      let hasRetweetedSet = new Set<string>();
+
+      if (ctx.session?.user?.id) {
+        const currentUserId = ctx.session.user.id;
+        const tweetIds = likes.map((like) => like.tweet.id);
+
+        if (tweetIds.length > 0) {
+          const [liked, retweeted] = await Promise.all([
+            prisma.like.findMany({
+              where: { userId: currentUserId, tweetId: { in: tweetIds } },
+              select: { tweetId: true },
+            }),
+            prisma.retweet.findMany({
+              where: { userId: currentUserId, tweetId: { in: tweetIds } },
+              select: { tweetId: true },
+            }),
+          ]);
+
+          hasLikedSet = new Set(liked.map((l) => l.tweetId));
+          hasRetweetedSet = new Set(retweeted.map((r) => r.tweetId));
+        }
+      }
+
+      // Annotate tweets with engagement state
+      const items = likes.map((like) => ({
+        ...like.tweet,
+        hasLiked: hasLikedSet.has(like.tweet.id),
+        hasRetweeted: hasRetweetedSet.has(like.tweet.id),
+      }));
+
       return {
-        items: likes.map((like) => like.tweet),
+        items,
         nextCursor,
       };
     }),

@@ -538,7 +538,7 @@ export const tweetRouter = createTRPCRouter({
         limit: z.number().int().positive().max(100).default(20),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { userId, cursor, limit } = input;
 
       const tweets = await prisma.tweet.findMany({
@@ -570,8 +570,40 @@ export const tweetRouter = createTRPCRouter({
         nextCursor = nextItem?.id ?? null;
       }
 
+      // If authenticated: batch-check hasLiked/hasRetweeted
+      let hasLikedSet = new Set<string>();
+      let hasRetweetedSet = new Set<string>();
+
+      if (ctx.session?.user?.id) {
+        const currentUserId = ctx.session.user.id;
+        const tweetIds = tweets.map((t) => t.id);
+
+        if (tweetIds.length > 0) {
+          const [liked, retweeted] = await Promise.all([
+            prisma.like.findMany({
+              where: { userId: currentUserId, tweetId: { in: tweetIds } },
+              select: { tweetId: true },
+            }),
+            prisma.retweet.findMany({
+              where: { userId: currentUserId, tweetId: { in: tweetIds } },
+              select: { tweetId: true },
+            }),
+          ]);
+
+          hasLikedSet = new Set(liked.map((l) => l.tweetId));
+          hasRetweetedSet = new Set(retweeted.map((r) => r.tweetId));
+        }
+      }
+
+      // Annotate tweets with engagement state
+      const items = tweets.map((tweet) => ({
+        ...tweet,
+        hasLiked: hasLikedSet.has(tweet.id),
+        hasRetweeted: hasRetweetedSet.has(tweet.id),
+      }));
+
       return {
-        items: tweets,
+        items,
         nextCursor,
       };
     }),
@@ -591,7 +623,7 @@ export const tweetRouter = createTRPCRouter({
         limit: z.number().int().positive().max(100).default(20),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { userId, cursor, limit } = input;
 
       const replies = await prisma.tweet.findMany({
@@ -623,8 +655,40 @@ export const tweetRouter = createTRPCRouter({
         nextCursor = nextItem?.id ?? null;
       }
 
+      // If authenticated: batch-check hasLiked/hasRetweeted
+      let hasLikedSet = new Set<string>();
+      let hasRetweetedSet = new Set<string>();
+
+      if (ctx.session?.user?.id) {
+        const currentUserId = ctx.session.user.id;
+        const tweetIds = replies.map((t) => t.id);
+
+        if (tweetIds.length > 0) {
+          const [liked, retweeted] = await Promise.all([
+            prisma.like.findMany({
+              where: { userId: currentUserId, tweetId: { in: tweetIds } },
+              select: { tweetId: true },
+            }),
+            prisma.retweet.findMany({
+              where: { userId: currentUserId, tweetId: { in: tweetIds } },
+              select: { tweetId: true },
+            }),
+          ]);
+
+          hasLikedSet = new Set(liked.map((l) => l.tweetId));
+          hasRetweetedSet = new Set(retweeted.map((r) => r.tweetId));
+        }
+      }
+
+      // Annotate replies with engagement state
+      const items = replies.map((reply) => ({
+        ...reply,
+        hasLiked: hasLikedSet.has(reply.id),
+        hasRetweeted: hasRetweetedSet.has(reply.id),
+      }));
+
       return {
-        items: replies,
+        items,
         nextCursor,
       };
     }),

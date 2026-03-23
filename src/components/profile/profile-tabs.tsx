@@ -93,7 +93,12 @@ export function ProfileTabs({ userId }: ProfileTabsProps) {
       >
         <div>
           {tweets.map((tweet) => (
-            <TweetCard key={tweet.id} tweet={tweet} hasLiked={false} hasRetweeted={false} />
+            <TweetCard
+              key={tweet.id}
+              tweet={tweet}
+              hasLiked={tweet.hasLiked ?? false}
+              hasRetweeted={tweet.hasRetweeted ?? false}
+            />
           ))}
         </div>
       </InfiniteScroll>
