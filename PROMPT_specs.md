@@ -212,7 +212,7 @@ Report findings to coordinator:
 
 ---
 
-## §6 — Commit and continue
+## §6 — Commit and exit
 
 ```bash
 git add specs/ README.md
@@ -221,11 +221,10 @@ git pull --ff-only && git push
 am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME" 2>/dev/null || true
 ```
 
-**Do NOT exit.** Return to §1 for the next audit cycle.
+**One item per loop.** You picked one gap in §3, wrote or updated one spec,
+verified it in §4, filed beads in §5. Now exit.
 
-Only output `LOOP_COMPLETE` if:
-- Coordinator sends a stop directive
-- `specs/GAPS.md` has zero unchecked items AND all specs pass §4 verification
+Output `LOOP_COMPLETE`.
 
 ---
 
