@@ -35,6 +35,8 @@ import type { NextRequest } from "next/server";
  * - Rejects unauthenticated requests with 401
  */
 
+const sigtermEncoder = new TextEncoder();
+
 // Track active connections for SIGTERM draining
 const activeConnections = new Set<{
   userId: string;
@@ -51,7 +53,7 @@ process.once("SIGTERM", () => {
   // Send server_restart event to all active connections
   for (const conn of activeConnections) {
     try {
-      conn.controller.enqueue("event: server_restart\ndata: {}\n\n");
+      conn.controller.enqueue(sigtermEncoder.encode("event: server_restart\ndata: {}\n\n"));
       conn.controller.close();
     } catch (error) {
       // Connection already closed
