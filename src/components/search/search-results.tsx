@@ -52,7 +52,7 @@ export function SearchResults({ query }: SearchResultsProps) {
         tweetsQuery.fetchNextPage();
       }
     },
-    tweetsQuery.hasNextPage && !tweetsQuery.isFetchingNextPage,
+    activeTab === "tweets" && tweetsQuery.hasNextPage && !tweetsQuery.isFetchingNextPage,
     0.5,
     "100px"
   );
@@ -64,7 +64,7 @@ export function SearchResults({ query }: SearchResultsProps) {
         usersQuery.fetchNextPage();
       }
     },
-    usersQuery.hasNextPage && !usersQuery.isFetchingNextPage,
+    activeTab === "people" && usersQuery.hasNextPage && !usersQuery.isFetchingNextPage,
     0.5,
     "100px"
   );
