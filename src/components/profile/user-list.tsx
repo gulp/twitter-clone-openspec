@@ -3,6 +3,7 @@
 import { FollowButton } from "@/components/social/follow-button";
 import { Avatar } from "@/components/ui/avatar";
 import { InfiniteScroll } from "@/components/ui/infinite-scroll";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -28,8 +29,23 @@ export function UserList({ userId, type }: UserListProps) {
 
   if (query.isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#1DA1F2] border-t-transparent" />
+      <div>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="border-b border-[#2f3336] px-4 py-3">
+            <div className="flex gap-3">
+              <Skeleton className="w-12 h-12 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

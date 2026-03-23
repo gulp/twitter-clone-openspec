@@ -1,6 +1,7 @@
 "use client";
 
 import { UserList } from "@/components/profile/user-list";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { useParams, useRouter } from "next/navigation";
 
@@ -13,8 +14,38 @@ export default function FollowersPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#15202B] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#1DA1F2] border-t-transparent" />
+      <div className="min-h-screen bg-[#15202B]">
+        {/* Header skeleton */}
+        <div className="sticky top-0 z-10 bg-[#15202B]/80 backdrop-blur-md border-b border-[#2f3336]">
+          <div className="px-4 py-3">
+            <Skeleton className="h-6 w-6 rounded-full mb-2" />
+            <Skeleton className="h-6 w-40 mb-1" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="flex border-b border-[#2f3336]">
+            <div className="flex-1 py-4" />
+            <div className="flex-1 py-4" />
+          </div>
+        </div>
+        {/* User list skeleton */}
+        <div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="border-b border-[#2f3336] px-4 py-3">
+              <div className="flex gap-3">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-full" />
+                  <div className="flex gap-4">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
