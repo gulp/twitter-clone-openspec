@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { MAX_MEDIA_PER_TWEET } from "@/lib/constants";
-import { validateMediaUrls } from "@/server/trpc/routers/media";
 import { env } from "@/env";
+import { ALLOWED_MIME_TYPES, MAX_MEDIA_PER_TWEET } from "@/lib/constants";
+import { validateMediaUrls } from "@/server/trpc/routers/media";
+import { describe, expect, it } from "vitest";
 
 /**
  * Media URL validation tests — validates S3 URL acceptance and rejection rules.
@@ -108,10 +108,7 @@ describe("Media URL validation", () => {
   });
 
   it("should reject mixed valid and invalid URLs in array", () => {
-    const urls = [
-      `${s3PublicUrl}/tweet/${mockUserId}/image1.jpg`,
-      "https://evil.com/image2.jpg",
-    ];
+    const urls = [`${s3PublicUrl}/tweet/${mockUserId}/image1.jpg`, "https://evil.com/image2.jpg"];
     expect(() => validateMediaUrls(urls, mockUserId, "tweet")).toThrow(
       "Invalid media URL: must be from authorized storage"
     );
@@ -126,6 +123,14 @@ describe("Media URL validation", () => {
 
   it("should enforce MAX_MEDIA_PER_TWEET constant value", () => {
     expect(MAX_MEDIA_PER_TWEET).toBe(4);
+  });
+
+  it("should define exactly 4 allowed MIME types", () => {
+    // Ensure constants.ts ALLOWED_MIME_TYPES is in sync with media.ts extractExtension
+    // extractExtension has a typeMap with 4 entries: jpeg, png, gif, webp
+    // If someone adds a 5th MIME type to ALLOWED_MIME_TYPES, this test fails as a reminder
+    // to also update extractExtension's typeMap in media.ts
+    expect(ALLOWED_MIME_TYPES).toEqual(["image/jpeg", "image/png", "image/gif", "image/webp"]);
   });
 
   it("should validate all URLs in array", () => {
