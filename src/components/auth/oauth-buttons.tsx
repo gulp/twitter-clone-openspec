@@ -5,29 +5,14 @@ import { useState } from "react";
 
 export function OAuthButtons() {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const handleOAuthSignIn = async (provider: "google" | "github") => {
-    // Clear previous errors when user tries again
-    setErrorMessage("");
+  const handleOAuthSignIn = (provider: "google" | "github") => {
     setLoadingProvider(provider);
-    try {
-      await signIn(provider, { callbackUrl: "/home" });
-    } catch (error) {
-      console.error(`${provider} sign-in failed:`, error);
-      setErrorMessage(`Failed to sign in with ${provider === "google" ? "Google" : "GitHub"}. Please try again.`);
-      setLoadingProvider(null);
-    }
+    void signIn(provider, { callbackUrl: "/home" });
   };
 
   return (
     <div className="space-y-3">
-      {errorMessage && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
-          <p className="text-sm text-red-400">{errorMessage}</p>
-        </div>
-      )}
-
       <button
         type="button"
         onClick={() => handleOAuthSignIn("google")}
