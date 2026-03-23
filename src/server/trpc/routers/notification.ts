@@ -2,7 +2,7 @@ import { paginationSchema } from "@/lib/validators";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma, publicUserSelect } from "../../db";
-import { decrUnreadCount, getUnreadCount, setUnreadCount } from "../../redis";
+import { decrUnreadCount, decrUnreadCountBy, getUnreadCount, setUnreadCount } from "../../redis";
 import { createTRPCRouter, protectedProcedure } from "../index";
 
 /**
@@ -145,13 +145,15 @@ export const notificationRouter = createTRPCRouter({
   /**
    * markAllRead — Mark all unread notifications as read
    *
-   * Updates all unread notifications for the user and resets Redis count to 0.
+   * Updates all unread notifications for the user and decrements Redis count by exactly
+   * the number of notifications marked as read. This prevents race conditions where
+   * concurrent notification creation could cause cache staleness.
    */
   markAllRead: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    // Update all unread notifications
-    await prisma.notification.updateMany({
+    // Update all unread notifications and capture the count
+    const result = await prisma.notification.updateMany({
       where: {
         recipientId: userId,
         read: false,
@@ -159,8 +161,9 @@ export const notificationRouter = createTRPCRouter({
       data: { read: true },
     });
 
-    // Reset Redis unread count to 0
-    await setUnreadCount(userId, 0, ctx.requestId);
+    // Decrement Redis by exact count of notifications marked (fail-open)
+    // Using decrBy instead of set(0) prevents race with concurrent createNotification
+    await decrUnreadCountBy(userId, result.count, ctx.requestId);
 
     return { success: true };
   }),

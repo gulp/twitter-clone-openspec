@@ -412,6 +412,44 @@ export async function decrUnreadCount(userId: string, requestId?: string): Promi
 }
 
 /**
+ * Unread notification count — fail open.
+ * Decrement unread notification count by N.
+ * No-op on Redis failure.
+ * Uses Lua script to atomically decrement and floor at 0 (prevents negative counts).
+ */
+export async function decrUnreadCountBy(userId: string, count: number, requestId?: string): Promise<void> {
+  if (count <= 0) return;
+
+  try {
+    // Use Lua to atomically: GET count, DECRBY count, floor at 0, refresh TTL
+    const lua = `
+      local key = KEYS[1]
+      local amount = tonumber(ARGV[1])
+      local val = redis.call('GET', key)
+
+      if val then
+        local currentCount = tonumber(val)
+        local newCount = math.max(0, currentCount - amount)
+        redis.call('SET', key, newCount)
+        redis.call('EXPIRE', key, 300)
+        return newCount
+      end
+
+      return 0
+    `;
+    await redis.eval(lua, 1, `notification:unread:${userId}`, count.toString());
+  } catch (error) {
+    log.warn("Redis operation failed", {
+      feature: "unread",
+      operation: "decrUnreadCountBy",
+      count,
+      error: error instanceof Error ? error.message : String(error),
+      requestId,
+    });
+  }
+}
+
+/**
  * SSE sequence number — fail open.
  * Get next monotonic sequence number for user's SSE stream.
  * Returns null on Redis failure (caller should generate local sequence).
