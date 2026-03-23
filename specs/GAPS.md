@@ -14,6 +14,10 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Session management — covered in security-session-management.md
 
 ## High (core features, caching, pagination)
+- [ ] Quote tweet design decisions — quoteTweetId as column vs relationship table, count atomicity, feed assembly behavior (engagement.ts:304-400)
+- [ ] JSON parsing safety — unsafe JSON.parse with generic try/catch in cached data, trust model not documented (feed.ts:144,429, redis.ts:451, social.ts:308)
+- [ ] Raw SQL parameter injection safety — template literal ${userId} in $queryRaw, Prisma escaping guarantees not audited (social.ts:317-371)
+- [ ] Unread count cache race — Redis.incrUnreadCount fails after DB write, cache becomes stale with no recovery (notification.ts:56-57)
 - [x] Unhandled promise rejection chains — covered in error-handling-promise-patterns.md
 - [x] Unread count cache strategy — covered in caching-unread-count-strategy.md
 - [x] Request correlation flow — covered in logging-request-correlation.md
