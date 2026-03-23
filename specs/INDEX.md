@@ -52,6 +52,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-cache-aside-pattern.md](caching-cache-aside-pattern.md) — Read-through cache pattern for query results, JSON serialization, TTL + explicit invalidation, fail-open error handling
 - [caching-unread-count-strategy.md](caching-unread-count-strategy.md) — Unread notification count caching with DB fallback, Lua atomic decrement, cache-aside backfill, no TTL invalidation
 - [caching-key-construction.md](caching-key-construction.md) — Cache key uniqueness principles, parameter inclusion rules, cursor hashing, deterministic serialization
+- [caching-json-parsing-safety.md](caching-json-parsing-safety.md) — JSON.parse trust model for cached data vs user cursors, fail-open/fail-closed patterns, corruption handling, type coercion gotchas
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
 - [pagination-cursor-validation.md](pagination-cursor-validation.md) — Base64url decode → JSON parse → type validation patterns, Zod transforms vs standalone parsers, error conversion, Date/NaN edge cases
 - [pagination-where-clause-construction.md](pagination-where-clause-construction.md) — Compound cursor WHERE clause pattern, lexicographic comparison, row syntax, null handling, peek-ahead

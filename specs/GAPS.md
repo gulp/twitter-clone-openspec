@@ -16,7 +16,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 
 ## High (core features, caching, pagination)
 - [x] Quote tweet design decisions — covered in engagement-quote-tweet-design.md
-- [ ] JSON parsing safety — unsafe JSON.parse with generic try/catch in cached data, trust model not documented (feed.ts:144,429, redis.ts:451, social.ts:308)
+- [x] JSON parsing safety — covered in caching-json-parsing-safety.md
 - [ ] Raw SQL parameter injection safety — template literal ${userId} in $queryRaw, Prisma escaping guarantees not audited (social.ts:317-371)
 - [ ] Unread count cache race — Redis.incrUnreadCount fails after DB write, cache becomes stale with no recovery (notification.ts:56-57)
 - [x] Unhandled promise rejection chains — covered in error-handling-promise-patterns.md
