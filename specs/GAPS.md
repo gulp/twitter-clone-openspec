@@ -19,7 +19,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Request correlation flow — covered in logging-request-correlation.md
 - [x] SSE replay buffer exhaustion — covered in sse-replay-buffer-exhaustion.md
 - [x] Feed cache ignores limit parameter — covered in caching-feed-limit-ignored.md
-- [ ] Tombstone lifecycle — TTL, cleanup strategy, garbage collection not documented
+- [x] Tombstone lifecycle — covered in caching-tombstone-filtering.md (TTL coordination section, EXPIRE reset behavior, Redis restart lifecycle)
 - [ ] $queryRaw patterns — when to use raw SQL, type casting, DISTINCT ON semantics not documented
 - [x] Lua script atomicity — covered in caching-lua-atomicity.md (I5, G1 mention error handling; detailed coverage in error-handling-redis-failure-policy.md)
 - [ ] Feed version initialization race — Redis failure edge case not documented (fixed in ac116e7, needs spec)
