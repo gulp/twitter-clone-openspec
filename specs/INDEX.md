@@ -61,6 +61,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [database-queryraw-patterns.md](database-queryraw-patterns.md) — $queryRaw usage for full-text search, CTEs, DISTINCT ON, UNION, Prisma.sql safe interpolation, type casting, row-value comparisons
 - [database-id-generation-strategy.md](database-id-generation-strategy.md) — CUID vs CUID2 usage: Prisma @default(cuid()) for primary keys, OAuth username generation, CUID2 for S3 object keys, format differences
 - [database-check-constraints.md](database-check-constraints.md) — PostgreSQL CHECK constraints for data integrity: non-negative counts, soft-delete consistency, content-or-media requirement, constraint violation handling
+- [search-full-text-implementation.md](search-full-text-implementation.md) — PostgreSQL full-text search using tsvector GENERATED column, GIN index, ts_rank relevance scoring, English stemming, cursor pagination with rank ties
 - [engagement-quote-tweet-design.md](engagement-quote-tweet-design.md) — Quote tweet as standalone entity vs engagement count, no quoteCount denormalization, feed version behavior, notification semantics, hydration gaps
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining

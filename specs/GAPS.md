@@ -21,7 +21,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] JSON parsing safety — covered in caching-json-parsing-safety.md
 - [x] User select patterns (§1.13) — covered in security-user-select-patterns.md
 - [ ] Batch engagement state checks (§1.16) — Promise.all + Set pattern implemented (feed.ts:119-131, search.ts:183-201) but no dedicated spec. Plan lines 358-365.
-- [ ] Full-text search implementation (§1.11) — tsvector GENERATED column, GIN index, ts_rank usage (search.ts:131-188, migration.sql:220) but no spec documenting ranking algorithm, phrase search behavior, or SQL patterns. Plan lines 302-303.
+- [x] Full-text search implementation (§1.11) — covered in search-full-text-implementation.md
 - [ ] Fire-and-forget async patterns — void (async () => {})() used inconsistently (email.ts:94-126, sse-publisher.ts:120-161, api/sse/route.ts). No policy doc.
 - [ ] Silent .catch() error suppression policy — engagement-buttons.tsx:154, auth.ts sessionDel, api/sse/route.ts cleanup use silent suppression. No spec defining when acceptable vs requires logging.
 - [ ] Promise.allSettled vs Promise.all consistency — SSE uses allSettled (sse-publisher.ts:203), feed uses all (feed.ts:312), tweets use all (tweet.ts:143-152). No unified policy.
