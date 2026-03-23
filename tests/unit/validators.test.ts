@@ -149,6 +149,12 @@ describe("emailSchema", () => {
   it("should accept email with subdomain", () => {
     expect(emailSchema.parse("alice@mail.example.com")).toBe("alice@mail.example.com");
   });
+
+  it("should normalize email to lowercase", () => {
+    expect(emailSchema.parse("User@Example.com")).toBe("user@example.com");
+    expect(emailSchema.parse("ALICE@EXAMPLE.COM")).toBe("alice@example.com");
+    expect(emailSchema.parse("AlIcE@ExAmPlE.CoM")).toBe("alice@example.com");
+  });
 });
 
 describe("registerSchema", () => {

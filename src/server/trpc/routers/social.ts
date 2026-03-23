@@ -90,11 +90,21 @@ export const socialRouter = createTRPCRouter({
       }
 
       // Fire FOLLOW notification (self-suppression handled in createNotification)
-      await createNotification({
-        recipientId: followingId,
-        actorId: followerId,
-        type: "FOLLOW",
-      });
+      // Best-effort: fail-open (§4, §10)
+      try {
+        await createNotification({
+          recipientId: followingId,
+          actorId: followerId,
+          type: "FOLLOW",
+        });
+      } catch (error) {
+        log.warn("Failed to create FOLLOW notification (fail open)", {
+          followerId,
+          followingId,
+          error: error instanceof Error ? error.message : String(error),
+          requestId: ctx.requestId,
+        });
+      }
 
       // Bump feed version for follower (invalidates cached home timeline)
       await bumpFeedVersion(followerId);

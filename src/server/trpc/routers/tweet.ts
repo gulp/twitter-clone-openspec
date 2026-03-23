@@ -140,25 +140,47 @@ export const tweetRouter = createTRPCRouter({
       };
 
       // Fire MENTION notifications (self-suppression handled in createNotification)
+      // Best-effort: fail-open (§4, §10)
       await Promise.all(
-        mentionedUserIds.map((mentionedUserId) =>
-          createNotification({
-            recipientId: mentionedUserId,
-            actorId: userId,
-            type: "MENTION",
-            tweetId: tweet.id,
-          })
-        )
+        mentionedUserIds.map(async (mentionedUserId) => {
+          try {
+            await createNotification({
+              recipientId: mentionedUserId,
+              actorId: userId,
+              type: "MENTION",
+              tweetId: tweet.id,
+            });
+          } catch (error) {
+            log.warn("Failed to create MENTION notification (fail open)", {
+              userId,
+              mentionedUserId,
+              tweetId: tweet.id,
+              error: error instanceof Error ? error.message : String(error),
+              requestId: ctx.requestId,
+            });
+          }
+        })
       );
 
       // Fire REPLY notification if this is a reply
+      // Best-effort: fail-open (§4, §10)
       if (parentId && parentAuthorId) {
-        await createNotification({
-          recipientId: parentAuthorId,
-          actorId: userId,
-          type: "REPLY",
-          tweetId: tweet.id,
-        });
+        try {
+          await createNotification({
+            recipientId: parentAuthorId,
+            actorId: userId,
+            type: "REPLY",
+            tweetId: tweet.id,
+          });
+        } catch (error) {
+          log.warn("Failed to create REPLY notification (fail open)", {
+            userId,
+            parentAuthorId,
+            tweetId: tweet.id,
+            error: error instanceof Error ? error.message : String(error),
+            requestId: ctx.requestId,
+          });
+        }
       }
 
       // Publish new-tweet SSE event to all followers (best-effort, fail-open)

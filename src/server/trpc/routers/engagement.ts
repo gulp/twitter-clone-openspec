@@ -72,13 +72,23 @@ export const engagementRouter = createTRPCRouter({
         ]);
 
         // Fire LIKE notification with dedupeKey (self-suppression in createNotification)
-        await createNotification({
-          recipientId: tweet.authorId,
-          actorId: userId,
-          type: "LIKE",
-          tweetId,
-          dedupeKey: `like:${userId}:${tweetId}`,
-        });
+        // Best-effort: fail-open (§4, §10)
+        try {
+          await createNotification({
+            recipientId: tweet.authorId,
+            actorId: userId,
+            type: "LIKE",
+            tweetId,
+            dedupeKey: `like:${userId}:${tweetId}`,
+          });
+        } catch (error) {
+          log.warn("Failed to create LIKE notification (fail open)", {
+            userId,
+            tweetId,
+            error: error instanceof Error ? error.message : String(error),
+            requestId: ctx.requestId,
+          });
+        }
 
         return { success: true };
       } catch (error) {
@@ -205,13 +215,23 @@ export const engagementRouter = createTRPCRouter({
         ]);
 
         // Fire RETWEET notification with dedupeKey (self-suppression in createNotification)
-        await createNotification({
-          recipientId: tweet.authorId,
-          actorId: userId,
-          type: "RETWEET",
-          tweetId,
-          dedupeKey: `retweet:${userId}:${tweetId}`,
-        });
+        // Best-effort: fail-open (§4, §10)
+        try {
+          await createNotification({
+            recipientId: tweet.authorId,
+            actorId: userId,
+            type: "RETWEET",
+            tweetId,
+            dedupeKey: `retweet:${userId}:${tweetId}`,
+          });
+        } catch (error) {
+          log.warn("Failed to create RETWEET notification (fail open)", {
+            userId,
+            tweetId,
+            error: error instanceof Error ? error.message : String(error),
+            requestId: ctx.requestId,
+          });
+        }
 
         // Bump feed version for retweeter's followers
         await bumpFeedVersionForFollowers(userId);
@@ -389,12 +409,23 @@ export const engagementRouter = createTRPCRouter({
       };
 
       // Fire QUOTE_TWEET notification to quoted tweet's author (self-suppression handled)
-      await createNotification({
-        recipientId: quotedTweet.authorId,
-        actorId: userId,
-        type: "QUOTE_TWEET",
-        tweetId: tweet.id,
-      });
+      // Best-effort: fail-open (§4, §10)
+      try {
+        await createNotification({
+          recipientId: quotedTweet.authorId,
+          actorId: userId,
+          type: "QUOTE_TWEET",
+          tweetId: tweet.id,
+        });
+      } catch (error) {
+        log.warn("Failed to create QUOTE_TWEET notification (fail open)", {
+          userId,
+          tweetId: tweet.id,
+          quoteTweetId,
+          error: error instanceof Error ? error.message : String(error),
+          requestId: ctx.requestId,
+        });
+      }
 
       return tweet;
     }),

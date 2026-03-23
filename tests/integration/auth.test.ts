@@ -83,6 +83,21 @@ describe("auth router", () => {
         })
       ).rejects.toThrow("Username already taken");
     });
+
+    it("returns 'Email already in use' for duplicate email with different case", async () => {
+      await createTestUser({ email: "user@example.com" });
+
+      const caller = createTestContext();
+
+      await expect(
+        caller.auth.register({
+          email: "User@Example.com",
+          username: "differentuser",
+          displayName: "Different User",
+          password: "password123",
+        })
+      ).rejects.toThrow("Email already in use");
+    });
   });
 
   describe("requestReset", () => {
@@ -115,6 +130,24 @@ describe("auth router", () => {
       });
 
       // Verify token was created
+      const token = await prisma.passwordResetToken.findFirst({
+        where: { userId: user.id, used: false },
+      });
+
+      expect(token).toBeDefined();
+      expect(token?.expiresAt.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it("works regardless of email case", async () => {
+      const { user } = await createTestUser({ email: "reset@example.com" });
+      const caller = createTestContext();
+
+      // Request reset with different case
+      await caller.auth.requestReset({
+        email: "Reset@Example.COM",
+      });
+
+      // Verify token was created for the user
       const token = await prisma.passwordResetToken.findFirst({
         where: { userId: user.id, used: false },
       });
