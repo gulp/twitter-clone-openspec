@@ -81,21 +81,23 @@ await cacheSet(cacheKey, JSON.stringify(result), 300);
 
 Suggestions are also **invalidated on follow/unfollow** (cache key is deleted), so 300s is a fallback TTL.
 
-### Tombstones Set (60s)
+### Tombstones Sorted Set (60s per entry)
 
-Deleted tweet IDs in the tombstones set expire after 60 seconds:
+Deleted tweet IDs in the tombstones sorted set expire independently after 60 seconds:
 
 ```typescript
-// From src/server/trpc/routers/tweet.ts:258-259
-await redis.sadd("tombstones:tweets", tweetId);
-await redis.expire("tombstones:tweets", 60);
+// From src/server/trpc/routers/tweet.ts:256-259
+const now = Date.now();
+const expiryTimestamp = now + 60000; // 60 seconds from now
+await redis.zadd("tombstones:tweets", expiryTimestamp, tweetId);
 ```
 
-**Rationale:** Filters deleted tweets from cached feed pages during the 60s feed TTL window. After 60s:
-- All cached feed pages referencing the deleted tweet expire
-- No need to maintain tombstone set indefinitely
+**Rationale:** Filters deleted tweets from cached feed pages during the 60s feed TTL window. Each tombstone has an independent expiry timestamp (score in the sorted set):
+- Burst deletes don't keep stale entries alive indefinitely
+- Recent tombstones survive even during quiet periods
+- Expired entries are cleaned on read via `ZREMRANGEBYSCORE`
 
-The tombstones set uses a **global key** (`tombstones:tweets`), not per-user. Each `SADD` resets the 60s TTL for the entire set.
+The tombstones sorted set uses a **global key** (`tombstones:tweets`), not per-user. Each entry's score is its expiry timestamp, allowing independent TTL per deleted tweet.
 
 ### Rate Limit Windows (Dynamic)
 
@@ -124,13 +126,16 @@ The Lua script sets TTL equal to the window duration, ensuring the sorted set is
 
 5. **No infinite TTLs** — All cached data has an expiration except:
    - `feed:version:{userId}` counters (monotonic, write-only, never read after invalidation)
-   - `tombstones:tweets` SET members (but the SET itself has 60s TTL)
+   - `tombstones:tweets` sorted set members (each member has independent 60s expiry via score)
 
 6. **Rate limit TTL = window duration** — The window naturally expires when the TTL elapses, preventing stale rate limit state.
 
 ## Gotchas
 
-**EXPIRE resets TTL for the entire key** — When adding a new tweet ID to `tombstones:tweets`, the entire SET's TTL resets to 60s. This is intentional: the set should persist as long as any cached feed page might reference any deleted tweet.
+**Tombstones use sorted set with score-based expiry** — Each deleted tweet ID is added with `ZADD` using its expiry timestamp as the score. On read, `ZREMRANGEBYSCORE` cleans up expired entries (score <= now) and `ZRANGEBYSCORE` returns only non-expired entries (score > now). This ensures:
+- Each tombstone has independent expiry (no shared TTL reset)
+- Recent tombstones survive during quiet periods
+- Stale tombstones are cleaned up even during burst deletes
 
 **Session allow-list TTL is best-effort** — If Redis fails or restarts, sessions fall back to `sessionVersion` check in PostgreSQL. The allow-list is purely an optimization, not required for correctness.
 
@@ -142,9 +147,9 @@ The Lua script sets TTL equal to the window duration, ensuring the sorted set is
 
 **cacheSet with no TTL → key never expires** — The `ttlSeconds` parameter is optional (src/server/redis.ts:55). Only `feed:version:{userId}` keys intentionally omit TTL. All other cached data must specify a TTL to prevent unbounded Redis memory growth.
 
-**Tombstone TTL extends on every deletion** — Deleting a tweet calls `EXPIRE tombstones:tweets 60`, resetting the TTL even if the set already existed. During high delete volume, the tombstones set can persist indefinitely (each delete extends the TTL). This is safe because:
-- The set only grows with unique tweet IDs (SADD is idempotent)
-- Memory usage is bounded by total tweet count
-- The set is read on every cache hit (constant cost, low latency)
+**Tombstones sorted set has no global TTL** — Unlike the old SET+EXPIRE approach, the sorted set itself never expires. Individual entries expire based on their score (expiry timestamp). Stale entries are cleaned lazily on read. Memory usage remains bounded because:
+- Each tweet ID is unique (ZADD overwrites if duplicate)
+- Cleanup happens on every getTombstones() call
+- Maximum size is bounded by total deleted tweets in last 60s
 
 **Suggestions cache invalidation is eager** — Follow/unfollow immediately deletes the cache key (src/server/trpc/routers/social.ts:110, :178). The 300s TTL only applies when the cache is NOT invalidated (e.g., new mutual connections appear without follow graph changes).

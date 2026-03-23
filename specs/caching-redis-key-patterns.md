@@ -43,7 +43,7 @@ All keys follow `{feature}:{entity}:{id}` pattern with optional suffixes:
 | `feed:version:{userId}` | String (integer) | none | Monotonic version counter for cache invalidation |
 | `feed:{userId}:v:{version}:page:{cursorHash}` | String (JSON) | 60s | Cached feed page |
 | `feed:{userId}:rebuilding` | String | 5s | SETNX lock to prevent concurrent cache rebuilds |
-| `tombstones:tweets` | Set | 60s | Soft-deleted tweet IDs for cache filtering |
+| `tombstones:tweets` | Sorted Set | 60s per entry (score) | Soft-deleted tweet IDs for cache filtering |
 | `sse:connections:{userId}` | Set | none | Active SSE connection IDs |
 | `sse:seq:{userId}` | String (integer) | none | Monotonic SSE event sequence number |
 | `sse:replay:{userId}` | List | 5 min | Event replay buffer (capped at 200 entries) |
@@ -64,12 +64,13 @@ if (ttlSeconds) {
 }
 ```
 
-For keys with separate expiration updates:
+For sorted sets with score-based expiry:
 
 ```typescript
-// From src/server/trpc/routers/tweet.ts:258-259
-await redis.sadd("tombstones:tweets", tweetId);
-await redis.expire("tombstones:tweets", 60);
+// From src/server/trpc/routers/tweet.ts:256-259
+const now = Date.now();
+const expiryTimestamp = now + 60000; // 60 seconds from now
+await redis.zadd("tombstones:tweets", expiryTimestamp, tweetId);
 ```
 
 ### SETNX Locking Pattern
@@ -144,7 +145,7 @@ This ensures concurrent requests can't both pass the count check before either a
 
 2. **Counters have no TTL** — `feed:version:{userId}`, `sse:seq:{userId}`, and `notification:unread:{userId}` persist indefinitely. They're write-only monotonic counters that occupy minimal space (~50 bytes each).
 
-3. **Shared-key TTL updates** — `tombstones:tweets` is a single global set. Every `SADD` resets its TTL to 60s via separate `EXPIRE` call (src/server/trpc/routers/tweet.ts:258-259). This is safe because all tombstone additions want the same 60s TTL.
+3. **Score-based expiry for tombstones** — `tombstones:tweets` is a sorted set where each member's score is its expiry timestamp. Individual entries expire independently (no shared TTL). Cleanup happens lazily via `ZREMRANGEBYSCORE` on reads (src/server/services/feed.ts:410-421).
 
 4. **TTL never extends on read** — Cache hits don't refresh TTL. A feed page cached at T0 expires at T0+60s regardless of access pattern.
 
@@ -154,7 +155,7 @@ This ensures concurrent requests can't both pass the count check before either a
 
 **SETNX lock acquisition failure is not an error** — When `feed:{userId}:rebuilding` lock is held, the request continues without the lock and queries PostgreSQL directly (src/server/services/feed.ts:174-184). This prevents deadlocks when cache rebuild takes >5s.
 
-**Tombstones key is global, not per-user** — Deleted tweets go into a single `tombstones:tweets` set, not `tombstones:tweets:{userId}`. Cache filtering checks every cached tweet against this global set (src/server/services/feed.ts:146-148). This works because soft-delete is rare and the 60s TTL keeps the set small.
+**Tombstones key is global, not per-user** — Deleted tweets go into a single `tombstones:tweets` sorted set, not `tombstones:tweets:{userId}`. Cache filtering checks every cached tweet against this global sorted set (src/server/services/feed.ts:146-148). Each entry's score is its expiry timestamp, allowing independent TTL per deleted tweet. Cleanup is lazy via `ZREMRANGEBYSCORE` on reads, keeping memory bounded to deleted tweets in last 60s.
 
 **Rate limit keys expire automatically** — The Lua script sets `EXPIRE` on every request (src/server/redis.ts:149). If a user makes one request then stops, the key self-evicts after `windowSeconds`. No cleanup needed.
 

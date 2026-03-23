@@ -253,10 +253,11 @@ export const tweetRouter = createTRPCRouter({
 
       await prisma.$transaction(operations);
 
-      // Add to Redis tombstones set with 60s TTL (fail-open)
+      // Add to Redis tombstones sorted set with independent 60s expiry (fail-open)
       try {
-        await redis.sadd("tombstones:tweets", tweetId);
-        await redis.expire("tombstones:tweets", 60);
+        const now = Date.now();
+        const expiryTimestamp = now + 60000; // 60 seconds from now
+        await redis.zadd("tombstones:tweets", expiryTimestamp, tweetId);
       } catch (error) {
         log.warn("Failed to add tweet to tombstones (fail open)", {
           feature: "tombstones",

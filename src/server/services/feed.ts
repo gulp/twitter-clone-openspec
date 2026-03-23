@@ -406,10 +406,19 @@ async function cacheFeedPage(
 
 /**
  * getTombstones — Get set of deleted tweet IDs from Redis
+ *
+ * Filters by expiry timestamp (score > now) and cleans up expired entries.
  */
 async function getTombstones(requestId?: string): Promise<Set<string>> {
   try {
-    const tombstones = await redis.smembers("tombstones:tweets");
+    const now = Date.now();
+
+    // Clean up expired tombstones (score <= now)
+    await redis.zremrangebyscore("tombstones:tweets", 0, now);
+
+    // Get non-expired tombstones (score > now)
+    const tombstones = await redis.zrangebyscore("tombstones:tweets", now + 1, "+inf");
+
     return new Set(tombstones);
   } catch (error) {
     log.warn("Failed to get tombstones (fail open)", {
