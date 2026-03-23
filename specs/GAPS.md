@@ -12,7 +12,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] SIGTERM graceful shutdown — covered in sse-graceful-shutdown.md
 - [x] CSRF origin validation — covered in security-csrf-origin.md
 - [x] Session management — covered in security-session-management.md
-- [ ] CUID vs CUID2 mismatch — Prisma schema uses @default(cuid()) but OAuth signup uses CUID2 createId() (src/server/auth.ts:194 vs prisma/schema.prisma). Deviation from plan §1.1.
+- [x] CUID vs CUID2 mismatch — covered in database-id-generation-strategy.md (OAuth uses CUID correctly, media router uses CUID2 for S3 keys intentionally)
 
 ## High (core features, caching, pagination)
 - [ ] Security headers: HSTS missing in production — Plan §1.17 (line 375) specifies "Strict-Transport-Security: max-age=31536000; includeSubDomains" but middleware.ts does not implement it.
