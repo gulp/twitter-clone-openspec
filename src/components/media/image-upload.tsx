@@ -56,6 +56,7 @@ export function ImageUpload({
 
     if (files.length === 0) return;
 
+    // Early check for quick feedback (still may race, but provides immediate UX)
     const remainingSlots = maxImages - urls.length - uploadingFiles.length;
     if (remainingSlots <= 0) {
       setValidationError(`Maximum ${maxImages} image${maxImages > 1 ? "s" : ""} allowed`);
@@ -96,13 +97,29 @@ export function ImageUpload({
       validFiles.push(processedFile);
     }
 
-    // Create preview URLs and upload
+    // Track which files were actually added after atomic capacity check
+    const addedFiles = new Map<string, { file: File; preview: string }>();
+
+    // Create preview URLs and add to uploading queue with atomic capacity check
     for (const file of validFiles) {
       const fileId = Math.random().toString(36).substring(7);
       const preview = URL.createObjectURL(file);
 
-      setUploadingFiles((prev) => [...prev, { id: fileId, file, preview, progress: 0 }]);
+      setUploadingFiles((prev) => {
+        // Atomic capacity check with current state — prevents race condition
+        if (urls.length + prev.length >= maxImages) {
+          URL.revokeObjectURL(preview);
+          return prev;
+        }
 
+        // File fits, add it and track it for upload
+        addedFiles.set(fileId, { file, preview });
+        return [...prev, { id: fileId, file, preview, progress: 0 }];
+      });
+    }
+
+    // Upload only files that were successfully added
+    for (const [fileId, { file, preview }] of addedFiles) {
       try {
         // Get pre-signed upload URL
         const { uploadUrl, publicUrl } = await getUploadUrlMutation.mutateAsync({
