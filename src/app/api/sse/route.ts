@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Generate unique connection ID
-  const connectionId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const connectionId = crypto.randomUUID();
 
   // Atomically check connection limit and add connection (max 5 per user)
   // Prevents race condition where concurrent requests both see count=4 and both proceed
