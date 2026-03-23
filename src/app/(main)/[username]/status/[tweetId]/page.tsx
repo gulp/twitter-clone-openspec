@@ -7,12 +7,14 @@ import { trpc } from "@/lib/trpc";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { useRef } from "react";
 
 export default function TweetDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
   const tweetId = params.tweetId as string;
+  const composerRef = useRef<HTMLDivElement>(null);
 
   // Fetch main tweet
   const {
@@ -48,6 +50,16 @@ export default function TweetDetailPage() {
     () => fetchNextPage(),
     hasNextPage && !isFetchingNextPage
   );
+
+  // Handle reply button - scroll to and focus composer
+  const handleReply = () => {
+    composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Focus the textarea after scrolling
+    setTimeout(() => {
+      const textarea = composerRef.current?.querySelector("textarea");
+      textarea?.focus();
+    }, 300);
+  };
 
   // Loading state
   if (isLoading || (tweet?.parentId && parentLoading)) {
@@ -277,21 +289,24 @@ export default function TweetDetailPage() {
             likeCount={tweet.likeCount}
             hasLiked={tweet.hasLiked}
             hasRetweeted={tweet.hasRetweeted}
+            onReply={session ? handleReply : undefined}
           />
         </div>
       </article>
 
       {/* Reply composer */}
       {session && (
-        <TweetComposer
-          parentId={tweetId}
-          placeholder="Post your reply"
-          replyToUser={{
-            username: tweet.author.username,
-            displayName: tweet.author.displayName,
-          }}
-          autoFocus={false}
-        />
+        <div ref={composerRef}>
+          <TweetComposer
+            parentId={tweetId}
+            placeholder="Post your reply"
+            replyToUser={{
+              username: tweet.author.username,
+              displayName: tweet.author.displayName,
+            }}
+            autoFocus={false}
+          />
+        </div>
       )}
 
       {/* Replies thread */}

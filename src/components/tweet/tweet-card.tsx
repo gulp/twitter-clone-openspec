@@ -163,6 +163,7 @@ export function TweetCard({
             likeCount={tweet.likeCount}
             hasLiked={hasLiked}
             hasRetweeted={hasRetweeted}
+            onReply={() => router.push(`/${tweet.author.username}/status/${tweet.id}`)}
           />
         </div>
       </div>
