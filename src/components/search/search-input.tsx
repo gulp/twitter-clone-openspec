@@ -45,8 +45,14 @@ export function SearchInput({ onQueryChange, className }: SearchInputProps) {
     if (onQueryChange) {
       onQueryChange("");
     }
-    // Clear URL query param
-    router.push("/search");
+    // Clear URL query param but preserve tab parameter
+    const params = new URLSearchParams();
+    const currentTab = searchParams.get("tab");
+    if (currentTab) {
+      params.set("tab", currentTab);
+    }
+    const newUrl = params.toString() ? `/search?${params.toString()}` : "/search";
+    router.push(newUrl);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
