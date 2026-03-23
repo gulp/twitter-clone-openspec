@@ -65,7 +65,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
 
     updateProfileMutation.mutate({
       displayName: displayName.trim() || undefined,
-      bio: bio.trim(),
+      bio: bio.trim() || null,
       avatarUrl: avatarUrls[0] || undefined,
       bannerUrl: bannerUrls[0] || undefined,
     });

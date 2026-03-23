@@ -74,6 +74,9 @@ export const userRouter = createTRPCRouter({
     if (avatarUrl) {
       validateMediaUrls([avatarUrl], userId, "avatar");
     }
+    // Normalize empty bio to null for consistency
+    const normalizedBio = bio === "" ? null : bio;
+
     if (bannerUrl) {
       validateMediaUrls([bannerUrl], userId, "banner");
     }
@@ -83,7 +86,7 @@ export const userRouter = createTRPCRouter({
       where: { id: userId },
       data: {
         ...(displayName !== undefined && { displayName }),
-        ...(bio !== undefined && { bio }),
+        ...(bio !== undefined && { bio: normalizedBio }),
         ...(avatarUrl !== undefined && { avatarUrl }),
         ...(bannerUrl !== undefined && { bannerUrl }),
       },

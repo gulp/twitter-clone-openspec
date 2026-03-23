@@ -11,7 +11,7 @@ export const passwordSchema = z.string().min(8).max(72); // bcrypt truncates at 
 
 export const displayNameSchema = z.string().min(1).max(50);
 
-export const bioSchema = z.string().max(160);
+export const bioSchema = z.string().max(160).nullable();
 
 export const tweetContentSchema = z.string().max(280);
 

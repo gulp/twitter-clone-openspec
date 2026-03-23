@@ -13,7 +13,7 @@ model User {
   email          String    @unique
   username       String    @unique
   displayName    String
-  bio            String    @default("")
+  bio            String?
   avatarUrl      String    @default("")
   bannerUrl      String    @default("")
   hashedPassword String?   // null for OAuth-only users
