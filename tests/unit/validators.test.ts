@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
   bioSchema,
   displayNameSchema,
@@ -13,6 +12,7 @@ import {
   updateProfileSchema,
   usernameSchema,
 } from "@/lib/validators";
+import { describe, expect, it } from "vitest";
 
 /**
  * Validator tests — validates all Zod schemas with boundary values and invalid formats.

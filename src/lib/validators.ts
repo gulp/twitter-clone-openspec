@@ -15,7 +15,10 @@ export const bioSchema = z.string().max(160).nullable();
 
 export const tweetContentSchema = z.string().min(1).max(280);
 
-export const emailSchema = z.string().email().transform((s) => s.toLowerCase());
+export const emailSchema = z
+  .string()
+  .email()
+  .transform((s) => s.toLowerCase());
 
 // Composite schemas for API endpoints
 export const registerSchema = z.object({
