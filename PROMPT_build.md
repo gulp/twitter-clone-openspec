@@ -54,9 +54,9 @@ reserve only the directories this task touches:
 
 ```bash
 # Examples — choose paths based on the task:
-am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "src/server/trpc/routers/auth.ts" "src/server/auth.ts" --reason "$TASK_ID"
-am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "src/components/tweet/**" --reason "$TASK_ID"
-am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "prisma/schema.prisma" --reason "$TASK_ID"
+DATABASE_URL= am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "src/server/trpc/routers/auth.ts" "src/server/auth.ts" --reason "$TASK_ID"
+DATABASE_URL= am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "src/components/tweet/**" --reason "$TASK_ID"
+DATABASE_URL= am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "prisma/schema.prisma" --reason "$TASK_ID"
 ```
 
 > Reservations are **advisory** — they signal intent, not enforce locks.
@@ -73,7 +73,7 @@ br sync --flush-only
 git add .beads/
 git commit -m "chore(beads): claim $TASK_ID in_progress"
 git push
-[ -n "$COORDINATOR" ] && am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[$TASK_ID] Start: TITLE" -b "Claiming $TASK_ID." --thread-id "$TASK_ID" || true
+[ -n "$COORDINATOR" ] && DATABASE_URL= am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[$TASK_ID] Start: TITLE" -b "Claiming $TASK_ID." --thread-id "$TASK_ID" || true
 ```
 
 ---
@@ -139,8 +139,8 @@ git commit -m "wip({scope}): description [$TASK_ID]"
 
 ```bash
 br update $TASK_ID --status=blocked
-am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME"
-[ -n "$COORDINATOR" ] && am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[$TASK_ID] Blocked: REASON" -b "Blocked on $TASK_ID: REASON." --thread-id "$TASK_ID" || true
+DATABASE_URL= am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME"
+[ -n "$COORDINATOR" ] && DATABASE_URL= am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[$TASK_ID] Blocked: REASON" -b "Blocked on $TASK_ID: REASON." --thread-id "$TASK_ID" || true
 ```
 
 Then `LOOP_COMPLETE` and exit.
@@ -221,8 +221,8 @@ git push
 **6c. Release and announce:**
 
 ```bash
-am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME"
-[ -n "$COORDINATOR" ] && am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[$TASK_ID] Complete" -b "Completed $TASK_ID. All checks pass." --thread-id "$TASK_ID" || true
+DATABASE_URL= am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME"
+[ -n "$COORDINATOR" ] && DATABASE_URL= am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[$TASK_ID] Complete" -b "Completed $TASK_ID. All checks pass." --thread-id "$TASK_ID" || true
 ```
 
 **6d. Safety net:**
@@ -249,9 +249,9 @@ br show <ID>
 br update <ID> --status=in_progress
 br close <ID> --reason "..."
 br sync --flush-only
-am file_reservations reserve <project> <agent> <paths...> --reason <ID>
-am file_reservations release <project> <agent>
-am mail send -p <slug> --from <agent> --to <coordinator> -s "subject" -b "body"
+DATABASE_URL= am file_reservations reserve <project> <agent> <paths...> --reason <ID>
+DATABASE_URL= am file_reservations release <project> <agent>
+DATABASE_URL= am mail send -p <slug> --from <agent> --to <coordinator> -s "subject" -b "body"
 ```
 
 `<agent-instructions>` tags in the conversation override all rules above.
