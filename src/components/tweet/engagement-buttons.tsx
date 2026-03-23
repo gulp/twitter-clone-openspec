@@ -35,10 +35,18 @@ export function EngagementButtons({
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [retweetCount, setRetweetCount] = useState(initialRetweetCount);
 
-  useEffect(() => { setHasLiked(initialHasLiked); }, [initialHasLiked]);
-  useEffect(() => { setHasRetweeted(initialHasRetweeted); }, [initialHasRetweeted]);
-  useEffect(() => { setLikeCount(initialLikeCount); }, [initialLikeCount]);
-  useEffect(() => { setRetweetCount(initialRetweetCount); }, [initialRetweetCount]);
+  useEffect(() => {
+    setHasLiked(initialHasLiked);
+  }, [initialHasLiked]);
+  useEffect(() => {
+    setHasRetweeted(initialHasRetweeted);
+  }, [initialHasRetweeted]);
+  useEffect(() => {
+    setLikeCount(initialLikeCount);
+  }, [initialLikeCount]);
+  useEffect(() => {
+    setRetweetCount(initialRetweetCount);
+  }, [initialRetweetCount]);
 
   const utils = trpc.useUtils();
 
