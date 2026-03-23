@@ -144,7 +144,7 @@ async function tryGetCachedFeed(
 
     // Build cache key for this page
     const cursorHash = parsedCursor ? hashCursor(parsedCursor) : "first";
-    const cacheKey = `feed:${userId}:v:${currentVersion}:page:${cursorHash}`;
+    const cacheKey = `feed:${userId}:v:${currentVersion}:page:${cursorHash}:limit:${limit}`;
 
     const cached = await cacheGet(cacheKey, requestId);
     if (!cached) {
@@ -226,7 +226,7 @@ async function fetchFeedFromDB(
 
   // Cache the result (best-effort, fail-open)
   if (acquiredLock) {
-    await cacheFeedPage(userId, parsedCursor, result, requestId);
+    await cacheFeedPage(userId, parsedCursor, result, limit, requestId);
   }
 
   return result;
@@ -421,6 +421,7 @@ async function cacheFeedPage(
   userId: string,
   parsedCursor: FeedCursor | null,
   result: FeedResult,
+  limit: number,
   requestId?: string
 ): Promise<void> {
   try {
@@ -435,7 +436,7 @@ async function cacheFeedPage(
     }
 
     const cursorHash = parsedCursor ? hashCursor(parsedCursor) : "first";
-    const cacheKey = `feed:${userId}:v:${currentVersion}:page:${cursorHash}`;
+    const cacheKey = `feed:${userId}:v:${currentVersion}:page:${cursorHash}:limit:${limit}`;
 
     await cacheSet(cacheKey, JSON.stringify(result), 60, requestId);
   } catch (error) {
