@@ -248,7 +248,7 @@ export const authRouter = createTRPCRouter({
     // Find token record
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { tokenHash },
-      include: { user: { select: { id: true, sessionVersion: true } } },
+      include: { user: { select: { id: true } } },
     });
 
     // Validate token exists, not used, and not expired
