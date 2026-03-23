@@ -171,7 +171,7 @@ async function tryGetCachedFeed(
     const tombstones = await getTombstones(requestId);
     const filtered = cachedFeed.items.filter((item) => !tombstones.has(item.id));
 
-    // Slice to requested limit to avoid over-serving (cache key doesn't include limit)
+    // Slice to requested limit after tombstone filtering
     const sliced = filtered.slice(0, limit);
 
     return {

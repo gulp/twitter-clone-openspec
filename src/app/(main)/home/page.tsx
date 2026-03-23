@@ -85,7 +85,7 @@ export default function HomePage() {
   }
 
   const isEmpty =
-    !isLoading && (!feedData?.pages[0]?.items || feedData.pages[0].items.length === 0);
+    !isLoading && !isError && (!feedData?.pages[0]?.items || feedData.pages[0].items.length === 0);
 
   return (
     <div ref={feedContainerRef} className="min-h-screen bg-[#0F1419]">
