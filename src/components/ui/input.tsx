@@ -36,7 +36,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         <div className="flex items-center justify-between mt-1">
-          {error && <p id={errorId} className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p id={errorId} className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
           {showCharCount && maxCharCount && (
             <p
               className={cn(
@@ -90,7 +94,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         <div className="flex items-center justify-between mt-1">
-          {error && <p id={errorId} className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p id={errorId} className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
           {showCharCount && maxCharCount && (
             <p
               className={cn(
