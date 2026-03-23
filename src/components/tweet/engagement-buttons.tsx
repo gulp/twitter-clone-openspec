@@ -56,6 +56,7 @@ export function EngagementButtons({
     },
     onSuccess: () => {
       // Invalidate tweet queries to sync engagement counts
+      utils.feed.home.invalidate();
       utils.tweet.getById.invalidate({ tweetId });
       utils.tweet.getReplies.invalidate({ tweetId });
     },
@@ -74,6 +75,7 @@ export function EngagementButtons({
     },
     onSuccess: () => {
       // Invalidate tweet queries to sync engagement counts
+      utils.feed.home.invalidate();
       utils.tweet.getById.invalidate({ tweetId });
       utils.tweet.getReplies.invalidate({ tweetId });
     },
