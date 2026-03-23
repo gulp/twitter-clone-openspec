@@ -45,7 +45,7 @@ test.describe("Authentication", () => {
     await expect(page.locator('[data-testid="home-feed"]')).toBeVisible();
   });
 
-  test("should logout and redirect to login", async ({ page, authPage }) => {
+  test("should logout and redirect to login", async ({ authPage }) => {
     // Login first
     await authPage.goto();
     await authPage.login("user1@test.com", "password123");

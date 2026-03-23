@@ -261,11 +261,18 @@ describe("social router", () => {
       const { user: other1 } = await createTestUser();
       const { user: other2 } = await createTestUser();
 
-      // Follow other1
+      // user follows other1, other1 follows other2
+      // This creates a mutual-connection path: user→other1→other2
       await prisma.follow.create({
         data: {
           followerId: user.id,
           followingId: other1.id,
+        },
+      });
+      await prisma.follow.create({
+        data: {
+          followerId: other1.id,
+          followingId: other2.id,
         },
       });
 

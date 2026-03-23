@@ -78,10 +78,10 @@ describe("media router", () => {
       expect(avatar.publicUrl).not.toBe(tweet.publicUrl);
       expect(banner.publicUrl).not.toBe(tweet.publicUrl);
 
-      // URLs should contain correct path segments
-      expect(avatar.publicUrl).toContain("avatars");
-      expect(banner.publicUrl).toContain("banners");
-      expect(tweet.publicUrl).toContain("tweets");
+      // URLs should contain correct path segments (singular: avatar/, banner/, tweet/)
+      expect(avatar.publicUrl).toContain("/avatar/");
+      expect(banner.publicUrl).toContain("/banner/");
+      expect(tweet.publicUrl).toContain("/tweet/");
     });
   });
 

@@ -90,7 +90,7 @@ describe("engagement router", () => {
       expect(updatedTweet!.likeCount).toBe(1);
     });
 
-    it("suppresses self-notification when liking own tweet", async () => {
+    it("rejects self-like (I6 invariant)", async () => {
       const { user } = await createTestUser();
       const tweet = await createTestTweet(user.id, {
         content: "My tweet",
@@ -98,18 +98,9 @@ describe("engagement router", () => {
 
       const caller = createTestContext(user.id);
 
-      await caller.engagement.like({ tweetId: tweet.id });
-
-      // Verify no notification was created (self-suppression)
-      const notification = await prisma.notification.findFirst({
-        where: {
-          recipientId: user.id,
-          actorId: user.id,
-          type: "LIKE",
-          tweetId: tweet.id,
-        },
-      });
-      expect(notification).toBeNull();
+      await expect(
+        caller.engagement.like({ tweetId: tweet.id })
+      ).rejects.toThrow("Cannot like your own tweet");
     });
   });
 

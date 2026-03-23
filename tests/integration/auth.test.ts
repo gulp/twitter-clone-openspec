@@ -8,14 +8,14 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { TRPCError } from "@trpc/server";
 import { prisma } from "@/server/db";
 import { redis } from "@/server/redis";
-import { cleanupDatabase, createTestContext, createTestUser, LogCapture } from "./helpers";
+import { cleanupDatabase, createTestContext, createTestUser } from "./helpers";
 import bcrypt from "bcryptjs";
 
 describe("auth router", () => {
   beforeEach(async () => {
     await cleanupDatabase();
-    // Clear rate limit keys between tests
-    const keys = await redis.keys("ratelimit:*");
+    // Clear rate limit keys between tests (actual key pattern: rate:*)
+    const keys = await redis.keys("rate:*");
     if (keys.length > 0) {
       await redis.del(...keys);
     }
@@ -251,43 +251,33 @@ describe("auth router", () => {
       // Use same IP for all requests in this test to trigger rate limit
       const sharedIp = "192.168.1.100";
 
-      const logs = new LogCapture();
-      logs.start();
+      // Clean rate limit key for this IP before test
+      await redis.del(`rate:auth:ip:${sharedIp}`);
 
-      // Make 6 registration attempts with same IP (limit is 5 per minute)
-      const promises = [];
+      // Make 6 registration attempts sequentially with same IP (limit is 5 per minute)
+      const results: (unknown | TRPCError)[] = [];
       for (let i = 0; i < 6; i++) {
         const caller = createTestContext(undefined, sharedIp);
-        promises.push(
-          caller.auth
-            .register({
-              email: `ratelimit${i}@example.com`,
-              username: `ratelimit${i}`,
-              displayName: `Rate Limit ${i}`,
-              password: "password123",
-            })
-            .catch((err) => err)
-        );
+        try {
+          const result = await caller.auth.register({
+            email: `ratelimit${i}@example.com`,
+            username: `ratelimit${i}`,
+            displayName: `Rate Limit ${i}`,
+            password: "password123",
+          });
+          results.push(result);
+        } catch (err) {
+          results.push(err);
+        }
       }
 
-      const results = await Promise.all(promises);
-
-      logs.stop();
-
-      // At least one should be rate limited
+      // At least one should be rate limited (the 6th request exceeds the 5/min limit)
       const rateLimitErrors = results.filter(
         (r) => r instanceof TRPCError && r.code === "TOO_MANY_REQUESTS"
       );
 
-      // Check if any were rate limited (depends on timing and Redis state)
-      if (rateLimitErrors.length > 0) {
-        expect(rateLimitErrors[0].message).toMatch(/Try again in \d+ seconds/);
-
-        // Verify rate limit warning was logged
-        const warnLogs = logs.getLogsByLevel("warn");
-        const rateLimitLog = warnLogs.find((log) => log.msg === "Rate limit hit");
-        expect(rateLimitLog).toBeDefined();
-      }
+      expect(rateLimitErrors.length).toBeGreaterThan(0);
+      expect((rateLimitErrors[0] as TRPCError).message).toMatch(/Try again in \d+ seconds/);
     });
   });
 });

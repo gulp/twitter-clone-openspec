@@ -47,7 +47,7 @@ test.describe("Feed", () => {
 
     // Should load more tweets (if there are more than one page)
     // Note: This test may not trigger loading if seed data has fewer than 20 tweets
-    const loadingIndicator = page.locator('[data-testid="loading-more"]');
+    void page.locator('[data-testid="loading-more"]');
 
     // Check if there's a loading state or if count increased
     const finalCount = await page.locator('[data-testid="tweet-card"]').count();
@@ -56,7 +56,7 @@ test.describe("Feed", () => {
     expect(finalCount >= initialCount).toBe(true);
   });
 
-  test("should show new tweets indicator when SSE emits", async ({ page, authPage, composerPage, feedPage }) => {
+  test("should show new tweets indicator when SSE emits", async ({ page, feedPage }) => {
     // This test requires SSE to work
     // We'll create a tweet from another user's session and verify indicator appears
 
@@ -145,7 +145,7 @@ test.describe("Feed", () => {
     const homePromise = feedPage.gotoHome();
 
     // Check for loading spinner (should appear briefly)
-    const spinner = page.locator('[data-testid="loading-feed"]');
+    void page.locator('[data-testid="loading-feed"]');
 
     await homePromise;
 

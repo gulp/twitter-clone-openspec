@@ -101,7 +101,7 @@ describe("user router", () => {
       const caller = createTestContext(user.id);
 
       const s3PublicUrl = env.S3_PUBLIC_URL;
-      const validAvatarUrl = `${s3PublicUrl}/avatars/${user.id}/photo.jpg`;
+      const validAvatarUrl = `${s3PublicUrl}/avatar/${user.id}/photo.jpg`;
 
       const result = await caller.user.updateProfile({
         avatarUrl: validAvatarUrl,

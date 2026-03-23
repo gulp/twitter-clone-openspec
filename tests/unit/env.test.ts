@@ -71,8 +71,8 @@ describe("env.ts validation schema", () => {
   });
 
   it("should handle missing optional vars without crashing", async () => {
+    // Build a clean env with only required vars (no optional vars from .env.test)
     process.env = {
-      ...originalEnv,
       DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
       REDIS_URL: "redis://localhost:6379",
       NEXTAUTH_URL: "http://localhost:3000",
@@ -85,7 +85,6 @@ describe("env.ts validation schema", () => {
       S3_PUBLIC_URL: "http://localhost:9000/test-bucket",
       APP_ORIGIN: "http://localhost:3000",
       NODE_ENV: "test",
-      // No optional vars set
     };
 
     const { env } = await import("../../src/env.js");

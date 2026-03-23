@@ -215,8 +215,8 @@ describe("tweet router", () => {
 
       // Should only return the regular tweet
       expect(result.items.length).toBe(1);
-      expect(result.items[0].id).toBe(regularTweet.id);
-      expect(result.items[0].content).toBe("Regular tweet");
+      expect(result.items[0]!.id).toBe(regularTweet.id);
+      expect(result.items[0]!.content).toBe("Regular tweet");
     });
 
     it("supports cursor pagination", async () => {

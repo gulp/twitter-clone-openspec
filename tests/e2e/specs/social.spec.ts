@@ -73,7 +73,7 @@ test.describe("Social Graph", () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  test("should update who-to-follow after following user", async ({ page, socialPage }) => {
+  test("should update who-to-follow after following user", async ({ page }) => {
     await page.goto("/home");
 
     // Check if who-to-follow sidebar exists
@@ -99,7 +99,7 @@ test.describe("Social Graph", () => {
 
     // Get the username from the first suggestion
     const usernameText = await firstSuggestion.locator('[data-testid="username"]').textContent();
-    const username = usernameText?.replace("@", "") || "";
+    expect(usernameText).toBeTruthy();
 
     // Click follow on the suggestion
     await firstSuggestion.locator('[data-testid="follow-button"]').click();

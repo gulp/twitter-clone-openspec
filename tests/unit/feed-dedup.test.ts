@@ -86,8 +86,8 @@ describe("Feed deduplication logic (SQL contract)", () => {
     });
 
     expect(deduped).toHaveLength(2);
-    expect(deduped[0].tweetId).toBe("t1");
-    expect(deduped[1].tweetId).toBe("t2");
+    expect(deduped[0]!.tweetId).toBe("t1");
+    expect(deduped[1]!.tweetId).toBe("t2");
   });
 
   it("should return empty array for empty feed", () => {

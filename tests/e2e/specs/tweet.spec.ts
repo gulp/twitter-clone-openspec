@@ -19,7 +19,7 @@ test.describe("Tweet Management", () => {
     await authPage.expectHomePage();
   });
 
-  test("should create tweet and appear in feed", async ({ page, composerPage, feedPage }) => {
+  test("should create tweet and appear in feed", async ({ composerPage, feedPage }) => {
     const tweetContent = `E2E test tweet ${Date.now()}`;
 
     await composerPage.createTweet(tweetContent);
@@ -28,7 +28,7 @@ test.describe("Tweet Management", () => {
     await feedPage.expectTweetInFeed(tweetContent);
   });
 
-  test("should show character counter at limit", async ({ page, composerPage }) => {
+  test("should show character counter at limit", async ({ page }) => {
     // Fill composer with exactly 280 characters
     const maxContent = "a".repeat(280);
     await page.fill('[data-testid="tweet-composer"]', maxContent);
@@ -48,7 +48,6 @@ test.describe("Tweet Management", () => {
   });
 
   test("should delete own tweet and remove from feed", async ({
-    page,
     composerPage,
     feedPage,
   }) => {

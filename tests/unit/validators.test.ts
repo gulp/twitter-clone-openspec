@@ -58,7 +58,11 @@ describe("passwordSchema", () => {
   });
 
   it("should accept password longer than 8 chars", () => {
-    expect(passwordSchema.parse("a".repeat(100))).toBe("a".repeat(100));
+    expect(passwordSchema.parse("a".repeat(72))).toBe("a".repeat(72));
+  });
+
+  it("should reject password longer than 72 chars (bcrypt limit)", () => {
+    expect(() => passwordSchema.parse("a".repeat(73))).toThrow();
   });
 
   it("should reject password shorter than 8 chars", () => {
@@ -212,7 +216,7 @@ describe("resetRequestSchema", () => {
 describe("resetCompleteSchema", () => {
   it("should accept valid reset completion", () => {
     const data = {
-      token: "valid-token-string",
+      token: "a".repeat(64),
       password: "newpassword123",
     };
     expect(resetCompleteSchema.parse(data)).toEqual(data);
@@ -220,7 +224,7 @@ describe("resetCompleteSchema", () => {
 
   it("should reject short password", () => {
     const data = {
-      token: "valid-token-string",
+      token: "a".repeat(64),
       password: "short",
     };
     expect(() => resetCompleteSchema.parse(data)).toThrow();
