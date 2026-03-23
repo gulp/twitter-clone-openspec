@@ -231,13 +231,30 @@ export const authOptions: NextAuthOptions = {
 
           return true;
         } catch (error) {
-          // P2002: unique constraint violation (concurrent OAuth sign-in created user)
+          // P2002: unique constraint violation
           if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-            log.info("OAuth user already created by concurrent request", {
+            // Check which unique constraint was violated
+            const target = "meta" in error && error.meta && typeof error.meta === "object" && "target" in error.meta
+              ? error.meta.target
+              : null;
+
+            // Email collision: concurrent OAuth sign-in created user between check and create
+            if (Array.isArray(target) ? target.includes("email") : target === "email") {
+              log.info("OAuth user already created by concurrent request", {
+                provider: account.provider,
+                email,
+              });
+              return true; // User exists, allow sign-in
+            }
+
+            // Username collision: CUID prefix overlap (extremely rare but possible)
+            // User was NOT created, so we must reject sign-in
+            log.error("OAuth username collision (CUID prefix overlap)", {
               provider: account.provider,
               email,
+              target,
             });
-            return true; // User exists, allow sign-in
+            return false;
           }
 
           log.error("Failed to auto-create OAuth user", {
