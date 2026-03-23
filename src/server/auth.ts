@@ -203,9 +203,9 @@ export const authOptions: NextAuthOptions = {
         // Auto-create new user
         // Generate username per §1.6: CUID prefix strategy (zero retries)
         try {
-          // Generate CUID first (using Prisma's cuid format, not cuid2)
-          const cuid = (await import("cuid")).default;
-          const userId = cuid();
+          // Generate CUID first
+          const { createId } = await import("@paralleldrive/cuid2");
+          const userId = createId();
 
           // Generate username per §1.6: CUID prefix strategy (zero retries)
           const displayName = user.name || "user";
