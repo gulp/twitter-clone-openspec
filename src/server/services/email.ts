@@ -130,7 +130,7 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
         `,
       });
 
-      let timeoutId!: NodeJS.Timeout;
+      let timeoutId: NodeJS.Timeout | undefined;
       const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => reject(new Error("Email send timeout after 30s")), 30000);
       });
@@ -144,7 +144,9 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
           previewUrl: nodemailer.getTestMessageUrl(info) || undefined,
         });
       } finally {
-        clearTimeout(timeoutId);
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+        }
       }
     } catch (error) {
       // Log error but do not throw — email sending is best-effort
