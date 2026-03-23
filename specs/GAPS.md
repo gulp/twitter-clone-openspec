@@ -21,7 +21,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] Feed cache ignores limit parameter — undocumented behavior in cache key construction
 - [ ] Tombstone lifecycle — TTL, cleanup strategy, garbage collection not documented
 - [ ] $queryRaw patterns — when to use raw SQL, type casting, DISTINCT ON semantics not documented
-- [ ] Lua script atomicity — error handling and fallback behavior not documented
+- [x] Lua script atomicity — covered in caching-lua-atomicity.md (I5, G1 mention error handling; detailed coverage in error-handling-redis-failure-policy.md)
 - [ ] Feed version initialization race — Redis failure edge case not documented (fixed in ac116e7, needs spec)
 - [ ] SSE connection limit — max 5 connections per user rationale not documented
 - [ ] Rate limiter retry-after calculation — Lua math and HTTP 429 codes not documented
@@ -31,7 +31,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 ## Medium (patterns, consistency, edge cases)
 - [ ] Cursor parsing validation — base64url decode → JSON parse → type validation pattern (search.ts:59-106, feed.ts:33-41)
 - [ ] Search input sanitization edge cases — SQL wildcard stripping before length validation causes empty string edge case (search.ts:24-51)
-- [ ] Promise.allSettled best-effort patterns — SSE fan-out with partial failures, health checks (sse-publisher.ts:138, health/route.ts:28)
+- [x] Promise.allSettled best-effort patterns — covered in error-handling-promise-patterns.md
 - [ ] Client-side form validation patterns — field-level error clearing, dynamic password strength feedback (register-form.tsx:28-70)
 - [ ] Nonce/RequestID propagation — x-nonce + x-request-id via request headers not response headers (middleware.ts:51-54)
 - [ ] SSE event type versioning — backward compatibility strategy for event format changes not documented
