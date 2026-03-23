@@ -163,9 +163,6 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google" || account?.provider === "github") {
         // Check if email is verified
         const email = user.email;
-        const emailVerified =
-          (profile as { email_verified?: boolean; verified_email?: boolean })?.email_verified ??
-          (profile as { email_verified?: boolean; verified_email?: boolean })?.verified_email;
 
         if (!email) {
           log.warn("OAuth sign-in rejected: no email provided", {
@@ -174,13 +171,22 @@ export const authOptions: NextAuthOptions = {
           return false;
         }
 
-        if (!emailVerified) {
-          log.warn("OAuth sign-in rejected: email not verified", {
-            provider: account.provider,
-            email,
-          });
-          return false;
+        // GitHub OAuth only returns verified primary email, so presence of email implies verification.
+        // Google OAuth provides explicit email_verified field.
+        if (account.provider === "google") {
+          const emailVerified =
+            (profile as { email_verified?: boolean; verified_email?: boolean })?.email_verified ??
+            (profile as { email_verified?: boolean; verified_email?: boolean })?.verified_email;
+
+          if (!emailVerified) {
+            log.warn("OAuth sign-in rejected: email not verified", {
+              provider: account.provider,
+              email,
+            });
+            return false;
+          }
         }
+        // For GitHub: email presence = verified (GitHub OAuth behavior)
 
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
