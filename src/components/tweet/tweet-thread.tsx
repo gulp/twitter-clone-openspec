@@ -4,10 +4,9 @@ import { TweetCard, type TweetCardProps } from "./tweet-card";
 
 export interface TweetThreadProps {
   tweets: TweetCardProps["tweet"][];
-  currentUserId?: string;
 }
 
-export function TweetThread({ tweets, currentUserId: _currentUserId }: TweetThreadProps) {
+export function TweetThread({ tweets }: TweetThreadProps) {
   if (tweets.length === 0) {
     return null;
   }
