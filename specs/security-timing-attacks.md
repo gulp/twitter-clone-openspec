@@ -18,9 +18,10 @@ The CredentialsProvider always runs bcrypt.compare() regardless of whether the u
 
 ```typescript
 // src/server/auth.ts:92-104
-// Pre-computed dummy hash for timing-safe comparison when user not found
-// Using bcrypt hash of "dummy_password_for_timing_safety"
-const DUMMY_HASH = "$2a$12$LQDW7KYN5Z5kqX9Z8qZ0Z.LQDW7KYN5Z5kqX9Z8qZ0ZLQDW7KYN5Z";
+// Pre-computed dummy hash for timing-safe comparison when user not found.
+// Generated via: bcrypt.hashSync("dummy_password_timing_safe", 12)
+// Must be a VALID bcrypt hash so bcrypt.compare takes ~250ms (same as real).
+const DUMMY_HASH = "$2a$12$VXIHqUNtBxGWRT0B.s95a.5bCKcQ66EXUoyCIV76EzF3H4uF/xDiq";
 
 // Always run bcrypt.compare to prevent timing oracle
 // Use dummy hash if user not found

@@ -9,7 +9,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] PII redaction policy — what gets redacted in logs (email, username, IP) not documented
 - [x] Timing-safe auth patterns — covered in security-timing-attacks.md
 - [x] Fire-and-forget email service — covered in security-email-timing-safety.md
-- [ ] SIGTERM graceful shutdown — SSE connection draining on process exit not documented (sse/route.ts:40-57)
+- [x] SIGTERM graceful shutdown — covered in sse-graceful-shutdown.md
 - [x] CSRF origin validation — covered in security-csrf-origin.md
 - [x] Session management — covered in security-session-management.md
 
