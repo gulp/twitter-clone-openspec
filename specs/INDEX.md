@@ -44,6 +44,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-wrapper-functions.md](caching-wrapper-functions.md) — Typed Redis wrappers with fail-open/fail-closed policies, structured logging, requestId correlation, Lua atomicity
 - [caching-connection-resilience.md](caching-connection-resilience.md) — Redis singleton pattern, exponential backoff retry strategy, dev-mode hot-reload safety, automatic reconnection
 - [caching-cache-aside-pattern.md](caching-cache-aside-pattern.md) — Read-through cache pattern for query results, JSON serialization, TTL + explicit invalidation, fail-open error handling
+- [caching-unread-count-strategy.md](caching-unread-count-strategy.md) — Unread notification count caching with DB fallback, Lua atomic decrement, cache-aside backfill, no TTL invalidation
 - [caching-key-construction.md](caching-key-construction.md) — Cache key uniqueness principles, parameter inclusion rules, cursor hashing, deterministic serialization
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
 - [pagination-where-clause-construction.md](pagination-where-clause-construction.md) — Compound cursor WHERE clause pattern, lexicographic comparison, row syntax, null handling, peek-ahead
