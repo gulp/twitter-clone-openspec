@@ -111,7 +111,7 @@ function TrendingWidget() {
  * Who to Follow widget — uses tRPC getSuggestions
  */
 function WhoToFollowWidget() {
-  const { data: suggestions, isLoading } = trpc.social.getSuggestions.useQuery();
+  const { data: suggestions, isLoading, isError } = trpc.social.getSuggestions.useQuery();
 
   return (
     <div
@@ -141,6 +141,13 @@ function WhoToFollowWidget() {
               </div>
             ))}
           </>
+        ) : isError ? (
+          // Error state
+          <div className="px-4 py-6 text-center">
+            <p className="text-[15px] text-[rgb(var(--color-text-tertiary))]">
+              Unable to load suggestions
+            </p>
+          </div>
         ) : suggestions && suggestions.length > 0 ? (
           suggestions.slice(0, 3).map((user: (typeof suggestions)[0]) => (
             <div
