@@ -1,7 +1,13 @@
 import { log } from "@/lib/logger";
 import { authOptions } from "@/server/auth";
-import { redis, sseAddConnection, sseGetConnections, sseRefreshConnectionTTL, sseRemoveConnection } from "@/server/redis";
-import { sseSubscriberManager, shutdownSSESubscriber } from "@/server/services/sse-subscriber";
+import {
+  redis,
+  sseAddConnection,
+  sseGetConnections,
+  sseRefreshConnectionTTL,
+  sseRemoveConnection,
+} from "@/server/redis";
+import { shutdownSSESubscriber, sseSubscriberManager } from "@/server/services/sse-subscriber";
 import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
 
@@ -109,7 +115,11 @@ export async function GET(req: NextRequest) {
   const encoder = new TextEncoder();
   let heartbeatInterval: NodeJS.Timeout | null = null;
   let isClosed = false;
-  let connTracker: { userId: string; connectionId: string; controller: ReadableStreamDefaultController } | null = null;
+  let connTracker: {
+    userId: string;
+    connectionId: string;
+    controller: ReadableStreamDefaultController;
+  } | null = null;
 
   const stream = new ReadableStream({
     async start(controller) {
