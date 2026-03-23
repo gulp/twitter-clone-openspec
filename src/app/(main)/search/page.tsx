@@ -31,6 +31,12 @@ function SearchPageContent() {
   const searchParamsRef = useRef(searchParams);
   searchParamsRef.current = searchParams;
 
+  // Sync query state with URL changes (browser back/forward, direct links)
+  useEffect(() => {
+    const urlQuery = searchParams.get("q") || "";
+    setQuery(urlQuery);
+  }, [searchParams]);
+
   // Update URL when debounced query changes
   useEffect(() => {
     const params = new URLSearchParams(searchParamsRef.current.toString());

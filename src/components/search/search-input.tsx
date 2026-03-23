@@ -52,7 +52,7 @@ export function SearchInput({ onQueryChange, className }: SearchInputProps) {
       params.set("tab", currentTab);
     }
     const newUrl = params.toString() ? `/search?${params.toString()}` : "/search";
-    router.push(newUrl);
+    router.replace(newUrl);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
