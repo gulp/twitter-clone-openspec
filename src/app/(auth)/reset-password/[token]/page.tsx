@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { passwordSchema } from "@/lib/validators";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 const resetCompleteSchema = z
@@ -39,6 +39,16 @@ export default function CompleteResetPage() {
   const [success, setSuccess] = useState(false);
 
   const completeResetMutation = trpc.auth.completeReset.useMutation();
+
+  // Redirect to login after successful reset with cleanup
+  useEffect(() => {
+    if (success) {
+      const timeoutId = setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [success, router]);
 
   const handleChange = (field: keyof ResetFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -106,11 +116,6 @@ export default function CompleteResetPage() {
       });
 
       setSuccess(true);
-
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
     } catch (error: unknown) {
       console.error("Password reset completion error:", error);
       const message =
