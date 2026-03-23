@@ -25,6 +25,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [error-handling-failopen-null-checks.md](error-handling-failopen-null-checks.md) — Null return handling from fail-open wrappers, version initialization race fix, defensive fallback patterns
 - [error-handling-validation.md](error-handling-validation.md) — Zod schema validation, business rule checks, authorization vs input errors
 - [error-handling-promise-patterns.md](error-handling-promise-patterns.md) — Promise.all() fail-fast vs Promise.allSettled() best-effort patterns, fail-open group error handling, concurrent operation trade-offs
+- [error-handling-subsystem-failure-policies.md](error-handling-subsystem-failure-policies.md) — Subsystem failure matrix (PostgreSQL/Redis/S3/Email/SSE), retry policy, media URL validation, orphan handling
 - [security-csrf-and-headers.md](security-csrf-and-headers.md) — Origin header CSRF protection, CSP with nonces, request ID propagation
 - [security-csrf-origin.md](security-csrf-origin.md) — CSRF protection via Origin header validation in Edge middleware
 - [security-rate-limiting.md](security-rate-limiting.md) — Redis sliding-window rate limiter with fail-open/fail-closed policies

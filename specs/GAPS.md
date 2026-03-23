@@ -27,9 +27,9 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Rate limiter retry-after calculation — covered in security-rate-limit-retry-after.md
 - [x] Feed assembly — covered in caching-feed-assembly.md
 - [x] Cursor pagination — covered in pagination-cursor-encoding.md
-- [ ] PostgreSQL connection failure handling — §10 error policy not documented (Prisma throws → INTERNAL_SERVER_ERROR, no app-level retry)
-- [ ] S3 pre-signed URL failure handling — media upload error policy not documented (§10: INTERNAL_SERVER_ERROR with 'Upload temporarily unavailable')
-- [ ] Media URL validation and orphan handling — validateMediaUrls ownership enforcement, S3 orphan cleanup strategy (media.ts:98)
+- [x] PostgreSQL connection failure handling — covered in error-handling-subsystem-failure-policies.md
+- [x] S3 pre-signed URL failure handling — covered in error-handling-subsystem-failure-policies.md
+- [x] Media URL validation and orphan handling — covered in error-handling-subsystem-failure-policies.md
 
 ## Medium (patterns, consistency, edge cases)
 - [x] Cursor parsing validation — covered in pagination-cursor-validation.md — base64url decode → JSON parse → type validation pattern (search.ts:59-106, feed.ts:33-41)
@@ -57,7 +57,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] Image utilities client-side canvas operations — image-utils.ts cover-crop algorithm, JPEG quality 0.95, memory impact
 - [ ] Redis session invalidation error handling — auth.ts:299 silent .catch on sessionDel, fail-open/closed policy
 - [ ] Lua script loading and caching — sse-publisher.ts:44-62 singleton pattern, script not found handling
-- [ ] Error handling philosophy — unifying spec for §10 subsystem failure matrix (PostgreSQL/Redis/S3/Email/SSE policies)
+- [x] Error handling philosophy — covered in error-handling-subsystem-failure-policies.md
 
 ## Low (polish, optimization, developer experience)
 - [ ] Image loading fallback — Avatar onError to /placeholder-avatar.png pattern (avatar.tsx:20-25, 43)
