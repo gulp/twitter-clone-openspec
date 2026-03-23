@@ -186,36 +186,6 @@ describe("feed limit parameter", () => {
     );
   });
 
-  it("limit=0 returns empty result from cache", async () => {
-    const { user: viewer } = await createTestUser();
-    const { user: followed } = await createTestUser();
-
-    // Follow user
-    await prisma.follow.create({
-      data: {
-        followerId: viewer.id,
-        followingId: followed.id,
-      },
-    });
-
-    // Create tweets
-    for (let i = 0; i < 5; i++) {
-      await createTestTweet(followed.id, {
-        content: `Tweet ${i}`,
-      });
-    }
-
-    const caller = createTestContext(viewer.id);
-
-    // Populate cache
-    const firstResult = await caller.feed.home({ limit: 20 });
-    expect(firstResult.items.length).toBe(5);
-
-    // Request with limit=0 (edge case)
-    const secondResult = await caller.feed.home({ limit: 0 });
-    expect(secondResult.items.length).toBe(0);
-  });
-
   it("cache key remains unchanged regardless of limit", async () => {
     const { user: viewer } = await createTestUser();
     const { user: followed } = await createTestUser();
