@@ -94,6 +94,12 @@ export function ImageUpload({
         continue;
       }
 
+      // Re-check size after resize (edge case: resize with high quality can increase size)
+      if (processedFile.size > MAX_MEDIA_SIZE_BYTES) {
+        setValidationError(`Processed file too large. Maximum size is 5MB.`);
+        continue;
+      }
+
       validFiles.push(processedFile);
     }
 
