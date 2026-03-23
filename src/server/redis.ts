@@ -336,7 +336,7 @@ export async function getUnreadCount(userId: string, requestId?: string): Promis
  */
 export async function setUnreadCount(userId: string, count: number, requestId?: string): Promise<void> {
   try {
-    await redis.set(`notification:unread:${userId}`, count.toString());
+    await redis.setex(`notification:unread:${userId}`, 300, count.toString());
   } catch (error) {
     log.warn("Redis operation failed", {
       feature: "unread",
@@ -352,10 +352,18 @@ export async function setUnreadCount(userId: string, count: number, requestId?: 
  * Unread notification count — fail open.
  * Increment unread notification count.
  * No-op on Redis failure.
+ * Sets 5-minute TTL atomically to prevent stale keys.
  */
 export async function incrUnreadCount(userId: string, requestId?: string): Promise<void> {
   try {
-    await redis.incr(`notification:unread:${userId}`);
+    // Atomic INCR + EXPIRE to prevent stale keys
+    const lua = `
+      local key = KEYS[1]
+      local val = redis.call('INCR', key)
+      redis.call('EXPIRE', key, 300)
+      return val
+    `;
+    await redis.eval(lua, 1, `notification:unread:${userId}`);
   } catch (error) {
     log.warn("Redis operation failed", {
       feature: "unread",
@@ -370,15 +378,19 @@ export async function incrUnreadCount(userId: string, requestId?: string): Promi
  * Unread notification count — fail open.
  * Decrement unread notification count.
  * No-op on Redis failure.
+ * Sets 5-minute TTL atomically to prevent stale keys.
  */
 export async function decrUnreadCount(userId: string, requestId?: string): Promise<void> {
   try {
     // Use Lua to floor at 0 — DECR alone can go negative if count is already 0
+    // Also atomically refresh TTL to prevent stale keys
     const lua = `
       local key = KEYS[1]
       local val = redis.call('GET', key)
       if val and tonumber(val) > 0 then
-        return redis.call('DECR', key)
+        local newVal = redis.call('DECR', key)
+        redis.call('EXPIRE', key, 300)
+        return newVal
       end
       return 0
     `;
