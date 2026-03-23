@@ -33,7 +33,7 @@ export const mediaRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
-      const { filename, contentType, purpose } = input;
+      const { contentType, purpose } = input;
 
       // Rate limit check: prevent S3 pre-signed URL abuse (10/hour per user)
       const rateLimit = await checkMediaUploadRateLimit(userId);
@@ -52,8 +52,8 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      // Extract file extension from filename or content type
-      const ext = extractExtension(filename, contentType);
+      // Extract file extension from validated content type
+      const ext = extractExtension(contentType);
 
       // Generate S3 key: {purpose}/{userId}/{cuid}.{ext}
       const fileId = createId();
@@ -73,17 +73,15 @@ export const mediaRouter = createTRPCRouter({
 });
 
 /**
- * Extract file extension from filename or content type.
- * Falls back to content type mapping if filename has no extension.
+ * Extract file extension from validated content type.
+ *
+ * Always derives extension from content type (not filename) to prevent
+ * misleading S3 keys (e.g., malicious.exe with image/jpeg content type).
+ * Content type is already validated against ALLOWED_MIME_TYPES before this function.
  */
-function extractExtension(filename: string, contentType: string): string {
-  // Try filename extension first
-  const match = filename.match(/\.([^.]+)$/);
-  if (match?.[1]) {
-    return match[1].toLowerCase();
-  }
-
-  // Fallback to content type mapping
+function extractExtension(contentType: string): string {
+  // Always use content type mapping for security
+  // (filename extension could be misleading, e.g., .exe)
   const typeMap: Record<string, string> = {
     "image/jpeg": "jpg",
     "image/png": "png",
@@ -91,7 +89,16 @@ function extractExtension(filename: string, contentType: string): string {
     "image/webp": "webp",
   };
 
-  return typeMap[contentType] || "jpg";
+  const extension = typeMap[contentType];
+
+  if (!extension) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Unsupported content type",
+    });
+  }
+
+  return extension;
 }
 
 /**
