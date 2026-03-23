@@ -1,5 +1,6 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { OAuthButtons } from "@/components/auth/oauth-buttons";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -27,16 +28,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <Suspense
-        fallback={
-          <div
-            className="h-64 animate-pulse bg-gray-800/20 rounded-lg"
-            role="status"
-            aria-busy="true"
-            aria-label="Loading"
-          />
-        }
-      >
+      <Suspense fallback={<Skeleton className="h-64 bg-gray-800/20 rounded-lg" />}>
         <LoginForm />
       </Suspense>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { FollowButton } from "@/components/social/follow-button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Search } from "lucide-react";
 import Link from "next/link";
@@ -128,14 +129,14 @@ function WhoToFollowWidget() {
           // Loading skeletons
           <>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="px-4 py-3" role="status" aria-busy="true" aria-label="Loading">
+              <div key={i} className="px-4 py-3">
                 <div className="flex items-start gap-3">
-                  <div className="h-12 w-12 rounded-full bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
+                  <Skeleton className="h-12 w-12 rounded-full bg-[rgb(var(--color-bg-tertiary))]" />
                   <div className="flex-1">
-                    <div className="h-4 w-24 rounded bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
-                    <div className="mt-1 h-3 w-16 rounded bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
+                    <Skeleton className="h-4 w-24 rounded bg-[rgb(var(--color-bg-tertiary))]" />
+                    <Skeleton className="mt-1 h-3 w-16 rounded bg-[rgb(var(--color-bg-tertiary))]" />
                   </div>
-                  <div className="h-8 w-20 rounded-full bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
+                  <Skeleton className="h-8 w-20 rounded-full bg-[rgb(var(--color-bg-tertiary))]" />
                 </div>
               </div>
             ))}
