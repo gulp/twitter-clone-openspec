@@ -3,6 +3,7 @@
 Sorted by priority. Checked items are addressed in existing specs.
 
 ## Critical (security, data integrity, auth)
+- [ ] Database CHECK constraints (§1.21) — All four constraints implemented (migration.sql:239-246: User_counts_nonneg, Tweet_counts_nonneg, Tweet_deleted_consistency, Tweet_content_or_media) but not documented in specs. Plan lines 427-442. PRIORITY: data integrity guardrails.
 - [x] Silent configuration validation — covered in security-env-validation-edge-runtime.md
 - [x] Password reset token race condition — covered in security-password-reset-tokens.md (UPDATED with SELECT FOR UPDATE implementation)
 - [x] Password sanitization rules — covered in security-password-validation.md
@@ -15,12 +16,12 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] CUID vs CUID2 mismatch — covered in database-id-generation-strategy.md (OAuth uses CUID correctly, media router uses CUID2 for S3 keys intentionally)
 
 ## High (core features, caching, pagination)
-- [ ] Security headers: HSTS missing in production — Plan §1.17 (line 375) specifies "Strict-Transport-Security: max-age=31536000; includeSubDomains" but middleware.ts does not implement it.
+- [x] Security headers: HSTS in production — covered in security-csrf-and-headers.md (next.config.mjs:45-52 implements conditional HSTS for production)
 - [x] Quote tweet design decisions — covered in engagement-quote-tweet-design.md
 - [x] JSON parsing safety — covered in caching-json-parsing-safety.md
 - [x] User select patterns (§1.13) — covered in security-user-select-patterns.md
 - [ ] Batch engagement state checks (§1.16) — Promise.all + Set pattern implemented (feed.ts:119-131, search.ts:183-201) but no dedicated spec. Plan lines 358-365.
-- [ ] Database CHECK constraints (§1.21) — All four constraints implemented (migration.sql:239-246: User_counts_nonneg, Tweet_counts_nonneg, Tweet_deleted_consistency, Tweet_content_or_media) but not documented in specs. Plan lines 427-442.
+- [ ] Full-text search implementation (§1.11) — tsvector GENERATED column, GIN index, ts_rank usage (search.ts:131-188, migration.sql:220) but no spec documenting ranking algorithm, phrase search behavior, or SQL patterns. Plan lines 302-303.
 - [ ] Fire-and-forget async patterns — void (async () => {})() used inconsistently (email.ts:94-126, sse-publisher.ts:120-161, api/sse/route.ts). No policy doc.
 - [ ] Silent .catch() error suppression policy — engagement-buttons.tsx:154, auth.ts sessionDel, api/sse/route.ts cleanup use silent suppression. No spec defining when acceptable vs requires logging.
 - [ ] Promise.allSettled vs Promise.all consistency — SSE uses allSettled (sse-publisher.ts:203), feed uses all (feed.ts:312), tweets use all (tweet.ts:143-152). No unified policy.
