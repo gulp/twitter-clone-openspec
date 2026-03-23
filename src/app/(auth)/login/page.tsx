@@ -26,7 +26,7 @@ function getOAuthErrorMessage(errorCode: string | null): string | null {
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: { error?: string; callbackUrl?: string };
 }) {
   const oauthError = getOAuthErrorMessage(searchParams.error ?? null);
 
@@ -43,7 +43,7 @@ export default function LoginPage({
         </div>
       )}
 
-      <OAuthButtons />
+      <OAuthButtons callbackUrl={searchParams.callbackUrl} />
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

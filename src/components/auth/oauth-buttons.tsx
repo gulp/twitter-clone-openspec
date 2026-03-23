@@ -1,18 +1,21 @@
 "use client";
 
+import { safeRedirectUrl } from "@/lib/utils";
 import { signIn } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export function OAuthButtons() {
+export function OAuthButtons({ callbackUrl }: { callbackUrl?: string }) {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleOAuthSignIn = (provider: "google" | "github") => {
     setLoadingProvider(provider);
-    void signIn(provider, { callbackUrl: "/home" });
+    const validatedCallbackUrl = safeRedirectUrl(callbackUrl);
+    void signIn(provider, { callbackUrl: validatedCallbackUrl });
 
     // Clear loading state after 10s if redirect hasn't happened
     // Handles edge cases: popup blocked, network error, user cancels OAuth
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setLoadingProvider(null);
     }, 10000);
   };
@@ -20,7 +23,9 @@ export function OAuthButtons() {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      setLoadingProvider(null);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
