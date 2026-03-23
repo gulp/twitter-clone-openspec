@@ -2,7 +2,7 @@
 
 import { ImageUpload } from "@/components/media/image-upload";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { trpc } from "@/lib/trpc";
 import { useSession } from "next-auth/react";
@@ -71,9 +71,7 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
     });
   };
 
-  const bioLength = bio.length;
   const bioMaxLength = 160;
-  const displayNameLength = displayName.length;
   const displayNameMaxLength = 50;
 
   return (
@@ -105,8 +103,8 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
           disabled={
             updateProfileMutation.isPending ||
             !displayName.trim() ||
-            displayNameLength > displayNameMaxLength ||
-            bioLength > bioMaxLength
+            displayName.length > displayNameMaxLength ||
+            bio.length > bioMaxLength
           }
           className="bg-[#E7E9EA] text-[#0F1419] hover:bg-[#d7d9db] font-bold rounded-full px-4"
         >
@@ -208,44 +206,32 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
         <div className="px-4 pb-6 space-y-6">
           {/* Display Name */}
           <div>
-            <label htmlFor="displayName" className="sr-only">
-              Display name
-            </label>
-            <div className="relative">
-              <Input
-                id="displayName"
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                maxLength={displayNameMaxLength}
-                placeholder="Display name"
-                className="bg-transparent border border-[#536471] text-[#E7E9EA] placeholder:text-[#71767B] focus:border-[#1DA1F2] focus:ring-1 focus:ring-[#1DA1F2] rounded"
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#71767B] tabular-nums">
-                {displayNameLength}/{displayNameMaxLength}
-              </div>
-            </div>
+            <Input
+              id="displayName"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              maxLength={displayNameMaxLength}
+              placeholder="Display name"
+              showCharCount
+              maxCharCount={displayNameMaxLength}
+              className="bg-transparent border border-[#536471] text-[#E7E9EA] placeholder:text-[#71767B] focus:border-[#1DA1F2] focus:ring-1 focus:ring-[#1DA1F2] rounded"
+            />
           </div>
 
           {/* Bio */}
           <div>
-            <label htmlFor="bio" className="sr-only">
-              Bio
-            </label>
-            <div className="relative">
-              <textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                maxLength={bioMaxLength}
-                placeholder="Bio"
-                rows={3}
-                className="w-full bg-transparent border border-[#536471] text-[#E7E9EA] placeholder:text-[#71767B] focus:border-[#1DA1F2] focus:ring-1 focus:ring-[#1DA1F2] rounded px-3 py-3 resize-none focus:outline-none"
-              />
-              <div className="absolute right-3 bottom-3 text-xs text-[#71767B] tabular-nums">
-                {bioLength}/{bioMaxLength}
-              </div>
-            </div>
+            <Textarea
+              id="bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              maxLength={bioMaxLength}
+              placeholder="Bio"
+              rows={3}
+              showCharCount
+              maxCharCount={bioMaxLength}
+              className="bg-transparent border border-[#536471] text-[#E7E9EA] placeholder:text-[#71767B] focus:border-[#1DA1F2] focus:ring-1 focus:ring-[#1DA1F2] rounded"
+            />
           </div>
 
           {updateProfileMutation.isError && (
