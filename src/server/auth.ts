@@ -231,6 +231,15 @@ export const authOptions: NextAuthOptions = {
 
           return true;
         } catch (error) {
+          // P2002: unique constraint violation (concurrent OAuth sign-in created user)
+          if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
+            log.info("OAuth user already created by concurrent request", {
+              provider: account.provider,
+              email,
+            });
+            return true; // User exists, allow sign-in
+          }
+
           log.error("Failed to auto-create OAuth user", {
             provider: account.provider,
             email,
