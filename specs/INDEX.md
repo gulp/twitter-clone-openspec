@@ -51,6 +51,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-unread-count-strategy.md](caching-unread-count-strategy.md) — Unread notification count caching with DB fallback, Lua atomic decrement, cache-aside backfill, no TTL invalidation
 - [caching-key-construction.md](caching-key-construction.md) — Cache key uniqueness principles, parameter inclusion rules, cursor hashing, deterministic serialization
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
+- [pagination-cursor-validation.md](pagination-cursor-validation.md) — Base64url decode → JSON parse → type validation patterns, Zod transforms vs standalone parsers, error conversion, Date/NaN edge cases
 - [pagination-where-clause-construction.md](pagination-where-clause-construction.md) — Compound cursor WHERE clause pattern, lexicographic comparison, row syntax, null handling, peek-ahead
 - [database-queryraw-patterns.md](database-queryraw-patterns.md) — $queryRaw usage for full-text search, CTEs, DISTINCT ON, UNION, Prisma.sql safe interpolation, type casting, row-value comparisons
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
