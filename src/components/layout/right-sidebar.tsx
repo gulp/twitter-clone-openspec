@@ -131,12 +131,12 @@ function WhoToFollowWidget() {
             {[1, 2, 3].map((i) => (
               <div key={i} className="px-4 py-3">
                 <div className="flex items-start gap-3">
-                  <Skeleton className="h-12 w-12 rounded-full bg-[rgb(var(--color-bg-tertiary))]" />
+                  <Skeleton className="h-12 w-12 rounded-full" />
                   <div className="flex-1">
-                    <Skeleton className="h-4 w-24 rounded bg-[rgb(var(--color-bg-tertiary))]" />
-                    <Skeleton className="mt-1 h-3 w-16 rounded bg-[rgb(var(--color-bg-tertiary))]" />
+                    <Skeleton className="h-4 w-24 rounded" />
+                    <Skeleton className="mt-1 h-3 w-16 rounded" />
                   </div>
-                  <Skeleton className="h-8 w-20 rounded-full bg-[rgb(var(--color-bg-tertiary))]" />
+                  <Skeleton className="h-8 w-20 rounded-full" />
                 </div>
               </div>
             ))}

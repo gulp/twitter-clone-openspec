@@ -36,14 +36,14 @@ export function FeedList() {
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="px-4 py-3">
             <div className="flex gap-3">
-              <Skeleton className="w-12 h-12 rounded-full bg-[#38444d]" />
+              <Skeleton className="w-12 h-12 rounded-full" />
               <div className="flex-1 space-y-3">
-                <Skeleton className="h-4 w-32 bg-[#38444d]" />
-                <Skeleton className="h-16 w-full bg-[#38444d]" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-16 w-full" />
                 <div className="flex gap-4">
-                  <Skeleton className="h-4 w-12 bg-[#38444d]" />
-                  <Skeleton className="h-4 w-12 bg-[#38444d]" />
-                  <Skeleton className="h-4 w-12 bg-[#38444d]" />
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-12" />
                 </div>
               </div>
             </div>
@@ -90,10 +90,10 @@ export function FeedList() {
         {isFetchingNextPage && (
           <div className="px-4">
             <div className="flex gap-3">
-              <Skeleton className="w-12 h-12 rounded-full bg-[#38444d]" />
+              <Skeleton className="w-12 h-12 rounded-full" />
               <div className="flex-1 space-y-3">
-                <Skeleton className="h-4 w-32 bg-[#38444d]" />
-                <Skeleton className="h-16 w-full bg-[#38444d]" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-16 w-full" />
               </div>
             </div>
           </div>

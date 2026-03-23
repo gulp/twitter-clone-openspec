@@ -59,13 +59,13 @@ export default function NotificationsPage() {
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="px-4 py-3">
               <div className="flex gap-3">
-                <Skeleton className="w-10 h-10 rounded-full bg-[#38444d]" />
+                <Skeleton className="w-10 h-10 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <div className="flex gap-2">
-                    <Skeleton className="w-8 h-8 rounded-full bg-[#38444d]" />
-                    <Skeleton className="h-4 w-32 bg-[#38444d]" />
+                    <Skeleton className="w-8 h-8 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
                   </div>
-                  <Skeleton className="h-12 w-full bg-[#38444d]" />
+                  <Skeleton className="h-12 w-full" />
                 </div>
               </div>
             </div>
@@ -162,10 +162,10 @@ export default function NotificationsPage() {
             {isFetchingNextPage && (
               <div className="px-4">
                 <div className="flex gap-3">
-                  <Skeleton className="w-10 h-10 rounded-full bg-[#38444d]" />
+                  <Skeleton className="w-10 h-10 rounded-full" />
                   <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-32 bg-[#38444d]" />
-                    <Skeleton className="h-12 w-full bg-[#38444d]" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-12 w-full" />
                   </div>
                 </div>
               </div>

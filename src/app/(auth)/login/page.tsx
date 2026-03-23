@@ -28,7 +28,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <Suspense fallback={<Skeleton className="h-64 bg-gray-800/20 rounded-lg" />}>
+      <Suspense fallback={<Skeleton className="h-64 rounded-lg" />}>
         <LoginForm />
       </Suspense>
 

@@ -219,6 +219,7 @@ The master plan (`plans/twitter-clone.md`) is authoritative for architecture dec
 - **Auth sessions:** JWT strategy with Redis-backed invalidation via `jti` claim.
 - **Media uploads:** Pre-signed S3 PUT URLs. Client uploads directly. No server proxy.
 - **Full-text search:** PostgreSQL `tsvector` generated column with GIN index. Raw SQL via `prisma.$queryRaw`.
+- **Skeleton loaders:** Use `<Skeleton />` component (src/components/ui/skeleton.tsx) for all loading states. Shimmer effect (default) provides visual consistency. Never use inline `animate-pulse` or hardcoded background colors.
 - **No edit in v1.** No DMs, video, ML ranking, content moderation.
 
 ## MCP Tools

@@ -2,6 +2,7 @@
 
 import { SearchInput } from "@/components/search/search-input";
 import { SearchResults } from "@/components/search/search-results";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -96,12 +97,7 @@ export default function SearchPage() {
         <div className="min-h-screen bg-[#0F1419]">
           <div className="sticky top-0 z-20 backdrop-blur-md bg-[#0F1419]/95 border-b border-[#38444d]">
             <div className="px-4 py-3">
-              <div
-                className="h-10 bg-[#202327] rounded-full animate-pulse"
-                role="status"
-                aria-busy="true"
-                aria-label="Loading"
-              />
+              <Skeleton className="h-10 rounded-full" />
             </div>
           </div>
         </div>
