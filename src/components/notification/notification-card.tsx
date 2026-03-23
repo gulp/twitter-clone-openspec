@@ -108,8 +108,8 @@ export function NotificationCard({ notification }: NotificationCardProps) {
     } else if (notification.tweet && !notification.tweet.deleted) {
       // Navigate to tweet detail page (use tweet author, not notification actor)
       router.push(`/${notification.tweet.author.username}/status/${notification.tweet.id}`);
-    } else if (!notification.tweet) {
-      // Follow notification without tweet - go to actor profile
+    } else {
+      // Fallback: deleted tweet or no tweet - go to actor profile
       router.push(`/${notification.actor.username}`);
     }
   };
