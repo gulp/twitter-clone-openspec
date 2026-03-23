@@ -18,7 +18,7 @@ export interface TabsProps {
 export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
   return (
     <div className={cn("w-full", className)}>
-      <div className="border-b border-gray-200">
+      <div className="border-b border-[rgb(var(--color-border-primary))]">
         <nav className="flex -mb-px" aria-label="Tabs">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
@@ -28,10 +28,10 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
                 type="button"
                 onClick={() => onChange(tab.id)}
                 className={cn(
-                  "py-4 px-6 text-center border-b-2 font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                  "py-4 px-6 text-center border-b-2 font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-brand))] focus:ring-offset-2",
                   isActive
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-[rgb(var(--color-brand))] text-[rgb(var(--color-brand))]"
+                    : "border-transparent text-[rgb(var(--color-text-tertiary))] hover:text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-border-secondary))]"
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
