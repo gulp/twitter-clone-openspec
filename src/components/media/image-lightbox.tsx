@@ -18,6 +18,13 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
     onCloseRef.current = onClose;
   }, [onClose]);
 
+  // Clamp currentIndex when images array changes
+  useEffect(() => {
+    if (currentIndex >= images.length && images.length > 0) {
+      setCurrentIndex(images.length - 1);
+    }
+  }, [images, currentIndex]);
+
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
     setImageError(false);
