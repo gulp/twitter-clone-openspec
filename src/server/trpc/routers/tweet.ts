@@ -210,6 +210,7 @@ export const tweetRouter = createTRPCRouter({
    * - Atomic count decrements (tweetCount, replyCount if reply)
    * - Adds to Redis tombstones:tweets set (60s TTL)
    * - Publishes tweet_deleted SSE event (TODO: E1)
+   * - Uses updateMany with WHERE deleted=false to prevent concurrent delete race
    */
   delete: protectedProcedure
     .input(z.object({ tweetId: z.string() }))
@@ -217,14 +218,13 @@ export const tweetRouter = createTRPCRouter({
       const userId = ctx.session.user.id;
       const { tweetId } = input;
 
-      // Fetch tweet to verify ownership
+      // Fetch tweet to verify ownership and get parentId
       const tweet = await prisma.tweet.findUnique({
         where: { id: tweetId },
         select: {
           id: true,
           authorId: true,
           parentId: true,
-          deleted: true,
         },
       });
 
@@ -235,11 +235,6 @@ export const tweetRouter = createTRPCRouter({
         });
       }
 
-      if (tweet.deleted) {
-        // Already deleted, idempotent success
-        return { success: true };
-      }
-
       // Verify ownership (I1.14)
       if (tweet.authorId !== userId) {
         throw new TRPCError({
@@ -248,15 +243,28 @@ export const tweetRouter = createTRPCRouter({
         });
       }
 
-      // Transaction: soft-delete + decrement counts (I3)
+      // Atomic update: only mark as deleted if not already deleted
+      // This prevents race conditions where two concurrent deletes both pass the check
+      // Pattern from auth.ts:269-296 completeReset
+      const updateResult = await prisma.tweet.updateMany({
+        where: {
+          id: tweetId,
+          deleted: false,
+        },
+        data: {
+          deleted: true,
+          deletedAt: new Date(),
+        },
+      });
+
+      // If count is 0, the tweet was already deleted by a concurrent request
+      if (updateResult.count === 0) {
+        // Already deleted, idempotent success
+        return { success: true };
+      }
+
+      // Now decrement counts (only executed if the update succeeded)
       const operations: Prisma.PrismaPromise<unknown>[] = [
-        prisma.tweet.update({
-          where: { id: tweetId },
-          data: {
-            deleted: true,
-            deletedAt: new Date(),
-          },
-        }),
         prisma.user.update({
           where: { id: userId },
           data: { tweetCount: { decrement: 1 } },
