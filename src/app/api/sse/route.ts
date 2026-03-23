@@ -1,8 +1,7 @@
-import { env } from "@/env";
 import { log } from "@/lib/logger";
 import { authOptions } from "@/server/auth";
 import { redis, sseAddConnection, sseGetConnections, sseRefreshConnectionTTL, sseRemoveConnection } from "@/server/redis";
-import Redis from "ioredis";
+import { sseSubscriberManager, shutdownSSESubscriber } from "@/server/services/sse-subscriber";
 import { getServerSession } from "next-auth";
 import type { NextRequest } from "next/server";
 
@@ -54,6 +53,11 @@ process.once("SIGTERM", () => {
   }
 
   activeConnections.clear();
+
+  // Shutdown shared subscriber
+  shutdownSSESubscriber().catch((error) => {
+    console.error("[SSE] Failed to shutdown subscriber:", error);
+  });
 });
 
 export async function GET(req: NextRequest) {
@@ -97,18 +101,9 @@ export async function GET(req: NextRequest) {
   // Track connection in Redis
   await sseAddConnection(userId, connectionId);
 
-  // Create Redis subscriber instance (separate from main client)
-  const subscriber = new Redis(env.REDIS_URL, {
-    maxRetriesPerRequest: 3,
-    retryStrategy(times) {
-      const delay = Math.min(times * 50, 2000);
-      return delay;
-    },
-  });
-
-  // Subscribe to user's channel
+  // Subscribe to user's channel via shared subscriber manager
   const channel = `sse:user:${userId}`;
-  await subscriber.subscribe(channel);
+  let unsubscribe: (() => void) | null = null;
 
   // SSE stream setup
   const encoder = new TextEncoder();
@@ -179,8 +174,8 @@ export async function GET(req: NextRequest) {
           }
         }, 30000);
 
-        // Handle incoming Redis Pub/Sub messages
-        subscriber.on("message", async (ch, message) => {
+        // Subscribe to channel via shared subscriber manager
+        unsubscribe = await sseSubscriberManager.subscribe(channel, (ch, message) => {
           if (ch !== channel || isClosed) return;
 
           try {
@@ -206,15 +201,6 @@ export async function GET(req: NextRequest) {
             });
           }
         });
-
-        // Handle subscriber errors
-        subscriber.on("error", (error) => {
-          console.error("[SSE] Subscriber error:", {
-            userId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-          cleanup();
-        });
       } catch (error) {
         console.error("[SSE] Stream start error:", {
           userId,
@@ -234,9 +220,10 @@ export async function GET(req: NextRequest) {
           heartbeatInterval = null;
         }
 
-        // Unsubscribe from Redis
-        subscriber.unsubscribe(channel).catch(() => {});
-        subscriber.quit().catch(() => {});
+        // Unsubscribe from shared subscriber
+        if (unsubscribe) {
+          unsubscribe();
+        }
 
         // Remove from Redis connection tracking
         sseRemoveConnection(userId, connectionId).catch(() => {});
@@ -262,8 +249,10 @@ export async function GET(req: NextRequest) {
           clearInterval(heartbeatInterval);
         }
 
-        subscriber.unsubscribe(channel).catch(() => {});
-        subscriber.quit().catch(() => {});
+        // Unsubscribe from shared subscriber
+        if (unsubscribe) {
+          unsubscribe();
+        }
 
         sseRemoveConnection(userId, connectionId).catch(() => {});
 

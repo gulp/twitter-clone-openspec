@@ -19,6 +19,7 @@ interface UploadingFile {
   preview: string;
   progress: number;
   error?: string;
+  xhr?: XMLHttpRequest;
 }
 
 export function ImageUpload({
@@ -98,9 +99,17 @@ export function ImageUpload({
         });
 
         // Upload file to S3
-        await uploadToS3(uploadUrl, file, (progress) => {
-          setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
-        });
+        await uploadToS3(
+          uploadUrl,
+          file,
+          (progress) => {
+            setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
+          },
+          (xhr) => {
+            // Store xhr reference so it can be aborted
+            setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, xhr } : f)));
+          }
+        );
 
         // Add to uploaded URLs — use ref for current value to avoid stale closure
         onChange([...urlsRef.current, publicUrl]);
@@ -117,6 +126,8 @@ export function ImageUpload({
               : f
           )
         );
+        // Clean up preview URL on error to prevent memory leak
+        URL.revokeObjectURL(preview);
       }
     }
   };
@@ -160,10 +171,14 @@ export function ImageUpload({
   const uploadToS3 = async (
     uploadUrl: string,
     file: File,
-    onProgress: (progress: number) => void
+    onProgress: (progress: number) => void,
+    onXhrCreated?: (xhr: XMLHttpRequest) => void
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+
+      // 60 second timeout for upload
+      xhr.timeout = 60000;
 
       xhr.upload.addEventListener("progress", (e) => {
         if (e.lengthComputable) {
@@ -184,6 +199,17 @@ export function ImageUpload({
         reject(new Error("Network error during upload"));
       });
 
+      xhr.addEventListener("timeout", () => {
+        reject(new Error("Upload timeout"));
+      });
+
+      xhr.addEventListener("abort", () => {
+        reject(new Error("Upload cancelled"));
+      });
+
+      // Notify caller of xhr instance so it can be aborted
+      onXhrCreated?.(xhr);
+
       xhr.open("PUT", uploadUrl);
       xhr.setRequestHeader("Content-Type", file.type);
       xhr.send(file);
@@ -197,6 +223,10 @@ export function ImageUpload({
   const handleRemoveUploading = (fileId: string) => {
     const file = uploadingFiles.find((f) => f.id === fileId);
     if (file) {
+      // Abort ongoing upload if xhr exists
+      if (file.xhr) {
+        file.xhr.abort();
+      }
       URL.revokeObjectURL(file.preview);
       setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId));
     }
