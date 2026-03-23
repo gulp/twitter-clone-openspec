@@ -24,6 +24,8 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
   const [bio, setBio] = useState(user.bio || "");
   const [avatarUrls, setAvatarUrls] = useState<string[]>(user.avatarUrl ? [user.avatarUrl] : []);
   const [bannerUrls, setBannerUrls] = useState<string[]>(user.bannerUrl ? [user.bannerUrl] : []);
+  const [bannerError, setBannerError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   // Reset form state when modal opens with potentially updated user data
   useEffect(() => {
@@ -32,8 +34,19 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
       setBio(user.bio || "");
       setAvatarUrls(user.avatarUrl ? [user.avatarUrl] : []);
       setBannerUrls(user.bannerUrl ? [user.bannerUrl] : []);
+      setBannerError(false);
+      setAvatarError(false);
     }
   }, [isOpen, user.displayName, user.bio, user.avatarUrl, user.bannerUrl]);
+
+  // Reset error states when URLs change
+  useEffect(() => {
+    setBannerError(false);
+  }, [bannerUrls]);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUrls]);
 
   const utils = trpc.useUtils();
   const { update: updateSession } = useSession();
@@ -104,8 +117,13 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
       <form onSubmit={handleSubmit} className="px-0 py-0">
         {/* Banner Upload */}
         <div className="relative h-48 bg-gradient-to-br from-[#1a2634] via-[#15202B] to-[#0f1419] overflow-hidden group">
-          {bannerUrls[0] ? (
-            <img src={bannerUrls[0]} alt="Banner preview" className="w-full h-full object-cover" />
+          {bannerUrls[0] && !bannerError ? (
+            <img
+              src={bannerUrls[0]}
+              alt="Banner preview"
+              onError={() => setBannerError(true)}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#1DA1F2]/20 via-transparent to-transparent" />
           )}
@@ -148,10 +166,11 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
         {/* Avatar Upload - Overlapping banner */}
         <div className="relative px-4 -mt-16 mb-4">
           <div className="relative w-28 h-28 rounded-full overflow-hidden ring-4 ring-[#15202B] bg-[#192734] group">
-            {avatarUrls[0] ? (
+            {avatarUrls[0] && !avatarError ? (
               <img
                 src={avatarUrls[0]}
                 alt="Avatar preview"
+                onError={() => setAvatarError(true)}
                 className="w-full h-full object-cover"
               />
             ) : (

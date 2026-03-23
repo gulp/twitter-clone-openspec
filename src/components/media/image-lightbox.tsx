@@ -10,13 +10,16 @@ export interface ImageLightboxProps {
 
 export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [imageError, setImageError] = useState(false);
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setImageError(false);
   }, [images.length]);
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setImageError(false);
   }, [images.length]);
 
   useEffect(() => {
@@ -99,11 +102,22 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
 
       {/* Current image */}
       <div className="relative max-w-7xl max-h-[90vh] mx-auto px-16">
-        <img
-          src={images[currentIndex]}
-          alt={`Image ${currentIndex + 1}`}
-          className="max-w-full max-h-[90vh] object-contain"
-        />
+        {imageError ? (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-white">
+            <svg className="w-16 h-16 mb-4 text-[#71767B]" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+            <p className="text-lg font-semibold mb-2">Failed to load image</p>
+            <p className="text-sm text-[#71767B]">This image is unavailable</p>
+          </div>
+        ) : (
+          <img
+            src={images[currentIndex]}
+            alt={`Image ${currentIndex + 1}`}
+            onError={() => setImageError(true)}
+            className="max-w-full max-h-[90vh] object-contain"
+          />
+        )}
       </div>
     </div>
   );

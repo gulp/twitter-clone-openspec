@@ -2,6 +2,7 @@
 
 import { Avatar } from "@/components/ui/avatar";
 import Link from "next/link";
+import { useState } from "react";
 
 export interface QuoteTweetEmbedProps {
   tweet: {
@@ -17,6 +18,7 @@ export interface QuoteTweetEmbedProps {
 }
 
 export function QuoteTweetEmbed({ tweet }: QuoteTweetEmbedProps) {
+  const [mediaError, setMediaError] = useState(false);
   return (
     <Link
       href={`/${tweet.author.username}/status/${tweet.id}`}
@@ -42,11 +44,12 @@ export function QuoteTweetEmbed({ tweet }: QuoteTweetEmbedProps) {
       )}
 
       {/* Media thumbnail (first image only) */}
-      {tweet.mediaUrls && tweet.mediaUrls.length > 0 && (
+      {tweet.mediaUrls && tweet.mediaUrls.length > 0 && !mediaError && (
         <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-[#192734]">
           <img
             src={tweet.mediaUrls[0]}
             alt="Quoted tweet media"
+            onError={() => setMediaError(true)}
             className="w-full h-full object-cover"
           />
           {tweet.mediaUrls.length > 1 && (

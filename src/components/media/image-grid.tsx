@@ -10,8 +10,16 @@ export interface ImageGridProps {
 export function ImageGrid({ images }: ImageGridProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-  if (images.length === 0) {
+  const handleImageError = (imageUrl: string) => {
+    setFailedImages((prev) => new Set(prev).add(imageUrl));
+  };
+
+  // Filter out failed images
+  const validImages = images.filter((img) => !failedImages.has(img));
+
+  if (validImages.length === 0) {
     return null;
   }
 
@@ -22,7 +30,7 @@ export function ImageGrid({ images }: ImageGridProps) {
 
   // Grid layouts based on image count
   const getGridClass = () => {
-    switch (images.length) {
+    switch (validImages.length) {
       case 1:
         return "grid-cols-1";
       case 2:
@@ -38,7 +46,7 @@ export function ImageGrid({ images }: ImageGridProps) {
 
   const getImageClass = (index: number) => {
     // For 3 images: first takes full left column, other two stack on right
-    if (images.length === 3) {
+    if (validImages.length === 3) {
       if (index === 0) return "row-span-2";
       return "";
     }
@@ -46,9 +54,9 @@ export function ImageGrid({ images }: ImageGridProps) {
   };
 
   const getImageAspect = (index: number) => {
-    if (images.length === 1) return "aspect-video";
-    if (images.length === 2) return "aspect-square";
-    if (images.length === 3) {
+    if (validImages.length === 1) return "aspect-video";
+    if (validImages.length === 2) return "aspect-square";
+    if (validImages.length === 3) {
       return index === 0 ? "aspect-[4/5]" : "aspect-square";
     }
     return "aspect-square";
@@ -60,7 +68,7 @@ export function ImageGrid({ images }: ImageGridProps) {
         className={`grid ${getGridClass()} rounded-2xl overflow-hidden border border-[#38444d] max-h-[512px]`}
         onClick={(e) => e.stopPropagation()}
       >
-        {images.map((image, index) => (
+        {validImages.map((image, index) => (
           <button
             key={index}
             onClick={() => handleImageClick(index)}
@@ -69,6 +77,7 @@ export function ImageGrid({ images }: ImageGridProps) {
             <img
               src={image}
               alt={`Image ${index + 1}`}
+              onError={() => handleImageError(image)}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             {/* Hover overlay */}
@@ -79,7 +88,7 @@ export function ImageGrid({ images }: ImageGridProps) {
 
       {lightboxOpen && (
         <ImageLightbox
-          images={images}
+          images={validImages}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
         />

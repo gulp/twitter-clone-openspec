@@ -28,6 +28,7 @@ export interface ProfileHeaderProps {
 export function ProfileHeader({ user, onFollowChange }: ProfileHeaderProps) {
   const { data: session } = useSession();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [bannerError, setBannerError] = useState(false);
   const utils = trpc.useUtils();
 
   const followMutation = trpc.social.follow.useMutation({
@@ -65,10 +66,11 @@ export function ProfileHeader({ user, onFollowChange }: ProfileHeaderProps) {
       <div className="relative">
         {/* Banner Image - Hero Moment */}
         <div className="relative h-48 md:h-64 bg-gradient-to-br from-[#1a2634] via-[#15202B] to-[#0f1419] overflow-hidden">
-          {user.bannerUrl ? (
+          {user.bannerUrl && !bannerError ? (
             <img
               src={user.bannerUrl}
               alt="Profile banner"
+              onError={() => setBannerError(true)}
               className="w-full h-full object-cover"
             />
           ) : (

@@ -35,6 +35,7 @@ export function ImageUpload({
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
 
   const getUploadUrlMutation = trpc.media.getUploadUrl.useMutation();
 
@@ -287,7 +288,21 @@ export function ImageUpload({
               key={url}
               className="relative aspect-square rounded-lg overflow-hidden bg-[#192734] border border-[#38444d]"
             >
-              <img src={url} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+              {failedUrls.has(url) ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[#192734] text-[#71767B]">
+                  <svg className="w-8 h-8 mb-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                  </svg>
+                  <span className="text-xs">Load failed</span>
+                </div>
+              ) : (
+                <img
+                  src={url}
+                  alt={`Upload ${index + 1}`}
+                  onError={() => setFailedUrls((prev) => new Set(prev).add(url))}
+                  className="w-full h-full object-cover"
+                />
+              )}
               <button
                 type="button"
                 onClick={() => handleRemove(url)}
@@ -318,6 +333,10 @@ export function ImageUpload({
               <img
                 src={file.preview}
                 alt="Uploading"
+                onError={() => {
+                  // Preview is a blob URL - error unlikely but handle gracefully
+                  console.warn("Failed to load upload preview");
+                }}
                 className="w-full h-full object-cover opacity-50"
               />
 
