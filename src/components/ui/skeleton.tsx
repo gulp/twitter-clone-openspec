@@ -46,7 +46,8 @@ export function Skeleton({ className, width, height, variant = "shimmer" }: Skel
     style.height = typeof height === "number" ? `${height}px` : height;
   }
 
-  const animationClasses = variant === "shimmer" ? "skeleton-shimmer" : "animate-pulse bg-[rgb(var(--color-bg-tertiary))]";
+  const animationClasses =
+    variant === "shimmer" ? "skeleton-shimmer" : "animate-pulse bg-[rgb(var(--color-bg-tertiary))]";
 
   return (
     <div

@@ -50,7 +50,9 @@ export default function NotificationsPage() {
         {/* Header */}
         <div className="sticky top-0 z-10 backdrop-blur-md bg-[rgb(var(--color-bg-primary))]/80 border-b border-[#38444d]">
           <div className="px-4 py-3">
-            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Notifications</h1>
+            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
+              Notifications
+            </h1>
           </div>
         </div>
 
@@ -82,13 +84,17 @@ export default function NotificationsPage() {
         {/* Header */}
         <div className="sticky top-0 z-10 backdrop-blur-md bg-[rgb(var(--color-bg-primary))]/80 border-b border-[#38444d]">
           <div className="px-4 py-3">
-            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Notifications</h1>
+            <h1 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">
+              Notifications
+            </h1>
           </div>
         </div>
 
         {/* Error message */}
         <div className="px-4 py-8 text-center">
-          <p className="text-[#F91880] font-manrope">{error?.message || "Failed to load notifications"}</p>
+          <p className="text-[#F91880] font-manrope">
+            {error?.message || "Failed to load notifications"}
+          </p>
         </div>
       </div>
     );
@@ -137,7 +143,8 @@ export default function NotificationsPage() {
                 No notifications yet
               </h2>
               <p className="text-[rgb(var(--color-text-secondary))] text-base leading-relaxed">
-                When someone likes, retweets, replies to, or mentions you in a tweet, you'll see it here.
+                When someone likes, retweets, replies to, or mentions you in a tweet, you'll see it
+                here.
               </p>
             </div>
           </div>

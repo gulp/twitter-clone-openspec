@@ -80,9 +80,7 @@ function SearchPageContent() {
               />
             </svg>
             <p className="text-[#E7E9EA] text-2xl font-bold mb-2">Search Twitter</p>
-            <p className="text-[#71767B] text-center max-w-md">
-              Find tweets and people on Twitter
-            </p>
+            <p className="text-[#71767B] text-center max-w-md">Find tweets and people on Twitter</p>
           </div>
         )}
       </div>
