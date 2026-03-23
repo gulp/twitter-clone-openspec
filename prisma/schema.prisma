@@ -91,6 +91,7 @@ model Like {
 
   @@id([userId, tweetId])
   @@index([tweetId])
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model Retweet {
