@@ -91,7 +91,7 @@ export async function assembleFeed(
   const parsedCursor = cursor ? parseFeedCursor(cursor) : null;
 
   // Try Redis-cached feed
-  const cachedResult = await tryGetCachedFeed(userId, parsedCursor, requestId);
+  const cachedResult = await tryGetCachedFeed(userId, parsedCursor, limit, requestId);
   if (cachedResult) {
     log.info("Feed cache hit", {
       userId,
@@ -114,10 +114,12 @@ export async function assembleFeed(
  * tryGetCachedFeed — Attempt to serve feed from Redis cache
  *
  * Returns null on cache miss, version mismatch, or Redis failure.
+ * Slices cached results to the requested limit to avoid over-serving.
  */
 async function tryGetCachedFeed(
   userId: string,
   parsedCursor: FeedCursor | null,
+  limit: number,
   requestId?: string
 ): Promise<FeedResult | null> {
   try {
@@ -147,8 +149,11 @@ async function tryGetCachedFeed(
     const tombstones = await getTombstones(requestId);
     const filtered = cachedFeed.items.filter((item) => !tombstones.has(item.id));
 
+    // Slice to requested limit to avoid over-serving (cache key doesn't include limit)
+    const sliced = filtered.slice(0, limit);
+
     return {
-      items: filtered,
+      items: sliced,
       nextCursor: cachedFeed.nextCursor,
     };
   } catch (error) {
