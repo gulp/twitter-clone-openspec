@@ -29,31 +29,6 @@ export function formatDate(date: Date | string, formatType?: "monthYear"): strin
 }
 
 /**
- * Cursor payload for time-ordered pagination
- */
-type CursorPayload = { ts: string; id: string };
-
-/**
- * Encode cursor from last item in page
- * Per §1.2: opaque base64url-encoded compound cursor
- */
-export function encodeCursor(item: { createdAt: Date; id: string }): string {
-  const payload: CursorPayload = {
-    ts: item.createdAt.toISOString(),
-    id: item.id,
-  };
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
-}
-
-/**
- * Decode cursor to WHERE clause components
- * Per §1.2: opaque base64url-encoded compound cursor
- */
-export function decodeCursor(cursor: string): CursorPayload {
-  return JSON.parse(Buffer.from(cursor, "base64url").toString());
-}
-
-/**
  * Generate username for OAuth users
  * Per §1.6: lowercase, strip non-alphanumeric, truncate to 8 chars, append _cuid6
  * Total: 8 + 1 + 6 = 15 chars (usernameSchema max)
