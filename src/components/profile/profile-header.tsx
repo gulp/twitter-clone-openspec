@@ -111,7 +111,6 @@ export function ProfileHeader({ user, onFollowChange }: ProfileHeaderProps) {
                   variant={isFollowing ? "outline" : "primary"}
                   onClick={handleFollowClick}
                   loading={isLoading}
-                  disabled={isLoading}
                   className={
                     isFollowing
                       ? "bg-transparent border-[#536471] text-[#E7E9EA] hover:bg-[#39090d] hover:border-[#67070f] hover:text-[#f4212e] font-bold rounded-full px-6 group transition-all duration-200"

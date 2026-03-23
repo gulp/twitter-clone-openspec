@@ -113,7 +113,8 @@ export function FollowButton({
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      disabled={isLoading || !session}
+      disabled={!session}
+      loading={isLoading}
       className={className}
       aria-label={isFollowing ? "Unfollow user" : "Follow user"}
     >

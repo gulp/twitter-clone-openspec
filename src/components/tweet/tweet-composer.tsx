@@ -222,7 +222,7 @@ export function TweetComposer({
               {/* Submit button */}
               <Button
                 onClick={handleSubmit}
-                disabled={!canSubmit || isLoading}
+                disabled={!canSubmit}
                 loading={isLoading}
                 size="sm"
                 className="font-manrope font-bold"

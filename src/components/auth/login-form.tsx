@@ -149,7 +149,6 @@ export function LoginForm() {
 
       <Button
         type="submit"
-        disabled={isLoading}
         loading={isLoading}
         className="w-full bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white font-bold rounded-full py-3 transition-all duration-200 disabled:opacity-50"
       >
