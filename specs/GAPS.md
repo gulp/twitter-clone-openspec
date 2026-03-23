@@ -17,7 +17,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] Unhandled promise rejection chains — Promise.all() fail-fast vs allSettled() best-effort patterns (tweet.ts:143-150, feed.ts:475-477)
 - [x] Unread count cache strategy — covered in caching-unread-count-strategy.md
 - [x] Request correlation flow — covered in logging-request-correlation.md
-- [ ] SSE replay buffer exhaustion — what happens when 200-entry buffer fills or expires after 5min not documented
+- [x] SSE replay buffer exhaustion — covered in sse-replay-buffer-exhaustion.md
 - [ ] Feed cache ignores limit parameter — undocumented behavior in cache key construction
 - [ ] Tombstone lifecycle — TTL, cleanup strategy, garbage collection not documented
 - [ ] $queryRaw patterns — when to use raw SQL, type casting, DISTINCT ON semantics not documented

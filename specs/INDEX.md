@@ -51,6 +51,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
 - [sse-graceful-shutdown.md](sse-graceful-shutdown.md) — SIGTERM handler for zero-downtime deployments, server_restart event notification, client reconnect flow, rolling restart behavior
+- [sse-replay-buffer-exhaustion.md](sse-replay-buffer-exhaustion.md) — Replay buffer overflow (>200 events) and TTL expiration (5min), missed event scenarios, client fallback polling, gap detection
 - [optimistic-ui-mutation-pattern.md](optimistic-ui-mutation-pattern.md) — tRPC mutation lifecycle (onMutate/onError/onSuccess), local state sync, rollback pattern, query invalidation
 - [testing-integration-helpers.md](testing-integration-helpers.md) — Test data factories, tRPC caller creation, database/Redis cleanup, unique IP generation, log capture for assertions
 - [testing-e2e-page-objects.md](testing-e2e-page-objects.md) — Page Object pattern for E2E tests, fixture integration, data-testid selectors, action/assertion separation
