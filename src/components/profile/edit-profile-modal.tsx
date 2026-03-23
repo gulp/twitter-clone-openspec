@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { trpc } from "@/lib/trpc";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export interface EditProfileModalProps {
@@ -35,10 +36,13 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
   }, [isOpen, user.displayName, user.bio, user.avatarUrl, user.bannerUrl]);
 
   const utils = trpc.useUtils();
+  const { update: updateSession } = useSession();
 
   const updateProfileMutation = trpc.user.updateProfile.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       utils.user.getByUsername.invalidate();
+      // Trigger JWT refresh to update session with new profile fields
+      await updateSession();
       onClose();
     },
   });

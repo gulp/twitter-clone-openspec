@@ -31,6 +31,9 @@ declare module "next-auth/jwt" {
   interface JWT {
     jti?: string;
     sv?: number;
+    username?: string;
+    displayName?: string;
+    avatarUrl?: string;
   }
 }
 
@@ -254,20 +257,60 @@ export const authOptions: NextAuthOptions = {
         token.sub = user.id;
         token.jti = randomUUID();
 
-        // Fetch sessionVersion from DB
+        // Fetch sessionVersion and user profile fields from DB
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
-          select: { sessionVersion: true },
+          select: {
+            sessionVersion: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
         });
 
         token.sv = dbUser?.sessionVersion ?? 0;
+        token.username = dbUser?.username;
+        token.displayName = dbUser?.displayName;
+        token.avatarUrl = dbUser?.avatarUrl ?? undefined;
 
         // Add session to Redis allow-list (30 days TTL)
         await sessionSet(token.jti, token.sub as string, 30 * 24 * 60 * 60);
       }
 
-      // On every non-signin request: validate session is still valid
-      if (trigger === "update" || !user) {
+      // On update trigger: refresh user profile fields from DB
+      if (trigger === "update") {
+        const jti = token.jti as string | undefined;
+        if (!jti) {
+          return {};
+        }
+
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            sessionVersion: true,
+            username: true,
+            displayName: true,
+            avatarUrl: true,
+          },
+        });
+
+        if (!dbUser || dbUser.sessionVersion !== token.sv) {
+          // Session invalid — clean up stale Redis entry
+          const redisSession = await sessionGet(jti);
+          if (redisSession !== null) {
+            await sessionDel(jti).catch(() => {});
+          }
+          return {};
+        }
+
+        // Update profile fields in token
+        token.username = dbUser.username;
+        token.displayName = dbUser.displayName;
+        token.avatarUrl = dbUser.avatarUrl ?? undefined;
+      }
+
+      // On every non-signin, non-update request: validate session is still valid
+      if (!user && trigger !== "update") {
         const jti = token.jti as string | undefined;
         if (!jti) {
           return {};
@@ -298,26 +341,14 @@ export const authOptions: NextAuthOptions = {
      * Session callback — exposes userId and profile fields to the client.
      *
      * Called whenever session is checked client-side via useSession() or getServerSession().
+     * Profile fields (username, displayName, avatarUrl) are read from JWT token (no DB query).
      */
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub as string;
-
-        // Fetch additional user fields for navigation/UI
-        const user = await prisma.user.findUnique({
-          where: { id: token.sub as string },
-          select: {
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        });
-
-        if (user) {
-          session.user.username = user.username;
-          session.user.displayName = user.displayName;
-          session.user.avatarUrl = user.avatarUrl ?? undefined;
-        }
+        session.user.username = token.username;
+        session.user.displayName = token.displayName;
+        session.user.avatarUrl = token.avatarUrl;
       }
       return session;
     },
