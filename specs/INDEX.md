@@ -33,7 +33,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [security-rate-limit-retry-after.md](security-rate-limit-retry-after.md) — Retry-After calculation in Lua script, oldest-entry expiry math, HTTP 429 response format, edge case handling (clock skew, empty ZSET)
 - [security-auth-and-sessions.md](security-auth-and-sessions.md) — Three-layer session validation, timing-safe auth, password reset tokens, OAuth username generation
 - [security-session-management.md](security-session-management.md) — JWT + Redis allow-list + sessionVersion for multi-layer session validation
-- [security-password-reset-tokens.md](security-password-reset-tokens.md) — Password reset flow with SHA-256 token hashing, TOCTOU race condition analysis, timing-attack resistance, single-use enforcement
+- [security-password-reset-tokens.md](security-password-reset-tokens.md) — Password reset flow with SHA-256 token hashing, SELECT FOR UPDATE race prevention, timing-attack resistance, single-use enforcement
 - [security-email-timing-safety.md](security-email-timing-safety.md) — Fire-and-forget email pattern for timing attack prevention, SMTP best-effort delivery, minimum response time enforcement
 - [security-env-validation-edge-runtime.md](security-env-validation-edge-runtime.md) — Edge Runtime environment validation gap, fail-closed CSRF with missing APP_ORIGIN, silent misconfiguration detection
 - [security-timing-attacks.md](security-timing-attacks.md) — Constant-time comparison and response timing flattening for auth endpoints

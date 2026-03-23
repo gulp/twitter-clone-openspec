@@ -4,7 +4,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 
 ## Critical (security, data integrity, auth)
 - [x] Silent configuration validation — covered in security-env-validation-edge-runtime.md
-- [x] Password reset token race condition — covered in security-password-reset-tokens.md
+- [x] Password reset token race condition — covered in security-password-reset-tokens.md (UPDATED with SELECT FOR UPDATE implementation)
 - [x] Password sanitization rules — covered in security-password-validation.md
 - [x] PII redaction policy — covered in logging-structured-output-redaction.md (I-LOG2: no email/IP beyond userIds)
 - [x] Timing-safe auth patterns — covered in security-timing-attacks.md
@@ -15,6 +15,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] CUID vs CUID2 mismatch — Prisma schema uses @default(cuid()) but OAuth signup uses CUID2 createId() (src/server/auth.ts:194 vs prisma/schema.prisma). Deviation from plan §1.1.
 
 ## High (core features, caching, pagination)
+- [ ] Security headers: HSTS missing in production — Plan §1.17 (line 375) specifies "Strict-Transport-Security: max-age=31536000; includeSubDomains" but middleware.ts does not implement it.
 - [x] Quote tweet design decisions — covered in engagement-quote-tweet-design.md
 - [x] JSON parsing safety — covered in caching-json-parsing-safety.md
 - [x] User select patterns (§1.13) — covered in security-user-select-patterns.md

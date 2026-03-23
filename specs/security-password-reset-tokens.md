@@ -27,88 +27,65 @@ Password reset flow using cryptographically secure tokens with SHA-256 hashing, 
 ### Token Consumption Flow (`completeReset`)
 
 1. **Hash incoming token** — SHA-256 hash of user-provided token for DB lookup (src/server/trpc/routers/auth.ts:246)
-2. **Fetch token record** — `findUnique` by tokenHash with user relation (src/server/trpc/routers/auth.ts:249-252)
-3. **Validate token** — Three checks BEFORE transaction (src/server/trpc/routers/auth.ts:254-274):
-   - Token exists (src/server/trpc/routers/auth.ts:255)
-   - Token not already used (src/server/trpc/routers/auth.ts:262)
-   - Token not expired (src/server/trpc/routers/auth.ts:269)
-4. **Hash new password** — bcrypt with cost 12 (src/server/trpc/routers/auth.ts:277)
-5. **Atomic update** — `$transaction` with two operations (src/server/trpc/routers/auth.ts:281-296):
-   - Update user password + increment sessionVersion (invalidates all sessions)
-   - Mark token as used
+2. **Hash new password** — bcrypt with cost 12, computed before transaction (src/server/trpc/routers/auth.ts:252)
+3. **Atomic validation and update** — `$transaction` with SELECT FOR UPDATE row locking (src/server/trpc/routers/auth.ts:255-310):
+   - **Lock token row** — `$queryRaw` with `FOR UPDATE` clause acquires exclusive row lock (src/server/trpc/routers/auth.ts:258-265)
+   - **Validate token** — Three checks INSIDE transaction after locking:
+     - Token exists (src/server/trpc/routers/auth.ts:267-272)
+     - Token not already used (src/server/trpc/routers/auth.ts:277-282)
+     - Token not expired (src/server/trpc/routers/auth.ts:285-290)
+   - **Mark token as used** (src/server/trpc/routers/auth.ts:293-296)
+   - **Update user password** + increment sessionVersion to invalidate all sessions (src/server/trpc/routers/auth.ts:299-305)
 
-### Race Condition (TOCTOU)
+### Race Condition Prevention (SELECT FOR UPDATE)
 
-**Issue:** Validation happens outside the transaction (src/server/trpc/routers/auth.ts:254-274), creating a time-of-check-time-of-use (TOCTOU) vulnerability.
+The implementation uses PostgreSQL row-level locking to prevent TOCTOU (time-of-check-time-of-use) race conditions on concurrent password reset attempts with the same token.
 
-**Attack scenario:**
-```
-Time 0: Attacker submits password reset request, receives token via email
-Time 1: Attacker sends completeReset(token, "password1") — Request A
-Time 1: Attacker sends completeReset(token, "password2") — Request B (concurrent)
-Time 2: Request A reads token (used=false) ✓
-Time 2: Request B reads token (used=false) ✓
-Time 3: Request A enters transaction, sets password="password1", marks used=true
-Time 4: Request B enters transaction, sets password="password2", marks used=true
-Result: Attacker's password ends up as "password2" (B wins race)
-```
-
-**Severity:** Low to Medium
-- Requires attacker to already possess valid reset token (email access)
-- Timing window is narrow (milliseconds between validation and transaction)
-- Both password changes are attacker-controlled; no unintended access granted
-- However, attacker can determine final password with high probability via request flooding
-
-**Mitigation (not implemented):**
-Option A — Atomic check-and-update using `updateMany`:
+**Locking mechanism:**
 ```typescript
-const updated = await prisma.passwordResetToken.updateMany({
-  where: {
-    tokenHash,
-    used: false,              // ← Atomic check
-    expiresAt: { gt: new Date() }
-  },
-  data: { used: true }
-});
-
-if (updated.count === 0) {
-  throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid or expired reset token" });
-}
+const lockedTokens = await tx.$queryRaw`
+  SELECT "tokenHash", "userId", "used", "expiresAt"
+  FROM "PasswordResetToken"
+  WHERE "tokenHash" = ${tokenHash}
+  FOR UPDATE
+`;
 ```
 
-Option B — Serializable transaction isolation (PostgreSQL default is READ COMMITTED):
-```typescript
-await prisma.$transaction(async (tx) => {
-  const token = await tx.passwordResetToken.findUnique({
-    where: { tokenHash },
-    include: { user: true }
-  });
-  // Validation + updates here
-}, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-```
+The `FOR UPDATE` clause (src/server/trpc/routers/auth.ts:264) acquires an exclusive row lock that:
+- Blocks other transactions from reading the row until the current transaction commits or rolls back
+- Prevents concurrent requests from validating the same token simultaneously
+- Guarantees only one request can proceed past validation
+
+**Why this works:**
+1. Request A acquires lock on token row → validates → marks used → commits
+2. Request B waits for lock → acquires lock after A commits → sees used=true → throws error
+
+**Alternative approaches considered:**
+- `updateMany` with atomic WHERE conditions — Would work but requires separate query to fetch userId
+- Serializable isolation level — Overkill; row-level locking is sufficient and more performant
 
 ## Invariants
 
-1. **Single-use enforcement** — Token can only reset password once (checked but vulnerable to race)
+1. **Single-use enforcement** — Token can only reset password once (enforced via SELECT FOR UPDATE row locking)
 2. **Expiry enforcement** — Token expires 1 hour after creation
 3. **Hash-only storage** — Raw token NEVER stored in database; only SHA-256 hash persisted
 4. **Prior token invalidation** — Requesting new reset invalidates all prior active tokens for that user
 5. **Session invalidation on reset** — Password reset increments sessionVersion, logging out all devices
 6. **Timing attack resistance** — Response time always ≥200ms, same message for valid/invalid emails
 7. **Cryptographic randomness** — Tokens generated with `crypto.randomBytes` (CSPRNG)
+8. **Race-free validation** — SELECT FOR UPDATE prevents concurrent requests from bypassing single-use check
 
 ## Gotchas
 
-1. **Race condition on concurrent resets** — Two simultaneous `completeReset` requests with same token can both succeed (see TOCTOU above)
-2. **Email delivery is fire-and-forget** — Email send never awaited; no retry, no delivery confirmation (src/server/trpc/routers/auth.ts:219)
-3. **Timing validation happens outside transaction** — `used` and `expiresAt` checks (src/server/trpc/routers/auth.ts:262, 269) are separate queries before transaction
-4. **Token invalidation is not transactional with generation** — `updateMany` (src/server/trpc/routers/auth.ts:191) + `create` (src/server/trpc/routers/auth.ts:207) are separate operations; crash between them leaves old tokens active
-5. **No rate limiting on completeReset** — Only `requestReset` is rate-limited; attacker with token can flood `completeReset`
-6. **bcrypt cost is hardcoded** — Cost factor 12 (src/server/trpc/routers/auth.ts:277) not configurable; future changes require code edit
-7. **Token in URL** — Reset token sent as URL query parameter (src/server/trpc/routers/auth.ts:216); may leak in browser history, server logs, HTTP referrer headers
-8. **No token rotation** — Partially-used token not rotated; if attacker intercepts POST body mid-flight, original token still valid until marked used
-9. **No dummy hash for non-existent users** — Non-existent user path is faster (no bcrypt operation), creating timing oracle despite 200ms minimum enforcement
-10. **Generic error messages** — All three validation failures (invalid/used/expired) return same message (src/server/trpc/routers/auth.ts:255, 262, 269); prevents user from distinguishing expiry vs. already-used
+1. **Email delivery is fire-and-forget** — Email send never awaited; no retry, no delivery confirmation (src/server/trpc/routers/auth.ts:219)
+2. **Token invalidation is not transactional with generation** — `updateMany` (src/server/trpc/routers/auth.ts:191) + `create` (src/server/trpc/routers/auth.ts:207) are separate operations; crash between them leaves old tokens active
+3. **SELECT FOR UPDATE blocks concurrent requests** — Second request waits for first to complete; under high load this creates queueing. PostgreSQL lock timeout (default 0 = wait forever) means no automatic retry.
+4. **No rate limiting on completeReset** — Only `requestReset` is rate-limited; attacker with token can flood `completeReset`
+5. **bcrypt cost is hardcoded** — Cost factor 12 (src/server/trpc/routers/auth.ts:252) not configurable; future changes require code edit
+6. **Token in URL** — Reset token sent as URL query parameter (src/server/trpc/routers/auth.ts:216); may leak in browser history, server logs, HTTP referrer headers
+7. **No token rotation** — Partially-used token not rotated; if attacker intercepts POST body mid-flight, original token still valid until marked used
+8. **No dummy hash for non-existent users** — Non-existent user path is faster (no bcrypt operation), creating timing oracle despite 200ms minimum enforcement
+9. **Generic error messages** — All three validation failures (invalid/used/expired) return same message (src/server/trpc/routers/auth.ts:268-290); prevents user from distinguishing expiry vs. already-used
 
 ## Security Considerations
 
@@ -118,17 +95,17 @@ await prisma.$transaction(async (tx) => {
 - Timing-attack mitigation via minimum 200ms response time
 - Session invalidation on password change prevents session fixation
 - Prior token invalidation limits exposure window
+- **SELECT FOR UPDATE row locking** — Prevents TOCTOU race conditions on concurrent token consumption
 
 ### Weaknesses
-- **TOCTOU race condition** — Concurrent requests can bypass single-use check
 - **Email delivery unreliable** — Fire-and-forget means user may never receive token (see security-email-timing-safety.md)
 - **Token in URL** — Query parameter exposure in logs/history
-- **No rate limit on consumption** — Attacker with token can brute-force concurrent requests
+- **No rate limit on consumption** — Attacker with token can flood `completeReset` (mitigated by lock contention)
 - **Timing oracle on email existence** — 200ms minimum doesn't eliminate timing variance; non-existent user path is faster (no bcrypt, no DB writes), existing user path has variable DB latency
 
 ### Recommendations
-1. Implement atomic check-and-update (Option A above) to eliminate race
-2. Add rate limiting to `completeReset` (e.g., 3 attempts per token)
-3. Consider using POST body for token instead of URL parameter
-4. Add email delivery confirmation or retry queue for production
-5. Log failed `completeReset` attempts for abuse monitoring
+1. Add rate limiting to `completeReset` (e.g., 3 attempts per token)
+2. Consider using POST body for token instead of URL parameter
+3. Add email delivery confirmation or retry queue for production
+4. Log failed `completeReset` attempts for abuse monitoring
+5. Consider lock timeout configuration for SELECT FOR UPDATE to prevent indefinite waits under DoS
