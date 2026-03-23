@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface ImageLightboxProps {
   images: string[];
@@ -11,6 +11,12 @@ export interface ImageLightboxProps {
 export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [imageError, setImageError] = useState(false);
+  const onCloseRef = useRef(onClose);
+
+  // Keep ref in sync with latest onClose prop
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
@@ -29,7 +35,7 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
     // Close on Escape key
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       } else if (e.key === "ArrowLeft") {
         handlePrevious();
       } else if (e.key === "ArrowRight") {
@@ -43,7 +49,7 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
       document.body.style.overflow = "unset";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [images.length, onClose, handlePrevious, handleNext]);
+  }, [handlePrevious, handleNext]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
