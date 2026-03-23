@@ -172,6 +172,12 @@ export async function sessionDel(jti: string, requestId?: string): Promise<void>
 }
 
 /**
+ * SSE connection management constants
+ */
+const SSE_CONNECTION_TTL_SECONDS = 120; // 2 minutes - auto-cleanup for crashed connections
+const SSE_MAX_CONNECTIONS_PER_USER = 5;
+
+/**
  * SSE connection tracking — fail open.
  * Atomically check connection limit and add connection if under limit.
  * Returns true if connection was added, false if limit reached.
@@ -203,7 +209,14 @@ export async function sseAtomicAddConnection(
       redis.call('EXPIRE', key, ttl)
       return 1
     `;
-    const result = await redis.eval(luaScript, 1, key, connectionId, "120", "5");
+    const result = await redis.eval(
+      luaScript,
+      1,
+      key,
+      connectionId,
+      SSE_CONNECTION_TTL_SECONDS.toString(),
+      SSE_MAX_CONNECTIONS_PER_USER.toString()
+    );
     return result === 1;
   } catch (error) {
     log.warn("Redis operation failed", {
@@ -217,37 +230,6 @@ export async function sseAtomicAddConnection(
   }
 }
 
-/**
- * SSE connection tracking — fail open.
- * Add a connection ID to the set of active SSE connections for a user.
- * No-op on Redis failure.
- */
-export async function sseAddConnection(
-  userId: string,
-  connectionId: string,
-  requestId?: string
-): Promise<void> {
-  try {
-    const key = `sse:connections:${userId}`;
-    // Atomic SADD + EXPIRE to prevent stale keys if process crashes between operations
-    const luaScript = `
-      local key = KEYS[1]
-      local member = ARGV[1]
-      local ttl = ARGV[2]
-      redis.call('SADD', key, member)
-      redis.call('EXPIRE', key, ttl)
-      return 1
-    `;
-    await redis.eval(luaScript, 1, key, connectionId, "120");
-  } catch (error) {
-    log.warn("Redis operation failed", {
-      feature: "sse",
-      operation: "sseAddConnection",
-      error: error instanceof Error ? error.message : String(error),
-      requestId,
-    });
-  }
-}
 
 /**
  * SSE connection tracking — fail open.
@@ -296,7 +278,7 @@ export async function sseGetConnections(userId: string, requestId?: string): Pro
  */
 export async function sseRefreshConnectionTTL(userId: string, requestId?: string): Promise<void> {
   try {
-    await redis.expire(`sse:connections:${userId}`, 120);
+    await redis.expire(`sse:connections:${userId}`, SSE_CONNECTION_TTL_SECONDS);
   } catch (error) {
     log.warn("Redis operation failed", {
       feature: "sse",
