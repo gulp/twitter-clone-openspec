@@ -240,10 +240,16 @@ export async function sessionDel(jti: string, requestId?: string): Promise<void>
 export async function sseAddConnection(userId: string, connectionId: string, requestId?: string): Promise<void> {
   try {
     const key = `sse:connections:${userId}`;
-    await redis.sadd(key, connectionId);
-    // Set expiry so stale connections are cleaned up after server crashes.
-    // Refreshed on every heartbeat (30s) via sseRefreshConnectionTTL.
-    await redis.expire(key, 120);
+    // Atomic SADD + EXPIRE to prevent stale keys if process crashes between operations
+    const luaScript = `
+      local key = KEYS[1]
+      local member = ARGV[1]
+      local ttl = ARGV[2]
+      redis.call('SADD', key, member)
+      redis.call('EXPIRE', key, ttl)
+      return 1
+    `;
+    await redis.eval(luaScript, 1, key, connectionId, "120");
   } catch (error) {
     log.warn("Redis operation failed", {
       feature: "sse",
