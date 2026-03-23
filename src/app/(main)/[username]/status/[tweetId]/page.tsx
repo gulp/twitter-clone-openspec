@@ -6,7 +6,7 @@ import { EngagementButtons } from "@/components/tweet/engagement-buttons";
 import { trpc } from "@/lib/trpc";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, useRef, useCallback } from "react";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 export default function TweetDetailPage() {
   const params = useParams();
@@ -43,32 +43,11 @@ export default function TweetDetailPage() {
     }
   );
 
-  // Infinite scroll observer
-  const observerTarget = useRef<HTMLDivElement>(null);
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [target] = entries;
-      if (target?.isIntersecting && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  // Infinite scroll
+  const sentinelRef = useInfiniteScroll(
+    () => fetchNextPage(),
+    hasNextPage && !isFetchingNextPage
   );
-
-  useEffect(() => {
-    const element = observerTarget.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0.1,
-    });
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [handleObserver]);
 
   // Loading state
   if (isLoading || (tweet?.parentId && parentLoading)) {
@@ -327,7 +306,7 @@ export default function TweetDetailPage() {
         ))}
 
         {/* Infinite scroll trigger */}
-        {hasNextPage && <div ref={observerTarget} className="h-20" />}
+        {hasNextPage && <div ref={sentinelRef} className="h-20" />}
 
         {/* Loading more indicator */}
         {isFetchingNextPage && (
