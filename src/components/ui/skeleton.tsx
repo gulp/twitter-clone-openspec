@@ -19,7 +19,7 @@ export function Skeleton({ className, width, height }: SkeletonProps) {
 
   return (
     <div
-      className={cn("animate-pulse bg-gray-200 rounded", className)}
+      className={cn("skeleton-shimmer rounded", className)}
       style={style}
       role="status"
       aria-busy="true"
