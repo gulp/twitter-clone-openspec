@@ -12,6 +12,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] SIGTERM graceful shutdown — covered in sse-graceful-shutdown.md
 - [x] CSRF origin validation — covered in security-csrf-origin.md
 - [x] Session management — covered in security-session-management.md
+- [ ] CUID vs CUID2 mismatch — Prisma schema uses @default(cuid()) but OAuth signup uses CUID2 createId() (src/server/auth.ts:194 vs prisma/schema.prisma)
 
 ## High (core features, caching, pagination)
 - [x] Quote tweet design decisions — covered in engagement-quote-tweet-design.md
@@ -34,6 +35,8 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] PostgreSQL connection failure handling — covered in error-handling-subsystem-failure-policies.md
 - [x] S3 pre-signed URL failure handling — covered in error-handling-subsystem-failure-policies.md
 - [x] Media URL validation and orphan handling — covered in error-handling-subsystem-failure-policies.md
+- [ ] Database CHECK constraints — NOT NULL, non-negative counts, soft-delete consistency, content/media requirement (prisma/migrations/*/migration.sql:239-246)
+- [ ] Full-text search implementation — tsvector GENERATED column, GIN index, ts_rank usage (search.ts:131-188, migration.sql:220)
 
 ## Medium (patterns, consistency, edge cases)
 - [ ] Fire-and-forget async patterns — void (async () => {})() for non-blocking operations used inconsistently (email.ts:94-126, sse-publisher.ts:120-161, api/sse/route.ts)
@@ -52,7 +55,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] Optimistic UI state sync — useEffect pattern for prop→state sync, mutation ordering not documented
 - [ ] Structured logging inconsistency — middleware console.warn vs tRPC log.warn/error abstraction not documented
 - [ ] Mention parsing service — @mention regex extraction and user resolution not documented (mention.ts:22, username length 3-15)
-- [ ] OAuth username generation — CUID prefix strategy not documented
+- [ ] OAuth username generation — truncate to 9 chars = 8 + underscore + 6 CUID prefix (lib/utils.ts:62-75)
 - [ ] Soft-delete enforcement — tweet.deleted filtering in queries not documented
 - [ ] Prisma transaction type assertions — pattern for typed transaction results not documented
 - [ ] P2002 idempotent mutation pattern — type-guard pattern inconsistent across routers
@@ -60,8 +63,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] Batch engagement state checks — Promise.all + Set creation pattern not documented (§1.16 referenced but missing spec)
 - [ ] bumpFeedVersion naming — bumpFeedVersionForFollowers vs bumpFeedVersion usage distinction (feed.ts:466-484 vs social.ts:377-380)
 - [ ] User select patterns — publicUserSelect vs selfUserSelect not documented
-- [ ] Full-text search implementation — tsvector generation and GIN index usage not documented
-- [ ] CUID ID strategy — Prisma @default(cuid()) usage and properties not documented
+- [ ] Search pagination cursor pattern — different payloads for tweets ({rank,ts,id}) vs users ({followerCount,id}) (search.ts)
 - [x] P2002/P2025 race handling — covered in error-handling-prisma-race-conditions.md
 - [ ] SSE client reconnect with polling fallback — use-sse.ts exponential backoff, Last-Event-ID replay, 3-strike polling fallback
 - [ ] Image utilities client-side canvas operations — image-utils.ts cover-crop algorithm, JPEG quality 0.95, memory impact
@@ -78,7 +80,6 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] SSE in-memory fallback — behavior when Redis unavailable not documented
 - [ ] CSRF origin validation edge cases — Edge Runtime constraints, env parsing not documented
 - [ ] Image EXIF handling — metadata sanitization, size limits not documented
-- [ ] Search pagination — cursor pattern for FTS results not documented
 - [ ] Risks & mitigations — §7 from plan not documented in specs
 - [ ] Performance targets — §9 from plan not documented in specs
 
