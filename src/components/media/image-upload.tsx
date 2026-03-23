@@ -3,7 +3,7 @@
 import { ALLOWED_MIME_TYPES, MAX_MEDIA_SIZE_BYTES } from "@/lib/constants";
 import { resizeImage } from "@/lib/image-utils";
 import { trpc } from "@/lib/trpc";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 export interface ImageUploadProps {
   urls: string[];
@@ -33,11 +33,22 @@ export function ImageUpload({
   const urlsRef = useRef(urls);
   urlsRef.current = urls;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+  const uploadingFilesRef = useRef(uploadingFiles);
+  uploadingFilesRef.current = uploadingFiles;
   const [isDragging, setIsDragging] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [failedUrls, setFailedUrls] = useState<Set<string>>(new Set());
 
   const getUploadUrlMutation = trpc.media.getUploadUrl.useMutation();
+
+  // Cleanup preview URLs on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      uploadingFilesRef.current.forEach((file) => {
+        URL.revokeObjectURL(file.preview);
+      });
+    };
+  }, []);
 
   const processFiles = async (files: File[]) => {
     setValidationError(null);
