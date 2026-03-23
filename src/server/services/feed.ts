@@ -456,11 +456,11 @@ async function getTombstones(requestId?: string): Promise<Set<string>> {
   try {
     const now = Date.now();
 
-    // Clean up expired tombstones (score <= now)
-    await redis.zremrangebyscore("tombstones:tweets", 0, now);
+    // Clean up expired tombstones (score < now)
+    await redis.zremrangebyscore("tombstones:tweets", 0, now - 1);
 
-    // Get non-expired tombstones (score > now)
-    const tombstones = await redis.zrangebyscore("tombstones:tweets", now + 1, "+inf");
+    // Get non-expired tombstones (score >= now)
+    const tombstones = await redis.zrangebyscore("tombstones:tweets", now, "+inf");
 
     return new Set(tombstones);
   } catch (error) {
