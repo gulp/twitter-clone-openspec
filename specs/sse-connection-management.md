@@ -8,10 +8,11 @@ SSE connections use client-side exponential backoff reconnect (max 30s), server-
 
 - `src/hooks/use-sse.ts:41-259` — Client-side reconnect hook with exponential backoff
 - `src/hooks/use-sse.ts:76-117` — Reconnect logic and fallback to polling
-- `src/app/api/sse/route.ts:59-98` — Connection limit enforcement (max 5 per user)
+- `src/app/api/sse/route.ts:92-107` — Atomic connection limit enforcement (max 5 per user)
 - `src/app/api/sse/route.ts:129-158` — Last-Event-ID replay from Redis buffer
 - `src/app/api/sse/route.ts:160-178` — Heartbeat interval setup
 - `src/app/api/sse/route.ts:40-57` — SIGTERM handler for graceful shutdown
+- `src/server/redis.ts:182-218` — Atomic connection limit check-and-add (Lua script)
 - `src/server/redis.ts:240-309` — SSE connection tracking functions
 
 ## How It Works
@@ -97,12 +98,16 @@ This allows clients to automatically recover from transient network issues (e.g.
 
 ### Connection Limit Enforcement
 
-The server limits each user to 5 concurrent SSE connections:
+The server limits each user to 5 concurrent SSE connections using an atomic check-and-add operation:
 
 ```typescript
-// src/app/api/sse/route.ts:81-92
-const existingConnections = await sseGetConnections(userId);
-if (existingConnections.length >= 5) {
+// src/app/api/sse/route.ts:92-107
+const connectionId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+// Atomically check connection limit and add connection (max 5 per user)
+// Prevents race condition where concurrent requests both see count=4 and both proceed
+const added = await sseAtomicAddConnection(userId, connectionId);
+if (!added) {
   return new Response('event: error\ndata: {"message":"Too many connections"}\n\n', {
     status: 429,
     headers: {
@@ -114,29 +119,50 @@ if (existingConnections.length >= 5) {
 }
 ```
 
-**Connection tracking:** Each connection gets a unique ID and is added to a Redis SET:
+**Atomic connection tracking:** The connection limit check and add are performed atomically using a Lua script to prevent race conditions:
 
 ```typescript
-// src/app/api/sse/route.ts:94-98
-const connectionId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-await sseAddConnection(userId, connectionId);
-```
-
-Redis tracking functions (fail-open):
-
-```typescript
-// src/server/redis.ts:240-254
-export async function sseAddConnection(userId: string, connectionId: string): Promise<void> {
+// src/server/redis.ts:182-218
+export async function sseAtomicAddConnection(
+  userId: string,
+  connectionId: string,
+  requestId?: string
+): Promise<boolean> {
   try {
     const key = `sse:connections:${userId}`;
-    await redis.sadd(key, connectionId);
-    // Set expiry so stale connections are cleaned up after server crashes.
-    await redis.expire(key, 120);
+    // Atomic check-and-add: SCARD → check limit → SADD + EXPIRE
+    // Returns 1 if added, 0 if limit reached
+    const luaScript = `
+      local key = KEYS[1]
+      local member = ARGV[1]
+      local ttl = tonumber(ARGV[2])
+      local limit = tonumber(ARGV[3])
+
+      local count = redis.call('SCARD', key)
+      if count >= limit then
+        return 0
+      end
+
+      redis.call('SADD', key, member)
+      redis.call('EXPIRE', key, ttl)
+      return 1
+    `;
+    const result = await redis.eval(luaScript, 1, key, connectionId, "120", "5");
+    return result === 1;
   } catch (error) {
-    log.warn("Redis operation failed", { feature: "sse", operation: "sseAddConnection" });
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseAtomicAddConnection",
+      error: error instanceof Error ? error.message : String(error),
+      requestId,
+    });
+    // Fail open: allow connection on Redis failure
+    return true;
   }
 }
 ```
+
+The Lua script ensures that the check (SCARD) and add (SADD + EXPIRE) operations are atomic, preventing the race condition where two concurrent requests could both see count=4 and both proceed to create a 6th connection.
 
 ### Last-Event-ID Replay
 
@@ -281,7 +307,7 @@ Clients reconnect after 2 seconds (with Last-Event-ID replay) while old server p
 
 2. **Heartbeat write failure is terminal.** If `controller.enqueue()` throws during heartbeat, the connection is broken (client closed without notifying server). Call `cleanup()` immediately to release resources.
 
-3. **Connection limit check is racy without atomic check-and-add.** Current implementation queries `sseGetConnections()`, checks length, then calls `sseAddConnection()`. Two concurrent requests can both see length=4 and both proceed. Consider Lua script for atomic check+add if strict limit required.
+3. **Connection limit check is atomic.** Implementation uses Lua script in `sseAtomicAddConnection()` to atomically check connection count (SCARD) and add connection (SADD + EXPIRE) if under limit. This prevents race condition where concurrent requests both see count=4 and both proceed to create 6 connections. The Lua script returns 1 on success (connection added) or 0 on rejection (limit reached).
 
 4. **TTL refresh can fail silently.** Heartbeat calls `sseRefreshConnectionTTL().catch(() => {})` — Redis errors are swallowed. If refresh fails repeatedly, connection will expire from Redis but remain active in-memory until next heartbeat write fails.
 
