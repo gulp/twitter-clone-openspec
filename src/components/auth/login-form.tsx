@@ -7,7 +7,7 @@ import { emailSchema } from "@/lib/validators";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 const loginFormSchema = z.object({
@@ -26,7 +26,16 @@ export function LoginForm() {
   });
   const [errors, setErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
   const [serverError, setServerError] = useState<string>("");
+  const [infoMessage, setInfoMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Read message from query params (e.g., after successful registration)
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message) {
+      setInfoMessage(message);
+    }
+  }, [searchParams]);
 
   const handleChange = (field: keyof LoginFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -37,6 +46,10 @@ export function LoginForm() {
     // Clear server error when user modifies form
     if (serverError) {
       setServerError("");
+    }
+    // Clear info message when user modifies form
+    if (infoMessage) {
+      setInfoMessage("");
     }
   };
 
@@ -91,6 +104,12 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {infoMessage && (
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+          <p className="text-sm text-green-400">{infoMessage}</p>
+        </div>
+      )}
+
       {serverError && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
           <p className="text-sm text-red-400">{serverError}</p>
