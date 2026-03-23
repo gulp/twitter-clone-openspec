@@ -134,16 +134,17 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
         timeoutId = setTimeout(() => reject(new Error("Email send timeout after 30s")), 30000);
       });
 
-      const info = await Promise.race([sendPromise, timeoutPromise]);
+      try {
+        const info = await Promise.race([sendPromise, timeoutPromise]);
 
-      // Clean up timer to prevent memory leak (timer continues running after race resolves)
-      clearTimeout(timeoutId);
-
-      log.info("Password reset email sent", {
-        to,
-        messageId: info.messageId,
-        previewUrl: nodemailer.getTestMessageUrl(info) || undefined,
-      });
+        log.info("Password reset email sent", {
+          to,
+          messageId: info.messageId,
+          previewUrl: nodemailer.getTestMessageUrl(info) || undefined,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (error) {
       // Log error but do not throw — email sending is best-effort
       log.error("Failed to send password reset email", {
