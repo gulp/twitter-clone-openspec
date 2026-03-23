@@ -80,38 +80,37 @@ export function EditProfileModal({ isOpen, onClose, user }: EditProfileModalProp
       onClose={onClose}
       className="bg-[#15202B] border border-[#2f3336] max-w-2xl"
     >
-      <div className="sticky top-0 bg-[#15202B] border-b border-[#2f3336] px-4 py-3 flex items-center justify-between z-10">
-        <div className="flex items-center gap-8">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-[#E7E9EA] hover:bg-[#1d2935] rounded-full p-2 transition-colors duration-200"
-            aria-label="Close"
-          >
-            <svg role="img" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7.414 6l5.586 5.586L18.586 6 20 7.414 14.414 13 20 18.586 18.586 20 13 14.414 7.414 20 6 18.586 11.586 13 6 7.414 7.414 6z" />
-            </svg>
-          </button>
-          <h2 className="text-xl font-manrope font-bold text-[#E7E9EA]">Edit profile</h2>
-        </div>
-        <Button
-          type="submit"
-          variant="primary"
-          size="sm"
-          loading={updateProfileMutation.isPending}
-          disabled={
-            updateProfileMutation.isPending ||
-            !displayName.trim() ||
-            displayName.length > displayNameMaxLength ||
-            bio.length > bioMaxLength
-          }
-          className="bg-[#E7E9EA] text-[#0F1419] hover:bg-[#d7d9db] font-bold rounded-full px-4"
-        >
-          Save
-        </Button>
-      </div>
-
       <form onSubmit={handleSubmit} className="px-0 py-0">
+        <div className="sticky top-0 bg-[#15202B] border-b border-[#2f3336] px-4 py-3 flex items-center justify-between z-10">
+          <div className="flex items-center gap-8">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-[#E7E9EA] hover:bg-[#1d2935] rounded-full p-2 transition-colors duration-200"
+              aria-label="Close"
+            >
+              <svg role="img" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7.414 6l5.586 5.586L18.586 6 20 7.414 14.414 13 20 18.586 18.586 20 13 14.414 7.414 20 6 18.586 11.586 13 6 7.414 7.414 6z" />
+              </svg>
+            </button>
+            <h2 className="text-xl font-manrope font-bold text-[#E7E9EA]">Edit profile</h2>
+          </div>
+          <Button
+            type="submit"
+            variant="primary"
+            size="sm"
+            loading={updateProfileMutation.isPending}
+            disabled={
+              updateProfileMutation.isPending ||
+              !displayName.trim() ||
+              displayName.length > displayNameMaxLength ||
+              bio.length > bioMaxLength
+            }
+            className="bg-[#E7E9EA] text-[#0F1419] hover:bg-[#d7d9db] font-bold rounded-full px-4"
+          >
+            Save
+          </Button>
+        </div>
         {/* Banner Upload */}
         <div className="relative h-48 bg-gradient-to-br from-[#1a2634] via-[#15202B] to-[#0f1419] overflow-hidden group">
           {bannerUrls[0] && !bannerError ? (
