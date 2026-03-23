@@ -462,22 +462,68 @@ function hashCursor(cursor: FeedCursor): string {
  * bumpFeedVersionForFollowers — Increment feed version for all followers of a user
  *
  * Called when a user posts a new tweet to invalidate follower caches.
+ * Uses batched database queries and Redis pipeline to avoid OOM/connection exhaustion.
  */
 export async function bumpFeedVersionForFollowers(userId: string): Promise<void> {
-  try {
-    // Get all followers
-    const followers = await prisma.follow.findMany({
-      where: { followingId: userId },
-      select: { followerId: true },
-    });
+  const BATCH_SIZE = 1000; // Fetch followers in batches
+  const PIPELINE_CHUNK_SIZE = 100; // Chunk pipeline commands
 
-    // Bump version for each follower
-    await Promise.all(
-      followers.map((follower) => cacheIncr(`feed:version:${follower.followerId}`))
-    );
+  try {
+    let skip = 0;
+
+    // Process followers in batches
+    while (true) {
+      const followers = await prisma.follow.findMany({
+        where: { followingId: userId },
+        select: { followerId: true },
+        take: BATCH_SIZE,
+        skip,
+      });
+
+      if (followers.length === 0) {
+        break;
+      }
+
+      const followerIds = followers.map((f) => f.followerId);
+
+      // Use Redis pipeline for bulk INCR, chunked to avoid memory issues
+      await bumpVersionsPipeline(followerIds, PIPELINE_CHUNK_SIZE);
+
+      skip += BATCH_SIZE;
+
+      // If we got fewer than BATCH_SIZE, we've reached the end
+      if (followers.length < BATCH_SIZE) {
+        break;
+      }
+    }
   } catch (error) {
     log.warn("Failed to bump feed version for followers (fail open)", {
       userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+/**
+ * bumpVersionsPipeline — Execute INCR commands in chunked Redis pipeline
+ *
+ * Splits follower IDs into chunks and executes pipeline for each chunk.
+ * Prevents memory exhaustion from 100k+ INCR commands in single pipeline.
+ */
+async function bumpVersionsPipeline(followerIds: string[], chunkSize: number): Promise<void> {
+  try {
+    for (let i = 0; i < followerIds.length; i += chunkSize) {
+      const chunk = followerIds.slice(i, i + chunkSize);
+      const pipeline = redis.pipeline();
+
+      for (const followerId of chunk) {
+        pipeline.incr(`feed:version:${followerId}`);
+      }
+
+      await pipeline.exec();
+    }
+  } catch (error) {
+    log.warn("Redis pipeline failed in bumpVersionsPipeline (fail open)", {
       error: error instanceof Error ? error.message : String(error),
     });
   }

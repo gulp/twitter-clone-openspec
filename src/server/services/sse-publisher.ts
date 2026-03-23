@@ -112,8 +112,9 @@ export async function publishToUser(userId: string, event: SSEEvent): Promise<nu
 /**
  * publishToFollowers — Publish an event to all followers of a user
  *
- * Queries the database for follower IDs and calls publishToUser for each.
- * Publishes in parallel with Promise.allSettled (best-effort).
+ * Queries the database for follower IDs in batches and calls publishToUser for each.
+ * Publishes with controlled concurrency (50 at a time) to prevent connection exhaustion.
+ * Uses Promise.allSettled for best-effort delivery.
  *
  * @returns Count of successful publishes
  */
@@ -121,34 +122,50 @@ export async function publishToFollowers(
   authorId: string,
   event: SSEEvent
 ): Promise<{ total: number; succeeded: number }> {
+  const BATCH_SIZE = 1000; // Fetch followers in batches
+  const CONCURRENCY_LIMIT = 50; // Max parallel publishes
+
   try {
-    // Get all follower IDs from database
-    const followers = await prisma.follow.findMany({
-      where: { followingId: authorId },
-      select: { followerId: true },
-    });
+    let totalFollowers = 0;
+    let totalSucceeded = 0;
+    let skip = 0;
 
-    const followerIds = followers.map((f) => f.followerId);
+    // Process followers in batches to avoid loading 100k+ rows at once
+    while (true) {
+      const followers = await prisma.follow.findMany({
+        where: { followingId: authorId },
+        select: { followerId: true },
+        take: BATCH_SIZE,
+        skip,
+      });
 
-    if (followerIds.length === 0) {
-      return { total: 0, succeeded: 0 };
+      if (followers.length === 0) {
+        break;
+      }
+
+      const followerIds = followers.map((f) => f.followerId);
+      totalFollowers += followerIds.length;
+
+      // Publish to this batch with controlled concurrency
+      const succeeded = await publishToFollowersBatch(followerIds, event, CONCURRENCY_LIMIT);
+      totalSucceeded += succeeded;
+
+      skip += BATCH_SIZE;
+
+      // If we got fewer than BATCH_SIZE, we've reached the end
+      if (followers.length < BATCH_SIZE) {
+        break;
+      }
     }
-
-    // Publish to all followers in parallel (best-effort)
-    const results = await Promise.allSettled(
-      followerIds.map((followerId) => publishToUser(followerId, event))
-    );
-
-    const succeeded = results.filter((r) => r.status === "fulfilled").length;
 
     log.info("SSE event published to followers", {
       authorId,
       eventType: event.type,
-      total: followerIds.length,
-      succeeded,
+      total: totalFollowers,
+      succeeded: totalSucceeded,
     });
 
-    return { total: followerIds.length, succeeded };
+    return { total: totalFollowers, succeeded: totalSucceeded };
   } catch (error) {
     log.error("publishToFollowers failed", {
       authorId,
@@ -158,6 +175,36 @@ export async function publishToFollowers(
 
     return { total: 0, succeeded: 0 };
   }
+}
+
+/**
+ * publishToFollowersBatch — Publish to a batch of followers with controlled concurrency
+ *
+ * Limits parallel publishes to prevent Redis connection exhaustion.
+ * Uses a simple semaphore pattern with Promise.allSettled.
+ *
+ * @returns Count of successful publishes in this batch
+ */
+async function publishToFollowersBatch(
+  followerIds: string[],
+  event: SSEEvent,
+  concurrencyLimit: number
+): Promise<number> {
+  let succeeded = 0;
+  const chunks: string[][] = [];
+
+  // Split into chunks of concurrencyLimit
+  for (let i = 0; i < followerIds.length; i += concurrencyLimit) {
+    chunks.push(followerIds.slice(i, i + concurrencyLimit));
+  }
+
+  // Process each chunk sequentially, but within each chunk publish in parallel
+  for (const chunk of chunks) {
+    const results = await Promise.allSettled(chunk.map((id) => publishToUser(id, event)));
+    succeeded += results.filter((r) => r.status === "fulfilled").length;
+  }
+
+  return succeeded;
 }
 
 /**
