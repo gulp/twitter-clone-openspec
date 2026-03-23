@@ -11,20 +11,41 @@ export type LogFields = {
   latencyMs?: number;
 } & Record<string, unknown>;
 
-const REDACTED_KEYS = ["password", "hashedPassword", "token", "access_token", "refresh_token"];
+const REDACTED_KEYS = ["password", "hashedPassword", "token", "access_token", "refresh_token", "id_token"];
 
 /**
- * Redact sensitive fields from log data
+ * Redact sensitive fields from log data (deep/recursive)
  */
 function redact(data?: LogFields): LogFields | undefined {
   if (!data) return data;
-  const clone = { ...data };
-  for (const key of REDACTED_KEYS) {
-    if (key in clone) {
-      clone[key] = "[REDACTED]";
+
+  function deepRedact(value: unknown): unknown {
+    // Handle null/undefined
+    if (value === null || value === undefined) return value;
+
+    // Handle arrays - recursively redact each element
+    if (Array.isArray(value)) {
+      return value.map((item) => deepRedact(item));
     }
+
+    // Handle objects - recursively redact nested objects and sensitive keys
+    if (typeof value === "object") {
+      const result: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(value)) {
+        if (REDACTED_KEYS.includes(key)) {
+          result[key] = "[REDACTED]";
+        } else {
+          result[key] = deepRedact(val);
+        }
+      }
+      return result;
+    }
+
+    // Primitives - return as-is
+    return value;
   }
-  return clone;
+
+  return deepRedact(data) as LogFields;
 }
 
 /**

@@ -201,4 +201,59 @@ describe("Logger redaction", () => {
     expect(output.username).toBe("alice");
     expect(output.email).toBe("alice@example.com");
   });
+
+  it("should redact nested OAuth tokens in account object", () => {
+    log.info("OAuth callback", {
+      userId: "user-1",
+      account: {
+        provider: "google",
+        access_token: "oauth-access-secret",
+        refresh_token: "oauth-refresh-secret",
+        id_token: "oauth-id-secret",
+      },
+    });
+
+    expect(consoleLogSpy).toHaveBeenCalled();
+    const output = JSON.parse(consoleLogSpy.mock.calls[0]?.[0] as string);
+    expect(output.userId).toBe("user-1");
+    expect(output.account.provider).toBe("google");
+    expect(output.account.access_token).toBe("[REDACTED]");
+    expect(output.account.refresh_token).toBe("[REDACTED]");
+    expect(output.account.id_token).toBe("[REDACTED]");
+  });
+
+  it("should redact deeply nested password fields", () => {
+    log.info("Deep structure", {
+      requestId: "req-123",
+      nested: {
+        deeply: {
+          password: "super-secret",
+          username: "alice",
+        },
+      },
+    });
+
+    expect(consoleLogSpy).toHaveBeenCalled();
+    const output = JSON.parse(consoleLogSpy.mock.calls[0]?.[0] as string);
+    expect(output.requestId).toBe("req-123");
+    expect(output.nested.deeply.password).toBe("[REDACTED]");
+    expect(output.nested.deeply.username).toBe("alice");
+  });
+
+  it("should redact passwords in arrays of objects", () => {
+    log.info("Batch operation", {
+      users: [
+        { id: "user-1", password: "secret1" },
+        { id: "user-2", password: "secret2" },
+      ],
+    });
+
+    expect(consoleLogSpy).toHaveBeenCalled();
+    const output = JSON.parse(consoleLogSpy.mock.calls[0]?.[0] as string);
+    expect(output.users).toHaveLength(2);
+    expect(output.users[0].id).toBe("user-1");
+    expect(output.users[0].password).toBe("[REDACTED]");
+    expect(output.users[1].id).toBe("user-2");
+    expect(output.users[1].password).toBe("[REDACTED]");
+  });
 });
