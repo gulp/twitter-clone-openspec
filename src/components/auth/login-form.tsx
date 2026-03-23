@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { safeRedirectUrl } from "@/lib/utils";
 import { emailSchema } from "@/lib/validators";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -77,8 +78,8 @@ export function LoginForm() {
         return;
       }
 
-      // Success - redirect to home or callbackUrl
-      const callbackUrl = searchParams.get("callbackUrl") || "/home";
+      // Success - redirect to home or callbackUrl (validated to prevent open redirect)
+      const callbackUrl = safeRedirectUrl(searchParams.get("callbackUrl"));
       router.push(callbackUrl);
       router.refresh();
     } catch (error) {

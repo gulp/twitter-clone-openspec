@@ -14,6 +14,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 | `optimistic-` | Mutation callbacks, rollback, cache invalidation | done |
 | `testing-` | Helpers, integration patterns, E2E fixtures | done |
 | `logging-` | Structured JSON, request correlation, redaction | done |
+| `engagement-` | Like/retweet/quote patterns, counts, notifications | partial |
 
 ## Files
 
@@ -55,6 +56,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [pagination-cursor-validation.md](pagination-cursor-validation.md) — Base64url decode → JSON parse → type validation patterns, Zod transforms vs standalone parsers, error conversion, Date/NaN edge cases
 - [pagination-where-clause-construction.md](pagination-where-clause-construction.md) — Compound cursor WHERE clause pattern, lexicographic comparison, row syntax, null handling, peek-ahead
 - [database-queryraw-patterns.md](database-queryraw-patterns.md) — $queryRaw usage for full-text search, CTEs, DISTINCT ON, UNION, Prisma.sql safe interpolation, type casting, row-value comparisons
+- [engagement-quote-tweet-design.md](engagement-quote-tweet-design.md) — Quote tweet as standalone entity vs engagement count, no quoteCount denormalization, feed version behavior, notification semantics, hydration gaps
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
 - [sse-graceful-shutdown.md](sse-graceful-shutdown.md) — SIGTERM handler for zero-downtime deployments, server_restart event notification, client reconnect flow, rolling restart behavior

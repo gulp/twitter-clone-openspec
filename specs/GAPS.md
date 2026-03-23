@@ -14,7 +14,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Session management — covered in security-session-management.md
 
 ## High (core features, caching, pagination)
-- [ ] Quote tweet design decisions — quoteTweetId as column vs relationship table, count atomicity, feed assembly behavior (engagement.ts:304-400)
+- [x] Quote tweet design decisions — covered in engagement-quote-tweet-design.md
 - [ ] JSON parsing safety — unsafe JSON.parse with generic try/catch in cached data, trust model not documented (feed.ts:144,429, redis.ts:451, social.ts:308)
 - [ ] Raw SQL parameter injection safety — template literal ${userId} in $queryRaw, Prisma escaping guarantees not audited (social.ts:317-371)
 - [ ] Unread count cache race — Redis.incrUnreadCount fails after DB write, cache becomes stale with no recovery (notification.ts:56-57)
@@ -36,6 +36,12 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Media URL validation and orphan handling — covered in error-handling-subsystem-failure-policies.md
 
 ## Medium (patterns, consistency, edge cases)
+- [ ] Fire-and-forget async patterns — void (async () => {})() for non-blocking operations used inconsistently (email.ts:94-126, sse-publisher.ts:120-161, api/sse/route.ts)
+- [ ] Silent .catch() error suppression policy — when silent suppression acceptable vs requires logging (engagement-buttons.tsx:154, auth.ts sessionDel, api/sse/route.ts cleanup)
+- [ ] SSE event publishing partial success — publishToFollowers returns {total, succeeded}, semantics of partial failure not documented (sse-publisher.ts:120-161)
+- [ ] IP extraction patterns duplication — duplicate logic in middleware and auth router, header precedence not documented (index.ts:61-64, auth.ts:23-28)
+- [ ] Rate limiting integration — which procedures use which limits, failClosed flag usage in practice not documented (rate-limiter.ts:20-24)
+- [ ] Promise.allSettled vs Promise.all consistency — when to use each not unified (feed uses all, SSE uses allSettled, mentions use all) (sse-publisher.ts:138-140, feed.ts:312, tweet.ts:143-152)
 - [x] Cursor parsing validation — covered in pagination-cursor-validation.md — base64url decode → JSON parse → type validation pattern (search.ts:59-106, feed.ts:33-41)
 - [ ] Search input sanitization edge cases — SQL wildcard stripping before length validation causes empty string edge case (search.ts:24-51)
 - [x] Promise.allSettled best-effort patterns — covered in error-handling-promise-patterns.md
@@ -78,6 +84,9 @@ Sorted by priority. Checked items are addressed in existing specs.
 
 ## Spec File Maintenance
 - [x] testing-e2e-page-objects.md — fixed broken file:line references (commit 4267b5d)
+- [ ] logging-structured-output-redaction.md line 9 — claims src/lib/logger.ts:1-62 but file has 61 lines (off-by-one)
+- [ ] security-input-validation.md line 9 — claims src/lib/validators.ts:1-62 but file has 61 lines (off-by-one)
+- [ ] sse-connection-management.md line 9 — claims src/hooks/use-sse.ts:41-259 but file has 245 lines (off by 14)
 - [ ] caching-feed-versioning.md line 9 — unfollow line reference off by ~8 lines (says 168, should be 176)
 - [ ] database-queryraw-patterns.md line 16 — social.ts:317-371 range too broad by ~12 lines (should be 317-359)
 - [ ] pagination-cursor-encoding.md line 14 — engagement.ts:497-511 range off by ~13 lines (should be 510-518)

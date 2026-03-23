@@ -73,3 +73,26 @@ export function generateUsername(displayName: string, cuid: string): string {
   // Combine with underscore (total max 15 chars: 8 + 1 + 6)
   return `${sanitized}_${cuidPrefix}`;
 }
+
+/**
+ * Validate and sanitize redirect URL to prevent open redirect attacks
+ * Only allows relative paths within the app
+ * Rejects absolute URLs, protocol-relative URLs, and javascript: URIs
+ */
+export function safeRedirectUrl(url: string | null | undefined, defaultPath = "/home"): string {
+  if (!url) {
+    return defaultPath;
+  }
+
+  // Must start with / but not // (reject protocol-relative URLs like //evil.com)
+  if (!url.startsWith("/") || url.startsWith("//")) {
+    return defaultPath;
+  }
+
+  // Reject URLs with protocol schemes (javascript:, data:, http:, etc.)
+  if (url.includes(":")) {
+    return defaultPath;
+  }
+
+  return url;
+}
