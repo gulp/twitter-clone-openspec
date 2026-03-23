@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactElement, type ReactNode, cloneElement, useEffect, useRef, useState } from "react";
 import { cn } from "./utils";
 
 export interface DropdownItem {
@@ -12,7 +12,7 @@ export interface DropdownItem {
 }
 
 export interface DropdownProps {
-  trigger: ReactNode;
+  trigger: ReactElement;
   items: DropdownItem[];
   align?: "left" | "right";
   className?: string;
@@ -65,18 +65,21 @@ export function Dropdown({ trigger, items, align = "right", className }: Dropdow
     }
   };
 
+  // Clone trigger element and merge dropdown handlers with existing handlers
+  const triggerElement = cloneElement(trigger, {
+    onClick: (e: React.MouseEvent) => {
+      trigger.props.onClick?.(e);
+      setIsOpen(!isOpen);
+    },
+    onKeyDown: (e: React.KeyboardEvent) => {
+      trigger.props.onKeyDown?.(e);
+      handleTriggerKeyDown(e);
+    },
+  });
+
   return (
     <div ref={dropdownRef} className={cn("relative inline-block", className)}>
-      {/* Render trigger directly — avoid wrapping in <button> to prevent nested buttons */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setIsOpen(!isOpen)}
-        onKeyDown={handleTriggerKeyDown}
-        className="flex items-center"
-      >
-        {trigger}
-      </div>
+      {triggerElement}
 
       {isOpen && (
         <div
