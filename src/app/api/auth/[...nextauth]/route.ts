@@ -1,8 +1,8 @@
 import { authOptions } from "@/server/auth";
 import { checkAuthIPRateLimit } from "@/server/services/rate-limiter";
+import NextAuth from "next-auth";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import NextAuth from "next-auth";
 
 /**
  * NextAuth API route handler.
@@ -37,7 +37,10 @@ function getClientIP(req: NextRequest): string {
  *
  * Rate limiting: 5 requests/min per IP (fail closed).
  */
-async function POST_WITH_RATE_LIMIT(req: NextRequest, context: any) {
+async function POST_WITH_RATE_LIMIT(
+  req: NextRequest,
+  context: { params: Promise<{ nextauth: string[] }> }
+) {
   const url = new URL(req.url);
 
   // Only rate limit credentials callback (not other auth endpoints)
