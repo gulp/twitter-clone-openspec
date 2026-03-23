@@ -70,7 +70,7 @@ export const notificationRouter = createTRPCRouter({
     const userId = ctx.session.user.id;
 
     // Try Redis cache first
-    const cachedCount = await getUnreadCount(userId);
+    const cachedCount = await getUnreadCount(userId, ctx.requestId);
     if (cachedCount !== null) {
       return { count: cachedCount };
     }
@@ -84,7 +84,7 @@ export const notificationRouter = createTRPCRouter({
     });
 
     // Backfill Redis cache
-    await setUnreadCount(userId, dbCount);
+    await setUnreadCount(userId, dbCount, ctx.requestId);
 
     return { count: dbCount };
   }),
@@ -137,7 +137,7 @@ export const notificationRouter = createTRPCRouter({
       }
 
       // Decrement Redis unread count (fail-open)
-      await decrUnreadCount(userId);
+      await decrUnreadCount(userId, ctx.requestId);
 
       return { success: true };
     }),
@@ -160,7 +160,7 @@ export const notificationRouter = createTRPCRouter({
     });
 
     // Reset Redis unread count to 0
-    await setUnreadCount(userId, 0);
+    await setUnreadCount(userId, 0, ctx.requestId);
 
     return { success: true };
   }),
