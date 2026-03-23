@@ -16,8 +16,10 @@ function getOAuthErrorMessage(errorCode: string | null): string | null {
   const errorMessages: Record<string, string> = {
     OAuthSignin: "Failed to start sign-in with the provider. Please try again.",
     OAuthCallback: "Failed to process sign-in. Please try again.",
-    OAuthCreateAccount: "Failed to create your account. Please try again or use a different sign-in method.",
-    OAuthAccountNotLinked: "This email is already associated with another account. Please sign in using your original method.",
+    OAuthCreateAccount:
+      "Failed to create your account. Please try again or use a different sign-in method.",
+    OAuthAccountNotLinked:
+      "This email is already associated with another account. Please sign in using your original method.",
   };
 
   return errorMessages[errorCode] || "An error occurred during sign-in. Please try again.";
