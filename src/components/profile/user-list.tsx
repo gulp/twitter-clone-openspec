@@ -114,16 +114,11 @@ export function UserList({ userId, type }: UserListProps) {
                   {/* User info */}
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/${user.username}`}
-                        className="block hover:underline"
-                      >
+                      <Link href={`/${user.username}`} className="block hover:underline">
                         <div className="font-manrope font-bold text-[#E7E9EA] truncate">
                           {user.displayName}
                         </div>
-                        <div className="text-[#71767B] text-[15px] truncate">
-                          @{user.username}
-                        </div>
+                        <div className="text-[#71767B] text-[15px] truncate">@{user.username}</div>
                       </Link>
                     </div>
 
@@ -144,18 +139,14 @@ export function UserList({ userId, type }: UserListProps) {
                         <span className={isFollowing ? "group-hover:hidden" : ""}>
                           {isFollowing ? "Following" : "Follow"}
                         </span>
-                        {isFollowing && (
-                          <span className="hidden group-hover:inline">Unfollow</span>
-                        )}
+                        {isFollowing && <span className="hidden group-hover:inline">Unfollow</span>}
                       </Button>
                     )}
                   </div>
 
                   {/* Bio */}
                   {user.bio && (
-                    <p className="text-[#E7E9EA] text-[15px] line-clamp-2 mb-2">
-                      {user.bio}
-                    </p>
+                    <p className="text-[#E7E9EA] text-[15px] line-clamp-2 mb-2">{user.bio}</p>
                   )}
 
                   {/* Stats */}
