@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { safeRedirectUrl } from "@/lib/utils";
+import { describe, expect, it } from "vitest";
 
 describe("safeRedirectUrl", () => {
   it("allows valid relative paths starting with /", () => {
