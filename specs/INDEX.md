@@ -50,6 +50,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [caching-key-construction.md](caching-key-construction.md) — Cache key uniqueness principles, parameter inclusion rules, cursor hashing, deterministic serialization
 - [pagination-cursor-encoding.md](pagination-cursor-encoding.md) — Opaque base64url cursors, keyset pagination patterns, Prisma vs custom encoding, peek-ahead strategy
 - [pagination-where-clause-construction.md](pagination-where-clause-construction.md) — Compound cursor WHERE clause pattern, lexicographic comparison, row syntax, null handling, peek-ahead
+- [database-queryraw-patterns.md](database-queryraw-patterns.md) — $queryRaw usage for full-text search, CTEs, DISTINCT ON, UNION, Prisma.sql safe interpolation, type casting, row-value comparisons
 - [sse-event-publishing.md](sse-event-publishing.md) — Atomic Lua script for event publishing, Redis Pub/Sub channels, sequence numbers, replay buffer, fan-out to followers
 - [sse-connection-management.md](sse-connection-management.md) — Client reconnect with exponential backoff, Last-Event-ID replay, connection limits, heartbeat, SIGTERM draining
 - [sse-graceful-shutdown.md](sse-graceful-shutdown.md) — SIGTERM handler for zero-downtime deployments, server_restart event notification, client reconnect flow, rolling restart behavior
