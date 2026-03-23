@@ -6,7 +6,9 @@ Every HTTP request gets a unique UUIDv4 identifier (`requestId`) that flows thro
 
 ## Where
 
-- `src/server/trpc/index.ts:20` — requestId generation in tRPC context
+- `src/middleware.ts:13` — requestId generation in Edge middleware
+- `src/middleware.ts:54` — requestId set as request header (x-request-id)
+- `src/server/trpc/index.ts:22` — requestId extraction from header with fallback
 - `src/server/trpc/index.ts:64-65` — AsyncLocalStorage propagation
 - `src/server/db.ts:10` — AsyncLocalStorage declaration
 - `src/server/db.ts:43` — requestId extraction in Prisma middleware
@@ -14,15 +16,46 @@ Every HTTP request gets a unique UUIDv4 identifier (`requestId`) that flows thro
 
 ## How It Works
 
-### Step 1: Generate requestId in tRPC context
+### Step 0: Edge Middleware generates requestId (optional path)
 
-Every incoming tRPC request gets a fresh UUIDv4:
+For browser requests, Next.js Edge middleware runs first and generates a requestId:
 
 ```typescript
-// src/server/trpc/index.ts:18-26
+// src/middleware.ts:13-14, 54
+export function middleware(request: NextRequest) {
+  const requestId = crypto.randomUUID();
+  const nonce = crypto.randomUUID();
+
+  // ... CSRF validation, CSP headers ...
+
+  // Pass requestId via request header (not response header)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
+  // Also set as response header for client visibility
+  response.headers.set("X-Request-Id", requestId);
+
+  return response;
+}
+```
+
+This runs for all routes except static assets (`_next/static`, `_next/image`, `favicon.ico`).
+
+### Step 1: tRPC context extracts or generates requestId
+
+tRPC context reads the requestId from the `x-request-id` header (set by middleware) or generates a fresh UUID if missing:
+
+```typescript
+// src/server/trpc/index.ts:18-28
 export async function createTRPCContext(opts: FetchCreateContextFnOptions) {
   const session = await getServerSession(authOptions);
-  const requestId = randomUUID();
+  // Use requestId from middleware (x-request-id header) for log correlation.
+  // Fall back to generating new UUID if middleware didn't set it (e.g., in tests).
+  const requestId = opts.req.headers.get("x-request-id") ?? randomUUID();
 
   return {
     session,
@@ -31,6 +64,11 @@ export async function createTRPCContext(opts: FetchCreateContextFnOptions) {
   };
 }
 ```
+
+**When fallback triggers:**
+- Unit/integration tests that call tRPC directly (no middleware)
+- Direct API route access bypassing middleware (rare)
+- Non-browser clients that don't pass through middleware matcher
 
 ### Step 2: Propagate via AsyncLocalStorage
 
@@ -115,17 +153,29 @@ External log aggregation tools (Datadog, CloudWatch, etc.) can group all logs wi
 
 ## Invariants
 
-1. **Every tRPC request MUST have a unique requestId** — generated once in `createTRPCContext`, never reused.
+1. **Every tRPC request MUST have a unique requestId** — generated in middleware (Edge Runtime) or tRPC context (Node.js fallback), never reused across requests.
 
-2. **AsyncLocalStorage MUST be initialized before executing the procedure** — the `requestContext.run()` call must wrap `next()`, not come after it.
+2. **Middleware-generated requestIds flow via header** — Edge middleware sets `x-request-id` request header, tRPC context reads it. If header missing, tRPC generates fallback UUID.
 
-3. **Prisma middleware MUST call `requestContext.getStore()`** — never assume the context exists; handle `ctx?.requestId` gracefully.
+3. **AsyncLocalStorage MUST be initialized before executing the procedure** — the `requestContext.run()` call must wrap `next()`, not come after it.
 
-4. **Redis wrappers MUST accept requestId as optional** — not all Redis operations originate from tRPC (SSE publisher, background jobs).
+4. **Prisma middleware MUST call `requestContext.getStore()`** — never assume the context exists; handle `ctx?.requestId` gracefully.
 
-5. **Logs MUST include requestId when available** — use `ctx.requestId` in tRPC middleware, `ctx?.requestId` in Prisma middleware, parameter in Redis wrappers.
+5. **Redis wrappers MUST accept requestId as optional** — not all Redis operations originate from tRPC (SSE publisher, background jobs).
+
+6. **Logs MUST include requestId when available** — use `ctx.requestId` in tRPC middleware, `ctx?.requestId` in Prisma middleware, parameter in Redis wrappers.
 
 ## Gotchas
+
+**Middleware runs in Edge Runtime:** The middleware (`src/middleware.ts`) uses `crypto.randomUUID()` from the Web Crypto API (Edge Runtime compatible), while tRPC context (`src/server/trpc/index.ts`) uses `randomUUID()` from Node.js `crypto` module. Both generate RFC 4122 v4 UUIDs but via different APIs.
+
+**Header vs fallback:** The tRPC context reads `x-request-id` from the request header (lowercase, set by middleware). If missing, it generates a fresh UUID. This fallback ensures tests work without middleware, but means you can't assume all requestIds come from middleware.
+
+**Response header visibility:** Middleware sets `X-Request-Id` as a response header (src/middleware.ts:61) so client-side JS can read it via `response.headers.get('X-Request-Id')`. This is for debugging/tracing from browser DevTools.
+
+**Middleware matcher:** Edge middleware only runs for routes matching `/((?!_next/static|_next/image|favicon.ico).*)` (src/middleware.ts:89). Static assets bypass middleware and won't have `x-request-id` headers. tRPC routes (`/api/trpc/*`) always match.
+
+**Test isolation:** Integration tests that create tRPC callers directly (via `createCaller()`) bypass middleware. The fallback `randomUUID()` ensures tests still get unique requestIds, but these won't correlate with any Edge middleware logs.
 
 **AsyncLocalStorage caveat:** If you create a new Promise chain outside the AsyncLocalStorage context (e.g., `Promise.all()` with externally-defined promises), the context may be lost. Keep all async work within the `requestContext.run()` callback.
 
