@@ -70,7 +70,7 @@ export function ImageGrid({ images }: ImageGridProps) {
       >
         {validImages.map((image, index) => (
           <button
-            key={index}
+            key={image}
             onClick={() => handleImageClick(index)}
             className={`relative ${getImageClass(index)} ${getImageAspect(index)} bg-[#192734] overflow-hidden group`}
           >
