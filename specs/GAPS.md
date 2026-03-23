@@ -14,7 +14,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Session management — covered in security-session-management.md
 
 ## High (core features, caching, pagination)
-- [ ] Unhandled promise rejection chains — Promise.all() fail-fast vs allSettled() best-effort patterns (tweet.ts:143-150, feed.ts:475-477)
+- [x] Unhandled promise rejection chains — covered in error-handling-promise-patterns.md
 - [x] Unread count cache strategy — covered in caching-unread-count-strategy.md
 - [x] Request correlation flow — covered in logging-request-correlation.md
 - [x] SSE replay buffer exhaustion — covered in sse-replay-buffer-exhaustion.md
