@@ -138,7 +138,8 @@ export function validateMediaUrls(
     }
 
     // Extract the S3 key (everything after the public URL base)
-    const key = url.replace(`${s3PublicUrl}/`, "");
+    // Use slice instead of replace to prevent double-prefix bypass attack
+    const key = url.slice(s3PublicUrl.length + 1); // +1 for the slash
 
     // Expected prefix: {purpose}/{userId}/
     const expectedPrefix = `${purpose}/${userId}/`;

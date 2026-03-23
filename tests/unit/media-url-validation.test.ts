@@ -137,4 +137,12 @@ describe("Media URL validation", () => {
       "Invalid media URL: does not match user ownership"
     );
   });
+
+  it("should reject double-prefix attack (url with s3PublicUrl repeated)", () => {
+    // Attack: repeat the s3PublicUrl prefix to bypass replace() validation
+    const attackUrl = `${s3PublicUrl}/${s3PublicUrl}/tweet/victim-user/image.jpg`;
+    expect(() => validateMediaUrls([attackUrl], mockUserId, "tweet")).toThrow(
+      "Invalid media URL: does not match user ownership"
+    );
+  });
 });
