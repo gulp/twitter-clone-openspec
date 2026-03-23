@@ -1,5 +1,6 @@
 import { env } from "@/env";
 import { log } from "@/lib/logger";
+import { escapeHtml } from "@/lib/utils";
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 
@@ -123,7 +124,7 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
         html: `
           <h2>Reset your password</h2>
           <p>Click the link below to reset your password:</p>
-          <p><a href="${resetUrl}">${resetUrl}</a></p>
+          <p><a href="${escapeHtml(resetUrl)}">${escapeHtml(resetUrl)}</a></p>
           <p>This link expires in 1 hour.</p>
           <p>If you did not request a password reset, please ignore this email.</p>
         `,

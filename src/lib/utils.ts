@@ -96,3 +96,18 @@ export function safeRedirectUrl(url: string | null | undefined, defaultPath = "/
 
   return url;
 }
+
+/**
+ * Escape HTML special characters to prevent injection
+ * Encodes &, <, >, ", and ' to their HTML entity equivalents
+ */
+export function escapeHtml(text: string): string {
+  const htmlEscapeMap: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char] || char);
+}
