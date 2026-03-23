@@ -207,7 +207,7 @@ git push
 Report findings to coordinator:
 
 ```bash
-[ -n "$COORDINATOR" ] && DATABASE_URL= am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[specs] Audit findings" -b "<summary of gaps found and specs written>" --thread-id "specs" 2>/dev/null || true
+[ -n "$COORDINATOR" ] && am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" --to "$COORDINATOR" -s "[specs] Audit findings" -b "<summary of gaps found and specs written>" --thread-id "specs" 2>/dev/null || true
 ```
 
 ---
@@ -218,7 +218,7 @@ Report findings to coordinator:
 git add specs/ README.md
 git commit -m "docs(specs): audit and update — <brief description>"
 git pull --ff-only && git push
-DATABASE_URL= am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME" 2>/dev/null || true
+am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME" 2>/dev/null || true
 ```
 
 **One item per loop.** You picked one gap in §3, wrote or updated one spec,

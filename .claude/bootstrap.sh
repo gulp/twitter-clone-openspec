@@ -30,6 +30,7 @@ git pull --ff-only 2>/dev/null || true
 mkdir -p .verify-cache
 
 # ── Agent mail registration ───────────────────────────────────────────────
+export DATABASE_URL="sqlite:////home/gulp/projects/mcp_agent_mail_rust/storage.sqlite3"
 SESSION=$(am macros start-session \
   --project "$PROJECT" \
   --program claude-code \

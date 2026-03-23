@@ -78,7 +78,7 @@ If coordinator assigned a file via inbox, use that instead.
 **Reserve files** (best-effort — skip if `am` fails):
 
 ```bash
-DATABASE_URL= am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "<file-pattern>" --reason "hunt" 2>/dev/null || true
+am file_reservations reserve "$PROJECT_SLUG" "$AGENT_NAME" "<file-pattern>" --reason "hunt" 2>/dev/null || true
 ```
 
 ---
@@ -158,7 +158,7 @@ git push
 For every issue found (fixed or filed):
 
 ```bash
-[ -n "$COORDINATOR" ] && DATABASE_URL= am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" \
+[ -n "$COORDINATOR" ] && am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" \
   --to "$COORDINATOR" -s "[hunt] <file>: <one-line summary>" \
   -b "<details: what, where, severity, fixed-or-filed>" \
   --thread-id "hunt" 2>/dev/null || true
@@ -172,13 +172,13 @@ For every issue found (fixed or filed):
 git add <specific-files-you-changed>
 git commit -m "fix({scope}): <summary> [hunt]"
 git pull --ff-only && git push
-DATABASE_URL= am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME" 2>/dev/null || true
+am file_reservations release "$PROJECT_SLUG" "$AGENT_NAME" 2>/dev/null || true
 ```
 
 If no issues found, still report:
 
 ```bash
-[ -n "$COORDINATOR" ] && DATABASE_URL= am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" \
+[ -n "$COORDINATOR" ] && am mail send -p "$PROJECT_SLUG" --from "$AGENT_NAME" \
   --to "$COORDINATOR" -s "[hunt] <file>: clean" \
   -b "Reviewed <file> and its imports/callers. No issues found." \
   --thread-id "hunt" 2>/dev/null || true
