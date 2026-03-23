@@ -502,7 +502,12 @@ export const engagementRouter = createTRPCRouter({
       const { userId, cursor, limit } = input;
 
       const likes = await prisma.like.findMany({
-        where: { userId },
+        where: {
+          userId,
+          tweet: {
+            deleted: false,
+          },
+        },
         orderBy: { createdAt: "desc" },
         take: limit + 1,
         cursor: cursor ? { userId_tweetId: parseLikeCursor(cursor) } : undefined,
@@ -519,7 +524,6 @@ export const engagementRouter = createTRPCRouter({
               likeCount: true,
               retweetCount: true,
               replyCount: true,
-              deleted: true,
               author: { select: publicUserSelect },
             },
           },
@@ -532,16 +536,8 @@ export const engagementRouter = createTRPCRouter({
         nextCursor = nextItem ? `${nextItem.userId}:${nextItem.tweetId}` : null;
       }
 
-      // Filter out deleted tweets
-      const items = likes
-        .filter((like) => !like.tweet.deleted)
-        .map((like) => {
-          const { deleted: _, ...tweetData } = like.tweet;
-          return tweetData;
-        });
-
       return {
-        items,
+        items: likes.map((like) => like.tweet),
         nextCursor,
       };
     }),
