@@ -1,5 +1,16 @@
 # CLAUDE.md
 
+## Code Principles
+
+- **KISS**: prefer the simplest correct implementation.
+- **YAGNI**: solve only the requested problem; no speculative abstractions or future-proofing.
+- **DRY**: reuse existing patterns and utilities; remove real duplication but don't over-abstract.
+- **POLA**: avoid surprising behavior, hidden side effects, and misleading names.
+- Match the repo's existing conventions unless there is a strong reason not to.
+- Prefer editing existing code over building parallel systems.
+- Avoid unnecessary dependencies, broad rewrites, and unrelated cleanup.
+- Never claim success without validation.
+
 ## Project Overview
 
 **Twitter Clone** — Full-stack social media application built with Next.js 14 (App Router),
