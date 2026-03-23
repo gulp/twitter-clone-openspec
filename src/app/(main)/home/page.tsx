@@ -33,10 +33,21 @@ export default function HomePage() {
     }
   }, [status, router]);
 
-  // Get initial feed data to check if empty
-  const { data: firstPage, isLoading } = trpc.feed.home.useQuery(
+  // Get feed data using infinite query
+  const {
+    data: feedData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = trpc.feed.home.useInfiniteQuery(
     { limit: 20 },
-    { enabled: status === "authenticated" }
+    {
+      enabled: status === "authenticated",
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }
   );
 
   const handleShowNewTweets = () => {
@@ -73,7 +84,8 @@ export default function HomePage() {
     return null;
   }
 
-  const isEmpty = !isLoading && (!firstPage?.items || firstPage.items.length === 0);
+  const isEmpty =
+    !isLoading && (!feedData?.pages[0]?.items || feedData.pages[0].items.length === 0);
 
   return (
     <div ref={feedContainerRef} className="min-h-screen bg-[#0F1419]">
@@ -91,7 +103,19 @@ export default function HomePage() {
       <NewTweetsIndicator onShowNewTweets={handleShowNewTweets} />
 
       {/* Feed content */}
-      {isEmpty ? <EmptyFeed /> : <FeedList />}
+      {isEmpty ? (
+        <EmptyFeed />
+      ) : (
+        <FeedList
+          data={feedData}
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+        />
+      )}
     </div>
   );
 }

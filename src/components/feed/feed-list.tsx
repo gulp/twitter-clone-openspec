@@ -3,7 +3,11 @@
 import { TweetCard } from "@/components/tweet/tweet-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { trpc } from "@/lib/trpc";
+import type { AppRouter } from "@/server/trpc/router";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { TRPCClientErrorLike } from "@trpc/client";
+
+type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 /**
  * Feed list component with infinite scroll
@@ -14,14 +18,30 @@ import { trpc } from "@/lib/trpc";
  * Uses IntersectionObserver via useInfiniteScroll hook to auto-load
  * next page when scrolling near the bottom.
  */
-export function FeedList() {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error } =
-    trpc.feed.home.useInfiniteQuery(
-      { limit: 20 },
-      {
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
+interface FeedListProps {
+  data:
+    | {
+        pages: RouterOutputs["feed"]["home"][];
+        pageParams: unknown[];
       }
-    );
+    | undefined;
+  fetchNextPage: () => void;
+  hasNextPage: boolean | undefined;
+  isFetchingNextPage: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  error: TRPCClientErrorLike<AppRouter> | null;
+}
+
+export function FeedList({
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  isLoading,
+  isError,
+  error,
+}: FeedListProps) {
 
   const sentinelRef = useInfiniteScroll(() => {
     if (hasNextPage && !isFetchingNextPage) {
