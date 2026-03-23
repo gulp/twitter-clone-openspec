@@ -6,7 +6,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Silent configuration validation — covered in security-env-validation-edge-runtime.md
 - [x] Password reset token race condition — covered in security-password-reset-tokens.md
 - [ ] Password sanitization rules — no Unicode normalization, forbidden characters, control char filtering not documented
-- [ ] PII redaction policy — what gets redacted in logs (email, username, IP) not documented
+- [x] PII redaction policy — covered in logging-structured-output-redaction.md (I-LOG2: no email/IP beyond userIds)
 - [x] Timing-safe auth patterns — covered in security-timing-attacks.md
 - [x] Fire-and-forget email service — covered in security-email-timing-safety.md
 - [x] SIGTERM graceful shutdown — covered in sse-graceful-shutdown.md

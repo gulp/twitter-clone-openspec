@@ -1,5 +1,4 @@
 import { env } from "@/env";
-import { MAX_MEDIA_SIZE_BYTES } from "@/lib/constants";
 import { log } from "@/lib/logger";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -50,7 +49,6 @@ export async function getUploadUrl(key: string, contentType: string, requestId?:
       Bucket: env.S3_BUCKET,
       Key: key,
       ContentType: contentType,
-      ContentLength: MAX_MEDIA_SIZE_BYTES, // Hint for S3, enforced by bucket policy
     });
 
     const signedUrl = await getSignedUrl(s3, command, {
