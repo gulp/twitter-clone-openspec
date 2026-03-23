@@ -1,8 +1,8 @@
 "use client";
 
+import { FollowButton } from "@/components/social/follow-button";
 import { Avatar } from "@/components/ui/avatar";
 import { InfiniteScroll } from "@/components/ui/infinite-scroll";
-import { FollowButton } from "@/components/social/follow-button";
 import { trpc } from "@/lib/trpc";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
