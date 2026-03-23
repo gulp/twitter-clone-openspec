@@ -96,7 +96,12 @@ export default function SearchPage() {
         <div className="min-h-screen bg-[#0F1419]">
           <div className="sticky top-0 z-20 backdrop-blur-md bg-[#0F1419]/95 border-b border-[#38444d]">
             <div className="px-4 py-3">
-              <div className="h-10 bg-[#202327] rounded-full animate-pulse" />
+              <div
+                className="h-10 bg-[#202327] rounded-full animate-pulse"
+                role="status"
+                aria-busy="true"
+                aria-label="Loading"
+              />
             </div>
           </div>
         </div>

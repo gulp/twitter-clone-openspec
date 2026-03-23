@@ -128,7 +128,7 @@ function WhoToFollowWidget() {
           // Loading skeletons
           <>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="px-4 py-3">
+              <div key={i} className="px-4 py-3" role="status" aria-busy="true" aria-label="Loading">
                 <div className="flex items-start gap-3">
                   <div className="h-12 w-12 rounded-full bg-[rgb(var(--color-bg-tertiary))] skeleton-shimmer" />
                   <div className="flex-1">

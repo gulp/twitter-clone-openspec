@@ -27,7 +27,16 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <Suspense fallback={<div className="h-64 animate-pulse bg-gray-800/20 rounded-lg" />}>
+      <Suspense
+        fallback={
+          <div
+            className="h-64 animate-pulse bg-gray-800/20 rounded-lg"
+            role="status"
+            aria-busy="true"
+            aria-label="Loading"
+          />
+        }
+      >
         <LoginForm />
       </Suspense>
 
