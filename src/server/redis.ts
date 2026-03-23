@@ -52,7 +52,12 @@ export async function cacheGet(key: string, requestId?: string): Promise<string 
  * Cache SET wrapper — fail open.
  * No-op on Redis failure (cache write is best-effort).
  */
-export async function cacheSet(key: string, value: string, ttlSeconds?: number, requestId?: string): Promise<void> {
+export async function cacheSet(
+  key: string,
+  value: string,
+  ttlSeconds?: number,
+  requestId?: string
+): Promise<void> {
   try {
     if (ttlSeconds) {
       await redis.setex(key, ttlSeconds, value);
@@ -130,7 +135,12 @@ export async function sessionGet(jti: string, requestId?: string): Promise<strin
  * Session SET wrapper — fail open.
  * No-op on Redis failure (session allow-list is best-effort performance optimization).
  */
-export async function sessionSet(jti: string, data: string, ttlSeconds: number, requestId?: string): Promise<void> {
+export async function sessionSet(
+  jti: string,
+  data: string,
+  ttlSeconds: number,
+  requestId?: string
+): Promise<void> {
   try {
     await redis.setex(`session:jti:${jti}`, ttlSeconds, data);
   } catch (error) {
@@ -165,7 +175,7 @@ export async function sessionDel(jti: string, requestId?: string): Promise<void>
  * SSE connection tracking — fail open.
  * Atomically check connection limit and add connection if under limit.
  * Returns true if connection was added, false if limit reached.
- * Returns false on Redis failure (fail open - allow connection).
+ * Returns true on Redis failure (fail open — allow connection).
  *
  * Addresses race condition described in specs/sse-connection-management.md Gotcha #3.
  */
@@ -212,7 +222,11 @@ export async function sseAtomicAddConnection(
  * Add a connection ID to the set of active SSE connections for a user.
  * No-op on Redis failure.
  */
-export async function sseAddConnection(userId: string, connectionId: string, requestId?: string): Promise<void> {
+export async function sseAddConnection(
+  userId: string,
+  connectionId: string,
+  requestId?: string
+): Promise<void> {
   try {
     const key = `sse:connections:${userId}`;
     // Atomic SADD + EXPIRE to prevent stale keys if process crashes between operations
@@ -240,7 +254,11 @@ export async function sseAddConnection(userId: string, connectionId: string, req
  * Remove a connection ID from the set of active SSE connections.
  * No-op on Redis failure.
  */
-export async function sseRemoveConnection(userId: string, connectionId: string, requestId?: string): Promise<void> {
+export async function sseRemoveConnection(
+  userId: string,
+  connectionId: string,
+  requestId?: string
+): Promise<void> {
   try {
     await redis.srem(`sse:connections:${userId}`, connectionId);
   } catch (error) {
@@ -315,7 +333,11 @@ export async function getUnreadCount(userId: string, requestId?: string): Promis
  * No-op on Redis failure.
  * TTL: 5 minutes to prevent stale counts from persisting indefinitely.
  */
-export async function setUnreadCount(userId: string, count: number, requestId?: string): Promise<void> {
+export async function setUnreadCount(
+  userId: string,
+  count: number,
+  requestId?: string
+): Promise<void> {
   try {
     await redis.setex(`notification:unread:${userId}`, 300, count.toString());
   } catch (error) {
@@ -392,7 +414,11 @@ export async function decrUnreadCount(userId: string, requestId?: string): Promi
  * No-op on Redis failure.
  * Uses Lua script to atomically decrement and floor at 0 (prevents negative counts).
  */
-export async function decrUnreadCountBy(userId: string, count: number, requestId?: string): Promise<void> {
+export async function decrUnreadCountBy(
+  userId: string,
+  count: number,
+  requestId?: string
+): Promise<void> {
   if (count <= 0) return;
 
   try {
@@ -423,4 +449,3 @@ export async function decrUnreadCountBy(userId: string, count: number, requestId
     });
   }
 }
-
