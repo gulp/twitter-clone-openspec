@@ -141,6 +141,11 @@ export function useSSE(): SSEHookReturn {
           const data = JSON.parse(event.data);
           const { tweetId } = data;
 
+          if (!tweetId || typeof tweetId !== 'string') {
+            console.warn('[SSE] Invalid tweet_deleted event: missing tweetId');
+            return;
+          }
+
           // Remove tweet from all feed caches (handles infinite query pagination)
           // tRPC wraps keys in nested arrays: [["feed", "home"], ...]
           queryClient.setQueriesData({ queryKey: [["feed"]] }, (oldData: unknown) => {
