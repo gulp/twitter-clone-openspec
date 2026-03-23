@@ -13,7 +13,7 @@ export const displayNameSchema = z.string().min(1).max(50);
 
 export const bioSchema = z.string().max(160);
 
-export const tweetContentSchema = z.string().min(1).max(280);
+export const tweetContentSchema = z.string().max(280);
 
 export const emailSchema = z.string().email();
 

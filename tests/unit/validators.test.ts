@@ -121,8 +121,8 @@ describe("tweetContentSchema", () => {
     expect(tweetContentSchema.parse("a".repeat(280))).toBe("a".repeat(280));
   });
 
-  it("should reject empty tweet", () => {
-    expect(() => tweetContentSchema.parse("")).toThrow();
+  it("should accept empty content (media-only tweets validated at API layer)", () => {
+    expect(tweetContentSchema.parse("")).toBe("");
   });
 
   it("should reject tweet with 281 chars", () => {
