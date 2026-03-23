@@ -199,6 +199,7 @@ export const socialRouter = createTRPCRouter({
    *
    * Returns paginated follower profiles with cursor-based pagination.
    * Ordered by Follow.createdAt DESC (most recent followers first).
+   * Includes isFollowing state for authenticated users (§1.16).
    */
   getFollowers: publicProcedure
     .input(
@@ -208,7 +209,7 @@ export const socialRouter = createTRPCRouter({
         limit: z.number().int().positive().max(100).default(20),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { userId, cursor, limit } = input;
 
       const follows = await prisma.follow.findMany({
@@ -240,8 +241,33 @@ export const socialRouter = createTRPCRouter({
         nextCursor = nextItem ? `${nextItem.followerId}:${nextItem.followingId}` : null;
       }
 
+      const users = follows.map((f) => f.follower);
+
+      // If authenticated: batch-check isFollowing (§1.16)
+      let isFollowingSet = new Set<string>();
+
+      if (ctx.session?.user?.id) {
+        const currentUserId = ctx.session.user.id;
+        const userIds = users.map((u) => u.id);
+
+        if (userIds.length > 0) {
+          const following = await prisma.follow.findMany({
+            where: { followerId: currentUserId, followingId: { in: userIds } },
+            select: { followingId: true },
+          });
+
+          isFollowingSet = new Set(following.map((f) => f.followingId));
+        }
+      }
+
+      // Annotate users with isFollowing state
+      const items = users.map((user) => ({
+        ...user,
+        isFollowing: isFollowingSet.has(user.id),
+      }));
+
       return {
-        items: follows.map((f) => f.follower),
+        items,
         nextCursor,
       };
     }),
@@ -251,6 +277,7 @@ export const socialRouter = createTRPCRouter({
    *
    * Returns paginated profiles with cursor-based pagination.
    * Ordered by Follow.createdAt DESC (most recent follows first).
+   * Includes isFollowing state for authenticated users (§1.16).
    */
   getFollowing: publicProcedure
     .input(
@@ -260,7 +287,7 @@ export const socialRouter = createTRPCRouter({
         limit: z.number().int().positive().max(100).default(20),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { userId, cursor, limit } = input;
 
       const follows = await prisma.follow.findMany({
@@ -292,8 +319,33 @@ export const socialRouter = createTRPCRouter({
         nextCursor = nextItem ? `${nextItem.followerId}:${nextItem.followingId}` : null;
       }
 
+      const users = follows.map((f) => f.following);
+
+      // If authenticated: batch-check isFollowing (§1.16)
+      let isFollowingSet = new Set<string>();
+
+      if (ctx.session?.user?.id) {
+        const currentUserId = ctx.session.user.id;
+        const userIds = users.map((u) => u.id);
+
+        if (userIds.length > 0) {
+          const following = await prisma.follow.findMany({
+            where: { followerId: currentUserId, followingId: { in: userIds } },
+            select: { followingId: true },
+          });
+
+          isFollowingSet = new Set(following.map((f) => f.followingId));
+        }
+      }
+
+      // Annotate users with isFollowing state
+      const items = users.map((user) => ({
+        ...user,
+        isFollowing: isFollowingSet.has(user.id),
+      }));
+
       return {
-        items: follows.map((f) => f.following),
+        items,
         nextCursor,
       };
     }),

@@ -93,8 +93,7 @@ export function UserList({ userId, type }: UserListProps) {
       <div>
         {users.map((user) => {
           const isOwnProfile = session?.user?.id === user.id;
-          // TODO: Fetch isFollowing state from server for each user
-          const isFollowing = false;
+          const isFollowing = user.isFollowing;
           const isLoading =
             (followMutation.isPending || unfollowMutation.isPending) &&
             (followMutation.variables?.userId === user.id ||
