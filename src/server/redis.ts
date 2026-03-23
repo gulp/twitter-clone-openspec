@@ -336,7 +336,7 @@ export async function getUnreadCount(userId: string, requestId?: string): Promis
  */
 export async function setUnreadCount(userId: string, count: number, requestId?: string): Promise<void> {
   try {
-    await redis.setex(`notification:unread:${userId}`, 300, count.toString());
+    await redis.set(`notification:unread:${userId}`, count.toString());
   } catch (error) {
     log.warn("Redis operation failed", {
       feature: "unread",
