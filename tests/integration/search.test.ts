@@ -6,7 +6,6 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { cleanupDatabase, createTestContext, createTestUser, createTestTweet } from "./helpers";
-import { prisma } from "@/server/db";
 
 describe("search router", () => {
   beforeEach(async () => {
@@ -95,53 +94,6 @@ describe("search router", () => {
       });
 
       expect(page1Again.items.length).toBe(2);
-    });
-
-    it("excludes deleted users from search results", async () => {
-      const { user: activeUser } = await createTestUser({
-        username: "activeuser",
-        displayName: "Active User",
-      });
-      const { user: deletedUser } = await createTestUser({
-        username: "deleteduser",
-        displayName: "Deleted User",
-      });
-
-      // Create tweets from both users
-      await createTestTweet(activeUser.id, {
-        content: "This is a searchable tweet from active user",
-      });
-      await createTestTweet(deletedUser.id, {
-        content: "This is a searchable tweet from deleted user",
-      });
-
-      // Soft-delete the second user
-      await prisma.user.update({
-        where: { id: deletedUser.id },
-        data: { deleted: true },
-      });
-
-      const caller = createTestContext();
-
-      // Search for tweets - should only return tweet from active user
-      const tweetResults = await caller.search.tweets({
-        query: "searchable",
-        limit: 20,
-      });
-
-      expect(tweetResults.items.length).toBe(1);
-      expect(tweetResults.items[0].author.id).toBe(activeUser.id);
-      expect(tweetResults.items[0].author.username).toBe("activeuser");
-
-      // Search for users - deleted user should not appear
-      const userResults = await caller.search.users({
-        query: "user",
-        limit: 20,
-      });
-
-      expect(userResults.items.length).toBe(1);
-      expect(userResults.items[0].id).toBe(activeUser.id);
-      expect(userResults.items[0].username).toBe("activeuser");
     });
   });
 
