@@ -12,6 +12,18 @@ import { cacheGet, cacheIncr, cacheSet, redis } from "../redis";
  */
 
 /**
+ * DELETED_TWEET_BUFFER — Extra items to fetch to account for deletions during hydration
+ *
+ * The peek pattern (limit+1) assumes hydration preserves all items. But tweets can be
+ * deleted between query and hydration (lines 377-379), causing hasNextPage to be
+ * incorrectly false when hydratedItems.length < limit even though more pages exist.
+ *
+ * Fetching limit+1+buffer ensures we have enough items after filtering to accurately
+ * determine hasNextPage. Buffer of 10 handles typical deletion rates without excess waste.
+ */
+const DELETED_TWEET_BUFFER = 10;
+
+/**
  * FeedCursor — opaque cursor for home timeline pagination
  *
  * Contains { effectiveAt, tweetId } because home feed ordering is by
@@ -206,11 +218,16 @@ async function fetchFeedFromDB(
   // Hydrate tweet + author data
   const hydratedItems = await hydrateFeedItems(userId, feedItems);
 
-  // Determine nextCursor
+  // Determine nextCursor and slice to limit
+  // After fetching limit+1+DELETED_TWEET_BUFFER, we may have many more items than needed.
+  // If we have more than limit items, slice to exactly limit and set nextCursor.
   let nextCursor: string | null = null;
+  let items = hydratedItems;
+
   if (hydratedItems.length > limit) {
-    hydratedItems.pop(); // Remove the peek item
-    const lastItem = hydratedItems[hydratedItems.length - 1];
+    // Slice to exactly limit items
+    items = hydratedItems.slice(0, limit);
+    const lastItem = items[items.length - 1];
     if (lastItem) {
       nextCursor = encodeFeedCursor({
         effectiveAt: lastItem.effectiveAt,
@@ -220,7 +237,7 @@ async function fetchFeedFromDB(
   }
 
   const result: FeedResult = {
-    items: hydratedItems,
+    items,
     nextCursor,
   };
 
@@ -276,7 +293,7 @@ async function fetchFeedItemsFromDB(
     SELECT * FROM deduped
     ${cursorWhere}
     ORDER BY "effectiveAt" DESC, "tweetId" DESC
-    LIMIT ${limit + 1};
+    LIMIT ${limit + 1 + DELETED_TWEET_BUFFER};
   `;
 
   type RawFeedItem = {

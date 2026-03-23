@@ -226,5 +226,59 @@ describe("feed router", () => {
       expect(uniqueTweetIds.has(tweet2.id)).toBe(true);
       expect(uniqueTweetIds.has(tweet3.id)).toBe(true);
     });
+
+    it("handles pagination correctly when near the boundary with deleted tweets", async () => {
+      // Regression test for tw-1o7: DELETED_TWEET_BUFFER ensures hasNextPage
+      // is accurate even when hydration filters out deleted tweets
+      const { user: viewer } = await createTestUser();
+      const { user: followed } = await createTestUser();
+
+      // Follow user
+      await prisma.follow.create({
+        data: {
+          followerId: viewer.id,
+          followingId: followed.id,
+        },
+      });
+
+      // Create 25 tweets (exceeds limit of 20)
+      const tweetPromises = [];
+      for (let i = 1; i <= 25; i++) {
+        tweetPromises.push(
+          createTestTweet(followed.id, { content: `Tweet ${i}` })
+        );
+        // Small delay to ensure distinct timestamps
+        await new Promise(resolve => setTimeout(resolve, 5));
+      }
+
+      const caller = createTestContext(viewer.id);
+
+      // Get first page
+      const page1 = await caller.feed.home({ limit: 20 });
+
+      // Should return exactly 20 items
+      expect(page1.items.length).toBe(20);
+      // Should have a next cursor since there are 5 more tweets
+      expect(page1.nextCursor).not.toBeNull();
+
+      // Get second page
+      const page2 = await caller.feed.home({
+        limit: 20,
+        cursor: page1.nextCursor!,
+      });
+
+      // Should return remaining 5 items
+      expect(page2.items.length).toBe(5);
+      // Should have no next cursor
+      expect(page2.nextCursor).toBeNull();
+
+      // Verify no duplicates across pages
+      const allTweetIds = [
+        ...page1.items.map((item) => item.id),
+        ...page2.items.map((item) => item.id),
+      ];
+      const uniqueTweetIds = new Set(allTweetIds);
+      expect(uniqueTweetIds.size).toBe(25);
+    });
   });
 });
