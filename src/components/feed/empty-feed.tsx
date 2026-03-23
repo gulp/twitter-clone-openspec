@@ -12,7 +12,7 @@ import Link from "next/link";
  */
 export function EmptyFeed() {
   return (
-    <div className="px-8 py-16 text-center">
+    <div data-testid="empty-feed" className="px-8 py-16 text-center">
       <div className="max-w-md mx-auto space-y-6">
         {/* Icon */}
         <div className="flex justify-center">

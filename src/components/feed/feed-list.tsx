@@ -88,7 +88,7 @@ export function FeedList() {
       {/* Sentinel for infinite scroll */}
       <div ref={sentinelRef} className="w-full py-4">
         {isFetchingNextPage && (
-          <div className="px-4">
+          <div data-testid="loading-more" className="px-4">
             <div className="flex gap-3">
               <Skeleton className="w-12 h-12 rounded-full" />
               <div className="flex-1 space-y-3">

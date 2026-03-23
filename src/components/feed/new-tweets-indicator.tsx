@@ -33,6 +33,7 @@ export function NewTweetsIndicator({ onShowNewTweets }: NewTweetsIndicatorProps)
   return (
     <button
       onClick={handleClick}
+      data-testid="new-tweets-indicator"
       className="sticky top-0 z-10 w-full py-3 bg-[#1DA1F2] text-[#0F1419] font-manrope font-bold text-sm transition-all hover:bg-[#1a8cd8] active:scale-[0.98] flex items-center justify-center gap-2"
       aria-live="polite"
     >
