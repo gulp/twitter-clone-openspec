@@ -54,14 +54,14 @@ export default function FollowersPage() {
     return (
       <div className="min-h-screen bg-[#15202B] flex flex-col items-center justify-center px-4">
         <h1 className="text-[31px] font-manrope font-bold text-[#E7E9EA] mb-2">
-          This account doesn't exist
+          Something went wrong
         </h1>
-        <p className="text-[#71767B] text-[15px] mb-6">Try searching for another.</p>
+        <p className="text-[#71767B] text-[15px] mb-6">Unable to load this profile.</p>
         <button
-          onClick={() => router.push(`/${username}`)}
+          onClick={() => router.push("/home")}
           className="text-[#1DA1F2] hover:underline font-bold"
         >
-          Go back
+          Go to Home
         </button>
       </div>
     );
