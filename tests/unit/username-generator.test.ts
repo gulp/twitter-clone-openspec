@@ -4,7 +4,8 @@ import { generateUsername } from "@/lib/utils";
 /**
  * Username generator tests — validates OAuth username generation.
  *
- * Per §1.6: lowercase, strip non-alphanumeric, truncate to 9 chars, append _cuid6
+ * Per §1.6: lowercase, strip non-alphanumeric, truncate to 8 chars, append _cuid6
+ * Max length: 8 + 1 + 6 = 15 chars (usernameSchema limit)
  */
 
 describe("generateUsername", () => {
@@ -15,7 +16,7 @@ describe("generateUsername", () => {
 
   it("should strip special characters", () => {
     const result = generateUsername("Alice-Bob.Smith!", "clx9abc123def");
-    expect(result).toBe("alicebobs_clx9ab"); // "alicebobsmith" truncated to 9 chars + CUID
+    expect(result).toBe("alicebob_clx9ab"); // "alicebobsmith" truncated to 8 chars + CUID
   });
 
   it("should handle short name without truncation", () => {
@@ -23,9 +24,9 @@ describe("generateUsername", () => {
     expect(result).toBe("al_clx9ab");
   });
 
-  it("should truncate long name to 9 chars", () => {
+  it("should truncate long name to 8 chars", () => {
     const result = generateUsername("VeryLongDisplayName", "clx9abc123def");
-    expect(result).toBe("verylongd_clx9ab"); // first 9 chars + CUID
+    expect(result).toBe("verylong_clx9ab"); // first 8 chars + CUID
   });
 
   it("should use first 6 chars of CUID as suffix", () => {
@@ -63,7 +64,7 @@ describe("generateUsername", () => {
 
   it("should strip spaces", () => {
     const result = generateUsername("Alice  Bob  Carol", "clx9abc123def");
-    expect(result).toBe("alicebobc_clx9ab"); // "alicebobcarol" truncated to 9 chars
+    expect(result).toBe("alicebob_clx9ab"); // "alicebobcarol" truncated to 8 chars
   });
 
   it("should guarantee uniqueness via CUID prefix", () => {
@@ -91,7 +92,15 @@ describe("generateUsername", () => {
 
   it("should produce valid username format", () => {
     const result = generateUsername("Test User", "clx9abc123def");
-    // Should match pattern: [a-z0-9]{1,9}_[a-z0-9]{6}
-    expect(result).toMatch(/^[a-z0-9]{1,9}_[a-z0-9]{6}$/);
+    // Should match pattern: [a-z0-9]{1,8}_[a-z0-9]{6}
+    expect(result).toMatch(/^[a-z0-9]{1,8}_[a-z0-9]{6}$/);
+  });
+
+  it("should never exceed usernameSchema max length of 15", () => {
+    // Test with maximum length base name
+    const longName = "a".repeat(100); // Way longer than needed
+    const result = generateUsername(longName, "clx9abc123def");
+    expect(result.length).toBeLessThanOrEqual(15);
+    expect(result).toBe("aaaaaaaa_clx9ab"); // 8 + 1 + 6 = 15
   });
 });

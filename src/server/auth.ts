@@ -199,9 +199,10 @@ export const authOptions: NextAuthOptions = {
           const baseUsername = displayName
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "")
-            .slice(0, 9);
+            .slice(0, 8);
 
           // Append CUID prefix (first 6 chars) for uniqueness
+          // Total: 8 + 1 + 6 = 15 chars (usernameSchema max)
           const username = `${baseUsername}_${userId.slice(0, 6)}`;
 
           // Create user (using the pre-generated CUID as id)

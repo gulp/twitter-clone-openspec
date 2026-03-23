@@ -55,7 +55,8 @@ export function decodeCursor(cursor: string): CursorPayload {
 
 /**
  * Generate username for OAuth users
- * Per §1.6: lowercase, strip non-alphanumeric, truncate to 9 chars, append _cuid6
+ * Per §1.6: lowercase, strip non-alphanumeric, truncate to 8 chars, append _cuid6
+ * Total: 8 + 1 + 6 = 15 chars (usernameSchema max)
  * Example: "John Doe" + cuid "clx9abc123def" → "johndoe_clx9ab"
  */
 export function generateUsername(displayName: string, cuid: string): string {
@@ -64,11 +65,11 @@ export function generateUsername(displayName: string, cuid: string): string {
     (displayName || "user")
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "")
-      .slice(0, 9) || "user";
+      .slice(0, 8) || "user";
 
   // Take first 6 chars of CUID
   const cuidPrefix = cuid.slice(0, 6);
 
-  // Combine with underscore
+  // Combine with underscore (total max 15 chars: 8 + 1 + 6)
   return `${sanitized}_${cuidPrefix}`;
 }
