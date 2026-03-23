@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function OAuthButtons() {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
@@ -9,7 +9,20 @@ export function OAuthButtons() {
   const handleOAuthSignIn = (provider: "google" | "github") => {
     setLoadingProvider(provider);
     void signIn(provider, { callbackUrl: "/home" });
+
+    // Clear loading state after 10s if redirect hasn't happened
+    // Handles edge cases: popup blocked, network error, user cancels OAuth
+    setTimeout(() => {
+      setLoadingProvider(null);
+    }, 10000);
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      setLoadingProvider(null);
+    };
+  }, []);
 
   return (
     <div className="space-y-3">
