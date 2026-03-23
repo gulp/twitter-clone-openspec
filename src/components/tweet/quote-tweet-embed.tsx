@@ -38,9 +38,7 @@ export function QuoteTweetEmbed({ tweet }: QuoteTweetEmbedProps) {
 
       {/* Content preview */}
       {tweet.content && (
-        <p className="text-[#E7E9EA] text-sm mb-2 line-clamp-3 leading-relaxed">
-          {tweet.content}
-        </p>
+        <p className="text-[#E7E9EA] text-sm mb-2 line-clamp-3 leading-relaxed">{tweet.content}</p>
       )}
 
       {/* Media thumbnail (first image only) */}

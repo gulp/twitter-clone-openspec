@@ -76,7 +76,7 @@ export function ImageGrid({ images }: ImageGridProps) {
           >
             <img
               src={image}
-              alt={`Image ${index + 1}`}
+              alt={`${index + 1} of ${validImages.length}`}
               onError={() => handleImageError(image)}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
