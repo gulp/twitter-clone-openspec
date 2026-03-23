@@ -13,6 +13,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const currentLength = typeof value === "string" ? value.length : 0;
     const generatedId = useId();
     const inputId = id ?? generatedId;
+    const errorId = `${inputId}-error`;
 
     return (
       <div className="w-full">
@@ -25,6 +26,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           ref={ref}
           value={value}
+          aria-describedby={error ? errorId : undefined}
+          aria-invalid={error ? true : undefined}
           className={cn(
             "w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed",
             error ? "border-red-500" : "border-gray-300",
@@ -33,7 +36,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         <div className="flex items-center justify-between mt-1">
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p id={errorId} className="text-sm text-red-600">{error}</p>}
           {showCharCount && maxCharCount && (
             <p
               className={cn(
@@ -64,6 +67,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const currentLength = typeof value === "string" ? value.length : 0;
     const generatedId = useId();
     const textareaId = id ?? generatedId;
+    const errorId = `${textareaId}-error`;
 
     return (
       <div className="w-full">
@@ -76,6 +80,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={textareaId}
           ref={ref}
           value={value}
+          aria-describedby={error ? errorId : undefined}
+          aria-invalid={error ? true : undefined}
           className={cn(
             "w-full px-3 py-2 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed resize-none",
             error ? "border-red-500" : "border-gray-300",
@@ -84,7 +90,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         <div className="flex items-center justify-between mt-1">
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p id={errorId} className="text-sm text-red-600">{error}</p>}
           {showCharCount && maxCharCount && (
             <p
               className={cn(
