@@ -213,7 +213,7 @@ export const authRouter = createTRPCRouter({
       });
 
       // Construct reset URL
-      const resetUrl = `${env.APP_ORIGIN}/reset-password?token=${rawToken}`;
+      const resetUrl = `${env.APP_ORIGIN}/reset-password/${rawToken}`;
 
       // Fire-and-forget email send (NEVER await)
       sendPasswordResetEmail(user.email, resetUrl);
