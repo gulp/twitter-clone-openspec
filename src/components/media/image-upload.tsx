@@ -7,7 +7,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 export interface ImageUploadProps {
   urls: string[];
-  onChange: (urls: string[]) => void;
+  onChange: React.Dispatch<React.SetStateAction<string[]>>;
   maxImages?: number;
   trigger?: ReactNode;
   purpose?: "tweet" | "avatar" | "banner";
@@ -30,8 +30,6 @@ export function ImageUpload({
   purpose = "tweet",
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const urlsRef = useRef(urls);
-  urlsRef.current = urls;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const uploadingFilesRef = useRef(uploadingFiles);
   uploadingFilesRef.current = uploadingFiles;
@@ -149,8 +147,8 @@ export function ImageUpload({
           }
         );
 
-        // Add to uploaded URLs — use ref for current value to avoid stale closure
-        onChange([...urlsRef.current, publicUrl]);
+        // Add to uploaded URLs — use functional update to avoid race condition
+        onChange(prev => [...prev, publicUrl]);
 
         // Remove from uploading
         setUploadingFiles((prev) => prev.filter((f) => f.id !== fileId));
@@ -255,7 +253,7 @@ export function ImageUpload({
   };
 
   const handleRemove = (url: string) => {
-    onChange(urls.filter((u) => u !== url));
+    onChange(prev => prev.filter((u) => u !== url));
   };
 
   const handleRemoveUploading = (fileId: string) => {
