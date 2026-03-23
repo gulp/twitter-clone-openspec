@@ -44,7 +44,6 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] PostgreSQL connection failure handling — covered in error-handling-subsystem-failure-policies.md
 - [x] S3 pre-signed URL failure handling — covered in error-handling-subsystem-failure-policies.md
 - [x] Media URL validation and orphan handling — covered in error-handling-subsystem-failure-policies.md
-- [ ] Full-text search implementation — tsvector GENERATED column, GIN index, ts_rank usage (search.ts:131-188, migration.sql:220)
 
 ## Medium (patterns, consistency, edge cases)
 - [ ] IP extraction patterns duplication — duplicate logic in middleware and auth router, header precedence (x-forwarded-for vs x-real-ip) not documented (index.ts:61-64, auth.ts:23-28)
