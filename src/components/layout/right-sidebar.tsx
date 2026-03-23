@@ -1,5 +1,6 @@
 "use client";
 
+import { FollowButton } from "@/components/social/follow-button";
 import { trpc } from "@/lib/trpc";
 import { Search } from "lucide-react";
 import Link from "next/link";
@@ -110,18 +111,12 @@ function TrendingWidget() {
  */
 function WhoToFollowWidget() {
   const { data: suggestions, isLoading } = trpc.social.getSuggestions.useQuery();
-  const followMutation = trpc.social.follow.useMutation();
-
-  const handleFollow = async (userId: string) => {
-    try {
-      await followMutation.mutateAsync({ userId });
-    } catch (error) {
-      console.error("Follow error:", error);
-    }
-  };
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border-primary)/0.3)]">
+    <div
+      data-testid="who-to-follow"
+      className="overflow-hidden rounded-2xl bg-[rgb(var(--color-bg-secondary))] border border-[rgb(var(--color-border-primary)/0.3)]"
+    >
       {/* Header */}
       <div className="px-4 py-3 border-b border-[rgb(var(--color-border-primary)/0.3)]">
         <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Who to follow</h2>
@@ -149,6 +144,7 @@ function WhoToFollowWidget() {
           suggestions.slice(0, 3).map((user: (typeof suggestions)[0]) => (
             <div
               key={user.id}
+              data-testid="who-to-follow-card"
               className="px-4 py-3 transition-colors duration-150 hover:bg-[rgb(var(--color-bg-tertiary))]"
             >
               <div className="flex items-start gap-3">
@@ -170,7 +166,10 @@ function WhoToFollowWidget() {
                 {/* User info */}
                 <div className="flex-1 min-w-0">
                   <Link href={`/${user.username}`} className="group block">
-                    <p className="truncate text-[15px] font-bold text-[rgb(var(--color-text-primary))] group-hover:underline">
+                    <p
+                      data-testid="username"
+                      className="truncate text-[15px] font-bold text-[rgb(var(--color-text-primary))] group-hover:underline"
+                    >
                       {user.displayName}
                     </p>
                     <p className="truncate text-[13px] text-[rgb(var(--color-text-tertiary))]">
@@ -184,15 +183,10 @@ function WhoToFollowWidget() {
                   )}
                 </div>
 
-                {/* Follow button */}
-                <button
-                  onClick={() => handleFollow(user.id)}
-                  disabled={followMutation.isPending}
-                  className="flex-shrink-0 rounded-full bg-[rgb(var(--color-text-primary))] px-4 py-1.5 text-[14px] font-bold text-[rgb(var(--color-bg-primary))] transition-all duration-150 hover:bg-[rgb(var(--color-text-secondary))] active:scale-95 disabled:opacity-50"
-                  aria-label={`Follow ${user.displayName}`}
-                >
-                  Follow
-                </button>
+                {/* Follow button - using FollowButton component for proper query invalidation */}
+                <div className="flex-shrink-0">
+                  <FollowButton userId={user.id} variant="compact" />
+                </div>
               </div>
             </div>
           ))
