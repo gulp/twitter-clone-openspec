@@ -264,14 +264,14 @@ export const authRouter = createTRPCRouter({
         FOR UPDATE
       `;
 
-      if (!lockedTokens || lockedTokens.length === 0) {
+      const resetToken = lockedTokens?.[0];
+
+      if (!resetToken) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Invalid or expired reset token",
         });
       }
-
-      const resetToken = lockedTokens[0]!;
 
       // Check if already used
       if (resetToken.used) {
