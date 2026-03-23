@@ -3,14 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { emailSchema } from "@/lib/validators";
+import { resetRequestSchema } from "@/lib/validators";
 import Link from "next/link";
 import { useState } from "react";
-import { z } from "zod";
-
-const resetRequestSchema = z.object({
-  email: emailSchema,
-});
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState("");
@@ -97,7 +92,6 @@ export default function ResetPasswordPage() {
               setEmail(e.target.value);
               setError("");
             }}
-            error={error}
             disabled={isLoading}
             className="bg-transparent border-gray-700 text-white placeholder:text-gray-500 focus:border-[#1DA1F2] focus:ring-[#1DA1F2]/20"
             autoComplete="email"
