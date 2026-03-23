@@ -133,7 +133,9 @@ export function ImageUpload({
           uploadUrl,
           file,
           (progress) => {
-            setUploadingFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, progress } : f)));
+            setUploadingFiles((prev) =>
+              prev.map((f) => (f.id === fileId ? { ...f, progress } : f))
+            );
           },
           (xhr) => {
             // Store xhr reference so it can be aborted
