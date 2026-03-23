@@ -1,10 +1,10 @@
 "use client";
 
 import { Avatar } from "@/components/ui/avatar";
+import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
-import { trpc } from "@/lib/trpc";
-import { Heart, MessageCircle, Repeat2, User, AtSign, Quote } from "lucide-react";
+import { AtSign, Heart, MessageCircle, Quote, Repeat2, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -129,7 +129,12 @@ export function NotificationCard({ notification }: NotificationCardProps) {
 
       <div className="flex gap-3">
         {/* Icon */}
-        <div className={cn("flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center", config.bgColor)}>
+        <div
+          className={cn(
+            "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
+            config.bgColor
+          )}
+        >
           <Icon className={cn("w-5 h-5", config.color)} />
         </div>
 
@@ -137,7 +142,11 @@ export function NotificationCard({ notification }: NotificationCardProps) {
         <div className="flex-1 min-w-0">
           {/* Actor info */}
           <div className="flex items-center gap-2 mb-1">
-            <Avatar src={notification.actor.avatarUrl} alt={notification.actor.displayName} size="sm" />
+            <Avatar
+              src={notification.actor.avatarUrl}
+              alt={notification.actor.displayName}
+              size="sm"
+            />
             <div className="flex items-center gap-1 min-w-0">
               <Link
                 href={`/${notification.actor.username}`}
