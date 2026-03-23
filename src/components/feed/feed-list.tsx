@@ -4,8 +4,8 @@ import { TweetCard } from "@/components/tweet/tweet-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import type { AppRouter } from "@/server/trpc/router";
-import type { inferRouterOutputs } from "@trpc/server";
 import type { TRPCClientErrorLike } from "@trpc/client";
+import type { inferRouterOutputs } from "@trpc/server";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 
@@ -42,7 +42,6 @@ export function FeedList({
   isError,
   error,
 }: FeedListProps) {
-
   const sentinelRef = useInfiniteScroll(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
