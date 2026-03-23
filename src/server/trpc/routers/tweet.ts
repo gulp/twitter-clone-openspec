@@ -149,7 +149,7 @@ export const tweetRouter = createTRPCRouter({
               actorId: userId,
               type: "MENTION",
               tweetId: tweet.id,
-            });
+            }, ctx.requestId);
           } catch (error) {
             log.warn("Failed to create MENTION notification (fail open)", {
               userId,
@@ -171,7 +171,7 @@ export const tweetRouter = createTRPCRouter({
             actorId: userId,
             type: "REPLY",
             tweetId: tweet.id,
-          });
+          }, ctx.requestId);
         } catch (error) {
           log.warn("Failed to create REPLY notification (fail open)", {
             userId,

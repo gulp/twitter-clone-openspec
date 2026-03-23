@@ -96,7 +96,7 @@ export const socialRouter = createTRPCRouter({
           recipientId: followingId,
           actorId: followerId,
           type: "FOLLOW",
-        });
+        }, ctx.requestId);
       } catch (error) {
         log.warn("Failed to create FOLLOW notification (fail open)", {
           followerId,

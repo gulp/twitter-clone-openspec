@@ -31,7 +31,8 @@ export interface CreateNotificationInput {
  * @returns The created notification or null if suppressed/deduplicated
  */
 export async function createNotification(
-  input: CreateNotificationInput
+  input: CreateNotificationInput,
+  requestId?: string
 ): Promise<{ id: string } | null> {
   const { recipientId, actorId, type, tweetId, dedupeKey } = input;
 
@@ -50,11 +51,11 @@ export async function createNotification(
         tweetId,
         dedupeKey,
       },
-      select: { id: true },
+      select: { id: true, createdAt: true },
     });
 
     // Increment Redis unread count (fail-open)
-    await incrUnreadCount(recipientId);
+    await incrUnreadCount(recipientId, requestId);
 
     // Log notification creation
     log.info("Notification created", {
@@ -71,7 +72,7 @@ export async function createNotification(
       type,
       actorId,
       tweetId,
-      createdAt: new Date(),
+      createdAt: notification.createdAt,
     });
 
     return notification;

@@ -81,7 +81,7 @@ export const engagementRouter = createTRPCRouter({
             type: "LIKE",
             tweetId,
             dedupeKey: `like:${userId}:${tweetId}`,
-          });
+          }, ctx.requestId);
         } catch (error) {
           log.warn("Failed to create LIKE notification (fail open)", {
             userId,
@@ -224,7 +224,7 @@ export const engagementRouter = createTRPCRouter({
             type: "RETWEET",
             tweetId,
             dedupeKey: `retweet:${userId}:${tweetId}`,
-          });
+          }, ctx.requestId);
         } catch (error) {
           log.warn("Failed to create RETWEET notification (fail open)", {
             userId,
@@ -417,7 +417,7 @@ export const engagementRouter = createTRPCRouter({
           actorId: userId,
           type: "QUOTE_TWEET",
           tweetId: tweet.id,
-        });
+        }, ctx.requestId);
       } catch (error) {
         log.warn("Failed to create QUOTE_TWEET notification (fail open)", {
           userId,
