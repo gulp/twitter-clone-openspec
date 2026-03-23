@@ -76,5 +76,7 @@ export async function getUploadUrl(key: string, contentType: string, requestId?:
  * @returns Public URL for the uploaded object
  */
 export function getPublicUrl(key: string): string {
-  return `${env.S3_PUBLIC_URL}/${key}`;
+  // Normalize trailing slashes to prevent double-slash in URL
+  const baseUrl = env.S3_PUBLIC_URL.replace(/\/+$/, "");
+  return `${baseUrl}/${key}`;
 }
