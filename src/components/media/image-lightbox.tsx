@@ -9,7 +9,9 @@ export interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxProps) {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentIndex, setCurrentIndex] = useState(
+    Math.max(0, Math.min(initialIndex, images.length - 1))
+  );
   const [imageError, setImageError] = useState(false);
   const onCloseRef = useRef(onClose);
 
@@ -18,9 +20,13 @@ export function ImageLightbox({ images, initialIndex, onClose }: ImageLightboxPr
     onCloseRef.current = onClose;
   }, [onClose]);
 
-  // Clamp currentIndex when images array changes
+  // Close if images becomes empty, otherwise clamp currentIndex
   useEffect(() => {
-    if (currentIndex >= images.length && images.length > 0) {
+    if (images.length === 0) {
+      onCloseRef.current();
+      return;
+    }
+    if (currentIndex >= images.length) {
       setCurrentIndex(images.length - 1);
     }
   }, [images, currentIndex]);
