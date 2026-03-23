@@ -7,8 +7,8 @@ Page Objects encapsulate UI interactions and element selectors into reusable cla
 ## Where
 
 Page object implementations:
-- `tests/e2e/page-objects/auth.page.ts:1-61` — Authentication flows
-- `tests/e2e/page-objects/feed.page.ts:1-69` — Feed interactions
+- `tests/e2e/page-objects/auth.page.ts:1` — Authentication flows
+- `tests/e2e/page-objects/feed.page.ts:1` — Feed interactions
 - `tests/e2e/page-objects/composer.page.ts` — Tweet composition
 - `tests/e2e/page-objects/profile.page.ts` — Profile pages
 - `tests/e2e/page-objects/social.page.ts` — Follow/unfollow
@@ -16,7 +16,7 @@ Page object implementations:
 - `tests/e2e/page-objects/notification.page.ts` — Notifications
 
 Fixture setup:
-- `tests/e2e/fixtures.ts:1-59` — Playwright fixture that injects page objects into tests
+- `tests/e2e/fixtures.ts:1` — Playwright fixture that injects page objects into tests
 
 Test usage examples:
 - `tests/e2e/specs/auth.spec.ts` — Login/register/reset flows
@@ -36,7 +36,7 @@ Each page object is a TypeScript class that encapsulates:
 Example: `AuthPage`
 
 ```typescript
-// tests/e2e/page-objects/auth.page.ts:6-60
+// tests/e2e/page-objects/auth.page.ts:1
 export class AuthPage {
   constructor(private page: Page) {}
 
@@ -71,7 +71,7 @@ export class AuthPage {
 Playwright fixtures inject page objects into tests:
 
 ```typescript
-// tests/e2e/fixtures.ts:14-44
+// tests/e2e/fixtures.ts:14
 export const test = base.extend<{
   authPage: AuthPage;
   composerPage: ComposerPage;
@@ -114,7 +114,7 @@ The `authPage` parameter is automatically injected by the fixture and shares the
 Action methods perform user interactions and hide selector implementation details:
 
 ```typescript
-// tests/e2e/page-objects/feed.page.ts:30-39
+// tests/e2e/page-objects/feed.page.ts:30
 async deleteTweet(content: string) {
   // Find the tweet card
   const tweetCard = this.page.locator(`[data-testid="tweet-card"]:has-text("${content}")`);
@@ -134,14 +134,14 @@ async deleteTweet(content: string) {
 Assertion methods verify page state and return booleans or throw Playwright timeouts:
 
 ```typescript
-// tests/e2e/page-objects/feed.page.ts:17-21
+// tests/e2e/page-objects/feed.page.ts:17
 async expectTweetInFeed(content: string) {
   const tweet = this.page.locator(`[data-testid="tweet-card"]:has-text("${content}")`);
   await tweet.waitFor({ state: "visible" });
   return true;
 }
 
-// tests/e2e/page-objects/feed.page.ts:23-28
+// tests/e2e/page-objects/feed.page.ts:23
 async expectTweetNotInFeed(content: string) {
   const tweet = this.page.locator(`[data-testid="tweet-card"]:has-text("${content}")`);
   await tweet.waitFor({ state: "hidden", timeout: 5000 }).catch(() => {});
@@ -162,7 +162,7 @@ Preferred for all interactive elements:
 // tests/e2e/page-objects/feed.page.ts:18
 const tweet = this.page.locator(`[data-testid="tweet-card"]:has-text("${content}")`);
 
-// tests/e2e/page-objects/feed.page.ts:34
+// tests/e2e/page-objects/feed.page.ts:30
 await tweetCard.locator('[data-testid="tweet-menu"]').click();
 ```
 
@@ -173,7 +173,7 @@ await tweetCard.locator('[data-testid="tweet-menu"]').click();
 For form inputs, use `name` attribute:
 
 ```typescript
-// tests/e2e/page-objects/auth.page.ts:22-23
+// tests/e2e/page-objects/auth.page.ts:6
 await this.page.fill('input[name="email"]', email);
 await this.page.fill('input[name="password"]', password);
 ```
@@ -194,7 +194,7 @@ Never use bare text selectors like `.locator('text=Login')` — they break with 
 Each page object provides navigation to its page(s):
 
 ```typescript
-// tests/e2e/page-objects/auth.page.ts:9-19
+// tests/e2e/page-objects/auth.page.ts:9
 async goto() {
   await this.page.goto("/login");
 }
@@ -215,7 +215,7 @@ async gotoResetPassword() {
 Page objects for real-time features use longer timeouts:
 
 ```typescript
-// tests/e2e/page-objects/feed.page.ts:47-51
+// tests/e2e/page-objects/feed.page.ts:47
 async expectNewTweetsIndicator() {
   const indicator = this.page.locator('[data-testid="new-tweets-indicator"]');
   await indicator.waitFor({ state: "visible", timeout: 10000 });
