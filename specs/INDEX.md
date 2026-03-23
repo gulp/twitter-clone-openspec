@@ -22,11 +22,13 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [error-handling-trpc-codes.md](error-handling-trpc-codes.md) — TRPCError code hierarchy, logging by severity, client error messages
 - [error-handling-prisma-race-conditions.md](error-handling-prisma-race-conditions.md) — P2002/P2025 handling for idempotent mutations, concurrent request races
 - [error-handling-redis-failure-policy.md](error-handling-redis-failure-policy.md) — Fail-open vs fail-closed strategy, auth rate limiting, cache degradation
+- [error-handling-failopen-null-checks.md](error-handling-failopen-null-checks.md) — Null return handling from fail-open wrappers, version initialization race fix, defensive fallback patterns
 - [error-handling-validation.md](error-handling-validation.md) — Zod schema validation, business rule checks, authorization vs input errors
 - [error-handling-promise-patterns.md](error-handling-promise-patterns.md) — Promise.all() fail-fast vs Promise.allSettled() best-effort patterns, fail-open group error handling, concurrent operation trade-offs
 - [security-csrf-and-headers.md](security-csrf-and-headers.md) — Origin header CSRF protection, CSP with nonces, request ID propagation
 - [security-csrf-origin.md](security-csrf-origin.md) — CSRF protection via Origin header validation in Edge middleware
 - [security-rate-limiting.md](security-rate-limiting.md) — Redis sliding-window rate limiter with fail-open/fail-closed policies
+- [security-rate-limit-retry-after.md](security-rate-limit-retry-after.md) — Retry-After calculation in Lua script, oldest-entry expiry math, HTTP 429 response format, edge case handling (clock skew, empty ZSET)
 - [security-auth-and-sessions.md](security-auth-and-sessions.md) — Three-layer session validation, timing-safe auth, password reset tokens, OAuth username generation
 - [security-session-management.md](security-session-management.md) — JWT + Redis allow-list + sessionVersion for multi-layer session validation
 - [security-password-reset-tokens.md](security-password-reset-tokens.md) — Password reset flow with SHA-256 token hashing, TOCTOU race condition analysis, timing-attack resistance, single-use enforcement

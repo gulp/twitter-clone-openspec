@@ -22,7 +22,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] Tombstone lifecycle — covered in caching-tombstone-filtering.md (TTL coordination section, EXPIRE reset behavior, Redis restart lifecycle)
 - [x] $queryRaw patterns — covered in database-queryraw-patterns.md
 - [x] Lua script atomicity — covered in caching-lua-atomicity.md (I5, G1 mention error handling; detailed coverage in error-handling-redis-failure-policy.md)
-- [ ] Feed version initialization race — Redis failure edge case not documented (fixed in ac116e7, needs spec)
+- [x] Feed version initialization race — covered in error-handling-failopen-null-checks.md
 - [x] SSE connection limit — covered in sse-connection-limit-rationale.md
 - [ ] Rate limiter retry-after calculation — Lua math and HTTP 429 codes not documented
 - [x] Feed assembly — covered in caching-feed-assembly.md
