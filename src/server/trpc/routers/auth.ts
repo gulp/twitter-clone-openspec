@@ -242,7 +242,29 @@ export const authRouter = createTRPCRouter({
    * Uses SELECT FOR UPDATE to prevent race conditions where two concurrent
    * requests both pass the used=false check before either marks it used.
    */
-  completeReset: publicProcedure.input(resetCompleteSchema).mutation(async ({ input }) => {
+  completeReset: publicProcedure.input(resetCompleteSchema).mutation(async ({ input, ctx }) => {
+    // Rate limit check (5/min per IP, fail closed)
+    const ip = getClientIP(ctx.req);
+    try {
+      const rateLimit = await checkAuthIPRateLimit(ip);
+
+      if (!rateLimit.allowed) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: `Too many requests. Try again in ${rateLimit.retryAfter} seconds.`,
+        });
+      }
+    } catch (error) {
+      // Convert "Rate limiting unavailable" to INTERNAL_SERVER_ERROR
+      if (error instanceof Error && error.message === "Rate limiting unavailable") {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Service temporarily unavailable",
+        });
+      }
+      throw error;
+    }
+
     const { token, password } = input;
 
     // Hash the token to look up in DB
