@@ -1,278 +1,264 @@
-# SSE Replay Buffer Exhaustion
+# SSE Replay Buffer Exhaustion and Event Loss
 
 ## What
 
-The SSE replay buffer stores the last 200 events per user with a 5-minute TTL. When the buffer fills (>200 events) or expires (no events for 5 minutes), older events are lost. Clients that reconnect after exhaustion miss notifications, relying on polling fallback or full feed refresh to catch up.
+SSE replay buffer mechanics when clients reconnect after missing more than 200 events or after the 5-minute TTL expiration. Documents event loss scenarios, client recovery behavior, and the trade-offs between buffer size, TTL, and memory usage.
 
 ## Where
 
-- Lua script: `scripts/sse-lua/publish.lua:42-46` — LTRIM to 200 entries, 5-minute EXPIRE
-- Replay logic: `src/app/api/sse/route.ts:129-158` — Last-Event-ID handling
-- Client reconnect: `src/hooks/use-sse.ts:81-84` — EventSource auto-reconnect
-- Fallback polling: `src/hooks/use-sse.ts:178-195` — 30s refresh on connection failure
+- Replay buffer size/TTL: `scripts/sse-lua/publish.lua:28-29` (LTRIM to 200, EXPIRE to 300s)
+- Replay logic: `src/app/api/sse/route.ts:129-158` (Last-Event-ID handling)
+- Client reconnect: `src/hooks/use-sse.ts:76-117` (exponential backoff + polling fallback)
+- Buffer storage: Redis LIST at key `sse:replay:{userId}`
 
 ## How It Works
 
-### Buffer Storage (Per-User Redis List)
+### Replay Buffer Lifecycle
 
-Each user has a Redis LIST key `sse:replay:{userId}` that stores recent events:
+Each user has a dedicated replay buffer: `sse:replay:{userId}` (Redis LIST, newest-first via LPUSH).
 
+**On every published event** (Lua script atomicity):
 ```lua
--- scripts/sse-lua/publish.lua:40-46
-redis.call('LPUSH', replayKey, eventWithSeq)  -- Add newest event to head
-redis.call('LTRIM', replayKey, 0, 199)        -- Keep only 200 most recent
-redis.call('EXPIRE', replayKey, 300)          -- Reset 5-minute TTL
+# scripts/sse-lua/publish.lua:27-30
+LPUSH sse:replay:{userId} {event_with_seq}  # Prepend new event
+LTRIM sse:replay:{userId} 0 199              # Keep only newest 200
+EXPIRE sse:replay:{userId} 300               # Reset TTL to 5 minutes
 ```
 
-**Key properties:**
-- LPUSH adds events to list head (newest first)
-- LTRIM immediately removes events beyond index 199 (keeps 0-199, 200 events total)
-- EXPIRE resets TTL to 300s on every new event
-- If no events for 5 minutes, entire list expires (Redis DEL)
+### Buffer Exhaustion Scenarios
 
-### Replay on Reconnect
+#### Scenario 1: Client Offline for <5 Minutes, <200 Events
 
-When client reconnects with `Last-Event-ID: <seq>`, server replays missed events:
+**Setup:**
+- Client disconnects at seq 1000
+- Server publishes events 1001–1050 (50 events)
+- Client reconnects after 2 minutes
 
+**Replay flow:**
 ```typescript
-// src/app/api/sse/route.ts:129-158
-const lastEventId = req.headers.get("Last-Event-ID");
-if (lastEventId) {
-  const lastSeq = Number.parseInt(lastEventId, 10);
-  const replayBuffer = await redis.lrange(`sse:replay:${userId}`, 0, 199);
+// src/app/api/sse/route.ts:129-149
+const lastEventId = "1000";  // From Last-Event-ID header
+const replayBuffer = await redis.lrange(`sse:replay:${userId}`, 0, 199);
+// replayBuffer = ["seq:1050...", "seq:1049...", ..., "seq:1001..."]
 
-  // Replay buffer is newest-first, reverse for chronological order
-  for (const event of replayBuffer.reverse()) {
-    const parsed = JSON.parse(event);
-    if (parsed.seq > lastSeq) {
-      // Send event to client
-      controller.enqueue(`id: ${parsed.seq}\nevent: ${parsed.type}\ndata: ${JSON.stringify(parsed.data)}\n\n`);
-    }
+for (const event of replayBuffer.reverse()) {
+  const parsed = JSON.parse(event);
+  if (parsed.seq > 1000) {  // 1001–1050
+    controller.enqueue(`id: ${parsed.seq}\nevent: ${parsed.type}\ndata: {...}\n\n`);
   }
 }
 ```
 
-**Replay algorithm:**
-1. Fetch entire buffer (0-199 indices, up to 200 events)
-2. Reverse list to get chronological order (oldest → newest)
-3. Filter events where `seq > lastSeq` (missed events)
-4. Send filtered events to client before live stream starts
+**Result:** ✅ **Full recovery** — All 50 missed events replayed in order.
 
-### Exhaustion Scenario 1: Buffer Overflow (>200 Events)
+---
 
-**Timeline:**
-1. User disconnects at seq 1000
-2. 250 events published while disconnected (seq 1001-1250)
-3. LTRIM keeps only seq 1051-1250 (200 most recent)
-4. Events 1001-1050 are lost (trimmed)
-5. User reconnects with `Last-Event-ID: 1000`
-6. Replay sends events 1051-1250 (only 200 events)
-7. **Gap:** Events 1001-1050 permanently missed
+#### Scenario 2: Client Offline for <5 Minutes, >200 Events
 
-**Client-side impact:**
-- Notifications list incomplete (50 missed notifications)
-- Feed may show tweets the user "should have seen" via SSE
-- No error indication (client doesn't know events were dropped)
+**Setup:**
+- Client disconnects at seq 1000
+- Server publishes events 1001–1250 (250 events)
+- Buffer trimmed after each event: keeps seq 1051–1250, discards 1001–1050
+- Client reconnects after 3 minutes
 
-**Mitigation:**
-- Client polling fallback queries `/api/trpc/notification.list` on reconnect
-- Full feed refresh via tRPC query on connection restore
-- UI: No UX indication of missed events (graceful degradation)
+**Buffer state:**
+```
+sse:replay:{userId} = [1250, 1249, 1248, ..., 1052, 1051]  // 200 events
+```
 
-### Exhaustion Scenario 2: TTL Expiration (5-Minute Idle)
-
-**Timeline:**
-1. User disconnects at seq 1000
-2. No events published for 6 minutes (low-activity account)
-3. Redis EXPIRE triggers, `sse:replay:{userId}` key deleted
-4. User reconnects with `Last-Event-ID: 1000`
-5. `redis.lrange()` returns empty array (key doesn't exist)
-6. Replay sends nothing
-7. **Gap:** All events since seq 1000 missed (if any were published before expiration)
-
-**Example:** User goes offline for 4 minutes 59 seconds, receives 10 events, then reconnects → replay works. User goes offline for 5 minutes 1 second → replay buffer expired, no history.
-
-**Client-side impact:**
-- Potentially zero notifications after 5+ minute disconnect
-- Feed refresh required to see new content
-- Unread count may be stale until refresh
-
-**Mitigation:**
-- 5-minute TTL is generous for typical mobile app backgrounding (~1-2 minutes)
-- Client auto-refreshes on reconnect (see "Fallback Polling" below)
-- Notification unread count cached in Redis (`notification:unread:{userId}`) survives longer than replay buffer
-
-### Exhaustion Scenario 3: High-Volume User (Burst >200 Events)
-
-**Timeline:**
-1. User is a celebrity with 1M followers
-2. User posts a tweet
-3. `publishToFollowers()` publishes `new_tweet` event to all 1M followers
-4. One follower is offline during publish
-5. Follower receives 200+ events (their feed, mentions, likes, retweets)
-6. Only last 200 events survive in replay buffer
-7. Follower reconnects → misses early events
-
-**Real-world example:** Elon Musk posts, 100M followers each get notification. Offline user comes back online → buffer only has last 200 events (mix of Musk + other followed accounts). Musk's tweet notification may be pushed out of buffer by other activity.
-
-**Mitigation:**
-- Notification deduplication (`dedupeKey` unique constraint) prevents duplicate SSE events
-- High-priority notifications (direct mentions) published first (not implemented in v1)
-- Client polls `/api/trpc/notification.list` to fetch full history
-
-### Client Fallback Polling
-
-When SSE connection fails or replay is incomplete, client falls back to polling:
-
+**Replay flow:**
 ```typescript
-// src/hooks/use-sse.ts:178-195
-if (reconnectAttempts >= 3) {
-  setIsFallback(true);
-  pollingInterval = setInterval(() => {
-    queryClient.invalidateQueries({ queryKey: ["feed"] });
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-  }, 30000); // 30s poll interval
+const lastEventId = "1000";  // Client expects events after 1000
+const replayBuffer = await redis.lrange(`sse:replay:${userId}`, 0, 199);
+
+// Events 1001–1050 NOT in buffer (trimmed)
+// Events 1051–1250 ARE in buffer
+
+for (const event of replayBuffer.reverse()) {
+  const parsed = JSON.parse(event);
+  if (parsed.seq > 1000) {  // 1051–1250 replayed
+    // ...
+  }
 }
 ```
 
-**Fallback triggers:**
-- SSE connection fails 3+ times
-- Browser EventSource error
-- Network unreachable
+**Result:** ⚠️ **Partial loss** — Events 1001–1050 (oldest 50) lost. Client receives 1051–1250, leaving a 50-event gap. Client UI shows inconsistent state (missing tweets, missing notifications).
 
-**Polling behavior:**
-- Invalidate tRPC queries every 30s
-- React Query refetches feed + notifications
-- No SSE overhead, pure HTTP polling
+**Client behavior:**
+- No error indication (client doesn't know events were lost)
+- Feed may have gaps (e.g., tweet #1025 referenced in a reply but not visible)
+- User must refresh page to restore consistency
 
-**Exit polling:** Client retries SSE connection every minute (exponential backoff capped at 60s).
+---
+
+#### Scenario 3: Client Offline for >5 Minutes, Any Number of Events
+
+**Setup:**
+- Client disconnects at seq 1000
+- Server publishes 100 events (1001–1100)
+- After 5 minutes of inactivity (no new events), buffer expires
+
+**Redis state:**
+```
+sse:replay:{userId} = (nil)  # Key expired, buffer gone
+```
+
+**Replay flow:**
+```typescript
+const lastEventId = "1000";
+const replayBuffer = await redis.lrange(`sse:replay:${userId}`, 0, 199);
+// replayBuffer = []  (empty, key doesn't exist)
+
+// No events to replay
+```
+
+**Result:** ⚠️ **Total loss** — All missed events lost. Client receives no replay events.
+
+**Client behavior:**
+- Receives only NEW events published after reconnect
+- Old feed state is stale (missing all tweets/notifications from offline period)
+- User MUST refresh page to load missing content via API
+
+---
+
+#### Scenario 4: Buffer Expires Mid-Disconnect
+
+**Setup:**
+- Client disconnects at seq 1000
+- Server publishes event 1001 at T+0 (buffer TTL set to T+300s)
+- Server publishes event 1002 at T+301s (buffer TTL reset to T+601s)
+- Client reconnects at T+550s (before new TTL expires)
+
+**Buffer state at T+550s:**
+```
+sse:replay:{userId} = [1002]  # Only event 1002; 1001 was in old buffer that expired
+```
+
+**Replay flow:**
+```typescript
+const lastEventId = "1000";
+const replayBuffer = await redis.lrange(`sse:replay:${userId}`, 0, 199);
+// replayBuffer = ["seq:1002..."]
+
+for (const event of replayBuffer.reverse()) {
+  const parsed = JSON.parse(event);
+  if (parsed.seq > 1000) {  // Only 1002 replayed
+    // ...
+  }
+}
+```
+
+**Result:** ⚠️ **Partial loss** — Event 1001 lost (was in expired buffer). Client receives 1002, creating 1-event gap.
+
+**Why:** Each `PUBLISH` call resets TTL for the CURRENT buffer. If buffer expired before the next event, the new event starts a NEW buffer (old events discarded).
+
+---
+
+### Replay Buffer Memory Cost
+
+**Per-user buffer:** ~10-20 KB (200 events × 50-100 bytes per event)
+
+**Example event size:**
+```json
+{
+  "seq": 1234567890,
+  "type": "new-tweet",
+  "data": {"tweetId": "cuid...", "authorUsername": "alice"}
+}
+```
+
+Serialized: ~90 bytes
+
+**Total memory (10k active users):**
+```
+10,000 users × 15 KB avg = 150 MB
+```
+
+**Redis memory overhead:**
+- LIST structure: ~24 bytes per entry
+- Key overhead: ~50 bytes
+- Total per buffer: ~18 KB (200 events × 90 bytes + 200 × 24 bytes + 50 bytes)
+
+**At scale (100k users):** ~1.8 GB just for replay buffers
+
+---
+
+### Why 200 Events and 5 Minutes?
+
+**200 event limit:**
+- Handles moderate disconnects (network blip, tab backgrounded)
+- Prevents unbounded memory growth
+- Typical user sees <200 events in 5 minutes (unless following high-volume accounts)
+
+**5-minute TTL:**
+- Balances memory usage vs replay window
+- Auto-cleans buffers for idle users (inactive users don't accumulate events forever)
+- Long enough to cover temporary network issues, short enough to prevent stale data
+
+**Trade-offs:**
+- **Larger buffer** → more memory, better replay coverage
+- **Longer TTL** → more Redis keys persisted, higher memory baseline
+- **Shorter TTL** → faster expiration, more frequent total loss
+
+---
 
 ## Invariants
 
-1. **Buffer size capped at 200** — LTRIM enforces strict limit (events 200+ immediately dropped)
-2. **TTL resets on every event** — Active users never see expiration (as long as events published <5min intervals)
-3. **FIFO eviction** — Oldest events trimmed first (LPUSH + LTRIM 0-199 = newest at index 0)
-4. **Replay is read-only** — Replaying events does NOT remove them from buffer (LRANGE doesn't mutate)
-5. **No gap detection** — Client cannot distinguish "replay complete" from "events lost"
-6. **Replay happens once** — On connection start only, not continuously
-7. **Sequence numbers monotonic per-user** — `sse:seq:{userId}` increments forever (no wrap-around)
+1. **Buffer size capped at 200 events** — LTRIM guarantees newest 200 kept, oldest discarded (FIFO)
+2. **TTL resets on every event** — Each PUBLISH resets TTL to 300s from current time
+3. **Buffer expiration is absolute** — 5 minutes with NO new events = buffer deleted
+4. **Replay is best-effort, not guaranteed** — Client MAY lose events if offline too long or too many events published
+5. **No error on event loss** — Client doesn't know events were lost; silently skips gap
+6. **Buffer uses LPUSH (newest-first)** — Server must reverse list before replaying (src/app/api/sse/route.ts:134)
+7. **Empty buffer (expired or never created) returns empty list** — No error thrown, just []
 
 ## Gotchas
 
-### ❌ DON'T: Assume replay always succeeds
+1. **No gap detection** — Client receives seq 1050 after seq 1000 with no indication that 1001–1049 were lost
+2. **TTL reset is per-event, not per-user** — If user has 5 followers and all publish simultaneously, buffer gets 5 TTL resets (one per `PUBLISH`)
+3. **Buffer disappears silently** — No Redis notification when buffer expires; client reconnects to find empty buffer
+4. **Replay order is critical** — Forgot to `.reverse()` → events delivered newest-first, breaking causality (replies before original tweets)
+5. **Malformed events skipped silently** — If `JSON.parse(event)` fails during replay, that event is skipped (src/app/api/sse/route.ts:142 empty catch block)
+6. **Polling fallback doesn't fix gaps** — After 3 SSE failures, client switches to polling `unreadCount` only; doesn't backfill missed tweets
+7. **No per-event TTL** — All 200 events in buffer share same TTL; can't have "last 50 events for 30 minutes, next 150 for 5 minutes"
+8. **Concurrent LTRIM is safe (atomic Lua)** — Multiple followers publishing to same user won't corrupt buffer (each `publish.lua` is atomic)
+9. **Idle users keep expired buffers** — If user goes offline before buffer expires, buffer sits in Redis until TTL expires (not reclaimed immediately on disconnect)
+10. **Reconnect within heartbeat window (30s) doesn't use replay** — Browser EventSource stays connected; Last-Event-ID only sent on CLOSE + RECONNECT
+11. **High-traffic users hit 200 limit faster** — Celebrity with 10k active followers may exhaust buffer in <1 minute during viral tweet
+12. **Buffer size is per-user, not per-connection** — User with 5 open tabs shares single replay buffer; all tabs get same replay events
 
+## Client Recovery Strategies
+
+When events are lost, client has three options:
+
+**1. Silent degradation (current implementation)**
+- Accept gaps, rely on user refresh
+- Simple, no additional server load
+- Poor UX for users with unreliable networks
+
+**2. Gap detection + API backfill (not implemented)**
 ```typescript
-// WRONG: Assume all missed events are in replay buffer
-const lastSeq = getLastSeenSeq();
-reconnect();
-// ← If >200 events or >5min passed, some events are lost
-```
-
-**Correct approach:** Refresh data via tRPC on reconnect:
-
-```typescript
-// CORRECT: Invalidate queries to refetch
-eventSource.addEventListener("open", () => {
-  queryClient.invalidateQueries({ queryKey: ["feed"] });
-  queryClient.invalidateQueries({ queryKey: ["notifications"] });
-});
-```
-
-### ❌ DON'T: Increase buffer size to 10,000 "to be safe"
-
-**Problem:** Redis memory usage scales with buffer size × active users:
-- 200 events × 10k users × 1KB/event = 2GB Redis memory
-- 10,000 events × 10k users × 1KB/event = 100GB Redis memory (expensive)
-
-**Correct approach:** Keep buffer small, rely on database queries for full history.
-
-### Edge Case: Seq Number Gaps After Buffer Overflow
-
-**Scenario:**
-1. Client receives event seq=1000, disconnects
-2. Events 1001-1250 published (250 events)
-3. LTRIM keeps 1051-1250
-4. Client reconnects, replays 1051-1250
-5. Client's sequence jumps from 1000 → 1051 (50-event gap)
-
-**Client-side detection:**
-
-```typescript
-// DETECT: seq jump > 1 indicates missed events
-if (event.seq > lastSeq + 1) {
-  console.warn(`Missed ${event.seq - lastSeq - 1} events`);
-  // Optionally invalidate queries here
+// Hypothetical: detect seq gap and query API
+if (lastSeq && newSeq > lastSeq + 1) {
+  const gap = newSeq - lastSeq - 1;
+  console.warn(`SSE gap detected: ${gap} events lost`);
+  // Fetch missed content via API
+  await trpc.feed.getHome.query({ limit: gap });
 }
 ```
 
-**Current implementation:** Client does NOT detect gaps (no check for `seq > lastSeq + 1`).
+**3. Full reload (manual)**
+- User refreshes page → all feeds re-query → consistent state
+- Highest UX cost (loses scroll position, form state)
+- Only option for >200 event loss
 
-### Edge Case: Race Between Expire and New Event
+## Recommendations (Not Implemented)
 
-**Scenario:**
-1. Last event published at T=0s (EXPIRE set to T+300s)
-2. User idle for 4 minutes 59 seconds
-3. At T=299s, new event published
-4. EXPIRE command in Lua script resets TTL to T+599s
-5. **No data loss**
-
-**Why it works:** EXPIRE is inside atomic Lua script. If script executes, TTL is reset BEFORE Redis can expire the key.
-
-**Edge case failure:**
-1. Last event at T=0s
-2. User idle exactly 5 minutes
-3. At T=300s, Redis expires key (async operation)
-4. At T=300.001s, new event tries to LPUSH
-5. LPUSH creates new key (LTRIM operates on 1-element list)
-6. **Result:** Replay buffer now only has 1 event (newest), all prior history lost
-
-**Probability:** Very low (requires event publish within milliseconds of expiration).
-
-### TTL Does NOT Extend on Read
-
-```typescript
-// LRANGE does NOT reset TTL
-const buffer = await redis.lrange(`sse:replay:${userId}`, 0, 199);
-// ← TTL unchanged, buffer can expire mid-replay
-```
-
-**Consequence:** If user reconnects after 4min 59s idle, fetches replay buffer, then another user publishes event at 5min 1s, the key might expire between LRANGE and new LPUSH. Not a data loss (new event creates new buffer), but replay shows no history.
-
-### Replay Buffer vs. Notification Unread Count
-
-**Separate systems:**
-- Replay buffer: 200 events, 5min TTL
-- Unread count: single INTEGER (`notification:unread:{userId}`), no TTL (persists indefinitely)
-
-**Inconsistency scenario:**
-1. User has 50 unread notifications (Redis `notification:unread:{userId} = 50`)
-2. User goes offline for 6 minutes
-3. Replay buffer expires (5min TTL)
-4. User reconnects, sees "50 unread" indicator (from Redis)
-5. Replay sends 0 events (buffer expired)
-6. **UX:** "50 unread" but no new notifications in list
-
-**Mitigation:**
-- Client queries `/api/trpc/notification.list` on reconnect
-- Unread count is advisory (not authoritative — DB is source of truth)
-- Notification list query respects `read: false` filter
-
-### LTRIM Index Off-by-One Gotcha
-
-```lua
-redis.call('LTRIM', replayKey, 0, 199)  -- Keeps indices 0-199 (200 elements)
-```
-
-**NOT:**
-```lua
-redis.call('LTRIM', replayKey, 0, 200)  -- Would keep indices 0-200 (201 elements)
-```
-
-LTRIM uses inclusive range. `0, 199` means "keep first 200 elements" (indices 0 through 199).
-
-## Related Specs
-
-- `sse-event-publishing.md` — Lua script atomicity, sequence number generation
-- `sse-connection-management.md` — Client reconnect with Last-Event-ID, exponential backoff
-- `sse-graceful-shutdown.md` — SIGTERM draining doesn't clear replay buffer
-- `caching-ttl-strategy.md` — TTL values (replay buffer: 5m, unread count: ∞, feed cache: 60s)
+1. **Increase buffer to 500 events** for high-traffic accounts (at cost of 2.5× memory)
+2. **Increase TTL to 10 minutes** to cover longer disconnects (at cost of ~2× memory baseline)
+3. **Add gap detection** on client — show "N new tweets" banner when seq gap detected
+4. **Expose replay metadata** — include `replayBufferSize` in connection response so client knows coverage
+5. **Per-account buffer sizing** — Verified users get 1000-event buffer, normal users get 200
+6. **Redis Streams instead of LIST** — better replay semantics, consumer groups, exact-once delivery
+7. **Persistent replay buffer** — Store replay buffer to disk (Redis AOF), survive Redis restarts
+8. **Client-side sequence tracking** — Store last received seq in localStorage, detect gaps across page reloads
