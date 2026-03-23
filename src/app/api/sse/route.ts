@@ -2,8 +2,7 @@ import { log } from "@/lib/logger";
 import { authOptions } from "@/server/auth";
 import {
   redis,
-  sseAddConnection,
-  sseGetConnections,
+  sseAtomicAddConnection,
   sseRefreshConnectionTTL,
   sseRemoveConnection,
 } from "@/server/redis";
@@ -90,9 +89,13 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Check connection limit (max 5 per user)
-  const existingConnections = await sseGetConnections(userId);
-  if (existingConnections.length >= 5) {
+  // Generate unique connection ID
+  const connectionId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  // Atomically check connection limit and add connection (max 5 per user)
+  // Prevents race condition where concurrent requests both see count=4 and both proceed
+  const added = await sseAtomicAddConnection(userId, connectionId);
+  if (!added) {
     return new Response('event: error\ndata: {"message":"Too many connections"}\n\n', {
       status: 429,
       headers: {
@@ -102,12 +105,6 @@ export async function GET(req: NextRequest) {
       },
     });
   }
-
-  // Generate unique connection ID
-  const connectionId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-  // Track connection in Redis
-  await sseAddConnection(userId, connectionId);
 
   // Subscribe to user's channel via shared subscriber manager
   const channel = `sse:user:${userId}`;

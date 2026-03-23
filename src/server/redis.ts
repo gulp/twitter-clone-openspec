@@ -163,6 +163,52 @@ export async function sessionDel(jti: string, requestId?: string): Promise<void>
 
 /**
  * SSE connection tracking — fail open.
+ * Atomically check connection limit and add connection if under limit.
+ * Returns true if connection was added, false if limit reached.
+ * Returns false on Redis failure (fail open - allow connection).
+ *
+ * Addresses race condition described in specs/sse-connection-management.md Gotcha #3.
+ */
+export async function sseAtomicAddConnection(
+  userId: string,
+  connectionId: string,
+  requestId?: string
+): Promise<boolean> {
+  try {
+    const key = `sse:connections:${userId}`;
+    // Atomic check-and-add: SCARD → check limit → SADD + EXPIRE
+    // Returns 1 if added, 0 if limit reached
+    const luaScript = `
+      local key = KEYS[1]
+      local member = ARGV[1]
+      local ttl = tonumber(ARGV[2])
+      local limit = tonumber(ARGV[3])
+
+      local count = redis.call('SCARD', key)
+      if count >= limit then
+        return 0
+      end
+
+      redis.call('SADD', key, member)
+      redis.call('EXPIRE', key, ttl)
+      return 1
+    `;
+    const result = await redis.eval(luaScript, 1, key, connectionId, "120", "5");
+    return result === 1;
+  } catch (error) {
+    log.warn("Redis operation failed", {
+      feature: "sse",
+      operation: "sseAtomicAddConnection",
+      error: error instanceof Error ? error.message : String(error),
+      requestId,
+    });
+    // Fail open: allow connection on Redis failure
+    return true;
+  }
+}
+
+/**
+ * SSE connection tracking — fail open.
  * Add a connection ID to the set of active SSE connections for a user.
  * No-op on Redis failure.
  */
