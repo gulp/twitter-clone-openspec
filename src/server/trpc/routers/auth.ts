@@ -271,7 +271,7 @@ export const authRouter = createTRPCRouter({
         });
       }
 
-      const resetToken = lockedTokens[0]!;
+      const [resetToken] = lockedTokens;
 
       // Check if already used
       if (resetToken.used) {

@@ -4,12 +4,12 @@
  * Tests registration, login, password reset, and logout flows.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { TRPCError } from "@trpc/server";
 import { prisma } from "@/server/db";
 import { redis } from "@/server/redis";
-import { cleanupDatabase, createTestContext, createTestUser } from "./helpers";
+import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { cleanupDatabase, createTestContext, createTestUser } from "./helpers";
 
 describe("auth router", () => {
   beforeEach(async () => {
@@ -50,7 +50,7 @@ describe("auth router", () => {
       expect(user?.hashedPassword).toBeDefined();
 
       // Verify password was hashed (not plaintext)
-      const isValidHash = await bcrypt.compare("password123", user!.hashedPassword!);
+      const isValidHash = await bcrypt.compare("password123", user?.hashedPassword ?? "");
       expect(isValidHash).toBe(true);
     });
 
@@ -120,7 +120,7 @@ describe("auth router", () => {
       });
 
       expect(token).toBeDefined();
-      expect(token!.expiresAt.getTime()).toBeGreaterThan(Date.now());
+      expect(token?.expiresAt.getTime()).toBeGreaterThan(Date.now());
     });
   });
 
@@ -161,25 +161,25 @@ describe("auth router", () => {
 
       const isNewPasswordValid = await bcrypt.compare(
         "newpassword123",
-        updatedUser!.hashedPassword!
+        updatedUser?.hashedPassword ?? ""
       );
       expect(isNewPasswordValid).toBe(true);
 
       // Verify old password no longer works
       const isOldPasswordValid = await bcrypt.compare(
         oldPassword,
-        updatedUser!.hashedPassword!
+        updatedUser?.hashedPassword ?? ""
       );
       expect(isOldPasswordValid).toBe(false);
 
       // Verify sessionVersion was incremented
-      expect(updatedUser!.sessionVersion).toBe(1);
+      expect(updatedUser?.sessionVersion).toBe(1);
 
       // Verify token was marked as used
       const token = await prisma.passwordResetToken.findFirst({
         where: { tokenHash },
       });
-      expect(token!.used).toBe(true);
+      expect(token?.used).toBe(true);
     });
 
     it("prevents concurrent completeReset race condition", async () => {
@@ -235,24 +235,24 @@ describe("auth router", () => {
       // Check which password won
       const firstPasswordValid = await bcrypt.compare(
         "password-from-first-request",
-        updatedUser!.hashedPassword!
+        updatedUser?.hashedPassword ?? ""
       );
       const secondPasswordValid = await bcrypt.compare(
         "password-from-second-request",
-        updatedUser!.hashedPassword!
+        updatedUser?.hashedPassword ?? ""
       );
 
       // Exactly one password should be valid
       expect(firstPasswordValid !== secondPasswordValid).toBe(true);
 
       // Verify sessionVersion was incremented exactly once
-      expect(updatedUser!.sessionVersion).toBe(1);
+      expect(updatedUser?.sessionVersion).toBe(1);
 
       // Verify token was marked as used
       const token = await prisma.passwordResetToken.findFirst({
         where: { tokenHash },
       });
-      expect(token!.used).toBe(true);
+      expect(token?.used).toBe(true);
     });
   });
 
@@ -272,7 +272,7 @@ describe("auth router", () => {
       const updatedUser = await prisma.user.findUnique({
         where: { id: user.id },
       });
-      expect(updatedUser!.sessionVersion).toBe(1);
+      expect(updatedUser?.sessionVersion).toBe(1);
     });
 
     it("requires authentication", async () => {
@@ -300,7 +300,7 @@ describe("auth router", () => {
       expect(dbUser).toBeDefined();
 
       // Verify wrong password doesn't match
-      const isValid = await bcrypt.compare("wrongpassword", dbUser!.hashedPassword!);
+      const isValid = await bcrypt.compare("wrongpassword", dbUser?.hashedPassword ?? "");
       expect(isValid).toBe(false);
 
       // The actual login flow happens through NextAuth, not tRPC
