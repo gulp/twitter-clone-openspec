@@ -46,6 +46,7 @@ export function ImageUpload({
     return () => {
       uploadingFilesRef.current.forEach((file) => {
         URL.revokeObjectURL(file.preview);
+        file.xhr?.abort();
       });
     };
   }, []);
