@@ -12,11 +12,18 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] SIGTERM graceful shutdown — covered in sse-graceful-shutdown.md
 - [x] CSRF origin validation — covered in security-csrf-origin.md
 - [x] Session management — covered in security-session-management.md
-- [ ] CUID vs CUID2 mismatch — Prisma schema uses @default(cuid()) but OAuth signup uses CUID2 createId() (src/server/auth.ts:194 vs prisma/schema.prisma)
+- [ ] CUID vs CUID2 mismatch — Prisma schema uses @default(cuid()) but OAuth signup uses CUID2 createId() (src/server/auth.ts:194 vs prisma/schema.prisma). Deviation from plan §1.1.
 
 ## High (core features, caching, pagination)
 - [x] Quote tweet design decisions — covered in engagement-quote-tweet-design.md
 - [x] JSON parsing safety — covered in caching-json-parsing-safety.md
+- [x] User select patterns (§1.13) — covered in security-user-select-patterns.md
+- [ ] Batch engagement state checks (§1.16) — Promise.all + Set pattern implemented (feed.ts:119-131, search.ts:183-201) but no dedicated spec. Plan lines 358-365.
+- [ ] Database CHECK constraints (§1.21) — All four constraints implemented (migration.sql:239-246: User_counts_nonneg, Tweet_counts_nonneg, Tweet_deleted_consistency, Tweet_content_or_media) but not documented in specs. Plan lines 427-442.
+- [ ] Fire-and-forget async patterns — void (async () => {})() used inconsistently (email.ts:94-126, sse-publisher.ts:120-161, api/sse/route.ts). No policy doc.
+- [ ] Silent .catch() error suppression policy — engagement-buttons.tsx:154, auth.ts sessionDel, api/sse/route.ts cleanup use silent suppression. No spec defining when acceptable vs requires logging.
+- [ ] Promise.allSettled vs Promise.all consistency — SSE uses allSettled (sse-publisher.ts:203), feed uses all (feed.ts:312), tweets use all (tweet.ts:143-152). No unified policy.
+- [ ] SSE partial success semantics — publishToFollowers returns {total, succeeded} (sse-publisher.ts:120-161) but partial failure handling not documented.
 - [ ] Raw SQL parameter injection safety — template literal ${userId} in $queryRaw, Prisma escaping guarantees not audited (social.ts:317-371)
 - [ ] Unread count cache race — Redis.incrUnreadCount fails after DB write, cache becomes stale with no recovery (notification.ts:56-57)
 - [x] Unhandled promise rejection chains — covered in error-handling-promise-patterns.md
@@ -35,23 +42,18 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [x] PostgreSQL connection failure handling — covered in error-handling-subsystem-failure-policies.md
 - [x] S3 pre-signed URL failure handling — covered in error-handling-subsystem-failure-policies.md
 - [x] Media URL validation and orphan handling — covered in error-handling-subsystem-failure-policies.md
-- [ ] Database CHECK constraints — NOT NULL, non-negative counts, soft-delete consistency, content/media requirement (prisma/migrations/*/migration.sql:239-246)
 - [ ] Full-text search implementation — tsvector GENERATED column, GIN index, ts_rank usage (search.ts:131-188, migration.sql:220)
 
 ## Medium (patterns, consistency, edge cases)
-- [ ] Fire-and-forget async patterns — void (async () => {})() for non-blocking operations used inconsistently (email.ts:94-126, sse-publisher.ts:120-161, api/sse/route.ts)
-- [ ] Silent .catch() error suppression policy — when silent suppression acceptable vs requires logging (engagement-buttons.tsx:154, auth.ts sessionDel, api/sse/route.ts cleanup)
-- [ ] SSE event publishing partial success — publishToFollowers returns {total, succeeded}, semantics of partial failure not documented (sse-publisher.ts:120-161)
-- [ ] IP extraction patterns duplication — duplicate logic in middleware and auth router, header precedence not documented (index.ts:61-64, auth.ts:23-28)
+- [ ] IP extraction patterns duplication — duplicate logic in middleware and auth router, header precedence (x-forwarded-for vs x-real-ip) not documented (index.ts:61-64, auth.ts:23-28)
 - [ ] Rate limiting integration — which procedures use which limits, failClosed flag usage in practice not documented (rate-limiter.ts:20-24)
-- [ ] Promise.allSettled vs Promise.all consistency — when to use each not unified (feed uses all, SSE uses allSettled, mentions use all) (sse-publisher.ts:138-140, feed.ts:312, tweet.ts:143-152)
-- [x] Cursor parsing validation — covered in pagination-cursor-validation.md — base64url decode → JSON parse → type validation pattern (search.ts:59-106, feed.ts:33-41)
 - [ ] Search input sanitization edge cases — SQL wildcard stripping before length validation causes empty string edge case (search.ts:24-51)
+- [x] Cursor parsing validation — covered in pagination-cursor-validation.md — base64url decode → JSON parse → type validation pattern (search.ts:59-106, feed.ts:33-41)
 - [x] Promise.allSettled best-effort patterns — covered in error-handling-promise-patterns.md
 - [ ] Client-side form validation patterns — field-level error clearing, dynamic password strength feedback (register-form.tsx:28-70)
 - [ ] Nonce/RequestID propagation — x-nonce + x-request-id via request headers not response headers (middleware.ts:51-54)
 - [ ] SSE event type versioning — backward compatibility strategy for event format changes not documented
-- [ ] Notification deduplication — dedupeKey computation formula (user+type? user+type+data?) not documented
+- [ ] Notification deduplication — dedupeKey computation formula (user+type? user+type+data?) not documented (notification.ts:33-97)
 - [ ] Optimistic UI state sync — useEffect pattern for prop→state sync, mutation ordering not documented
 - [ ] Structured logging inconsistency — middleware console.warn vs tRPC log.warn/error abstraction not documented
 - [ ] Mention parsing service — @mention regex extraction and user resolution not documented (mention.ts:22, username length 3-15)
@@ -60,10 +62,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] Prisma transaction type assertions — pattern for typed transaction results not documented
 - [ ] P2002 idempotent mutation pattern — type-guard pattern inconsistent across routers
 - [ ] Engagement count denormalization — atomic update pattern in transactions not documented
-- [ ] Batch engagement state checks — Promise.all + Set creation pattern not documented (§1.16 referenced but missing spec)
 - [ ] bumpFeedVersion naming — bumpFeedVersionForFollowers vs bumpFeedVersion usage distinction (feed.ts:466-484 vs social.ts:377-380)
-- [ ] User select patterns — publicUserSelect vs selfUserSelect not documented
-- [ ] Search pagination cursor pattern — different payloads for tweets ({rank,ts,id}) vs users ({followerCount,id}) (search.ts)
 - [x] P2002/P2025 race handling — covered in error-handling-prisma-race-conditions.md
 - [ ] SSE client reconnect with polling fallback — use-sse.ts exponential backoff, Last-Event-ID replay, 3-strike polling fallback
 - [ ] Image utilities client-side canvas operations — image-utils.ts cover-crop algorithm, JPEG quality 0.95, memory impact
@@ -83,7 +82,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 - [ ] Risks & mitigations — §7 from plan not documented in specs
 - [ ] Performance targets — §9 from plan not documented in specs
 
-## Spec File Maintenance
+## Spec File Maintenance (broken file:line references)
 - [x] testing-e2e-page-objects.md — fixed broken file:line references (commit 4267b5d)
 - [ ] logging-structured-output-redaction.md line 9 — claims src/lib/logger.ts:1-62 but file has 61 lines (off-by-one)
 - [ ] security-input-validation.md line 9 — claims src/lib/validators.ts:1-62 but file has 61 lines (off-by-one)
