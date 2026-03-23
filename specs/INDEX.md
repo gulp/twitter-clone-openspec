@@ -32,6 +32,7 @@ Cross-cutting documentation derived from `src/` code. One file per topic, prefix
 - [security-email-timing-safety.md](security-email-timing-safety.md) — Fire-and-forget email pattern for timing attack prevention, SMTP best-effort delivery, minimum response time enforcement
 - [security-env-validation-edge-runtime.md](security-env-validation-edge-runtime.md) — Edge Runtime environment validation gap, fail-closed CSRF with missing APP_ORIGIN, silent misconfiguration detection
 - [security-timing-attacks.md](security-timing-attacks.md) — Constant-time comparison and response timing flattening for auth endpoints
+- [security-password-validation.md](security-password-validation.md) — Password validation with length constraints, Unicode normalization gaps, homograph attack risks, bcrypt byte truncation behavior
 - [security-input-validation.md](security-input-validation.md) — Zod schemas, field validators, pagination defaults, tRPC integration
 - [caching-feed-versioning.md](caching-feed-versioning.md) — Monotonic version counters for cache invalidation, follower feed bumping, cursor hash determinism
 - [caching-ttl-strategy.md](caching-ttl-strategy.md) — TTL values for feed pages (60s), sessions (30d), replay buffers (5m), suggestions (5m), tombstones (60s)

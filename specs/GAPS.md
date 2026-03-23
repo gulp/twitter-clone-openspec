@@ -5,7 +5,7 @@ Sorted by priority. Checked items are addressed in existing specs.
 ## Critical (security, data integrity, auth)
 - [x] Silent configuration validation — covered in security-env-validation-edge-runtime.md
 - [x] Password reset token race condition — covered in security-password-reset-tokens.md
-- [ ] Password sanitization rules — no Unicode normalization, forbidden characters, control char filtering not documented
+- [x] Password sanitization rules — covered in security-password-validation.md
 - [x] PII redaction policy — covered in logging-structured-output-redaction.md (I-LOG2: no email/IP beyond userIds)
 - [x] Timing-safe auth patterns — covered in security-timing-attacks.md
 - [x] Fire-and-forget email service — covered in security-email-timing-safety.md
