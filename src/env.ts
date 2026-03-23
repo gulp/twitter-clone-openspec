@@ -38,7 +38,17 @@ const envSchema = z.object({
 
   // Optional: SMTP/Email
   SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.string().optional(),
+  SMTP_PORT: z
+    .string()
+    .regex(/^\d+$/, "SMTP_PORT must be a number")
+    .refine(
+      (val) => {
+        const num = Number.parseInt(val, 10);
+        return num >= 1 && num <= 65535;
+      },
+      { message: "SMTP_PORT must be a valid port (1-65535)" }
+    )
+    .optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
