@@ -92,11 +92,14 @@ export const socialRouter = createTRPCRouter({
       // Fire FOLLOW notification (self-suppression handled in createNotification)
       // Best-effort: fail-open (§4, §10)
       try {
-        await createNotification({
-          recipientId: followingId,
-          actorId: followerId,
-          type: "FOLLOW",
-        }, ctx.requestId);
+        await createNotification(
+          {
+            recipientId: followingId,
+            actorId: followerId,
+            type: "FOLLOW",
+          },
+          ctx.requestId
+        );
       } catch (error) {
         log.warn("Failed to create FOLLOW notification (fail open)", {
           followerId,
