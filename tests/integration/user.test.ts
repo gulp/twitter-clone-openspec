@@ -53,6 +53,27 @@ describe("user router", () => {
       ).rejects.toThrow("User not found");
     });
 
+    it("finds user with case-insensitive username lookup", async () => {
+      const { user } = await createTestUser({ username: "AliceUser" });
+
+      const caller = createTestContext();
+
+      // Test lowercase
+      const result1 = await caller.user.getByUsername({ username: "aliceuser" });
+      expect(result1.id).toBe(user.id);
+      expect(result1.username).toBe("AliceUser"); // Original case preserved
+
+      // Test uppercase
+      const result2 = await caller.user.getByUsername({ username: "ALICEUSER" });
+      expect(result2.id).toBe(user.id);
+      expect(result2.username).toBe("AliceUser"); // Original case preserved
+
+      // Test mixed case
+      const result3 = await caller.user.getByUsername({ username: "aLiCeUsEr" });
+      expect(result3.id).toBe(user.id);
+      expect(result3.username).toBe("AliceUser"); // Original case preserved
+    });
+
     it("includes isFollowing for authenticated users", async () => {
       const { user: viewer } = await createTestUser();
       const { user: target } = await createTestUser({ username: "target" });

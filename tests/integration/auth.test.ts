@@ -98,6 +98,32 @@ describe("auth router", () => {
         })
       ).rejects.toThrow("Email already in use");
     });
+
+    it("returns 'Username already taken' for duplicate username with different case", async () => {
+      await createTestUser({ username: "AliceUser" });
+
+      const caller = createTestContext();
+
+      // Try to register with lowercase version of username
+      await expect(
+        caller.auth.register({
+          email: "different@example.com",
+          username: "aliceuser",
+          displayName: "Different User",
+          password: "password123",
+        })
+      ).rejects.toThrow("Username already taken");
+
+      // Try to register with uppercase version
+      await expect(
+        caller.auth.register({
+          email: "another@example.com",
+          username: "ALICEUSER",
+          displayName: "Another User",
+          password: "password123",
+        })
+      ).rejects.toThrow("Username already taken");
+    });
   });
 
   describe("requestReset", () => {
