@@ -129,11 +129,15 @@ export function sendPasswordResetEmail(to: string, resetUrl: string): void {
         `,
       });
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Email send timeout after 30s")), 30000)
-      );
+      let timeoutId!: NodeJS.Timeout;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("Email send timeout after 30s")), 30000);
+      });
 
       const info = await Promise.race([sendPromise, timeoutPromise]);
+
+      // Clean up timer to prevent memory leak (timer continues running after race resolves)
+      clearTimeout(timeoutId);
 
       log.info("Password reset email sent", {
         to,
