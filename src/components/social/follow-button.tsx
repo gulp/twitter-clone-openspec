@@ -46,7 +46,10 @@ export function FollowButton({
     onSuccess: () => {
       // Invalidate relevant queries
       utils.social.getFollowers.invalidate({ userId });
-      utils.social.getFollowing.invalidate({ userId: session?.user?.id });
+      // Guard against session expiring mid-mutation
+      if (session?.user?.id) {
+        utils.social.getFollowing.invalidate({ userId: session.user.id });
+      }
       utils.social.getSuggestions.invalidate();
     },
   });
@@ -64,7 +67,10 @@ export function FollowButton({
     onSuccess: () => {
       // Invalidate relevant queries
       utils.social.getFollowers.invalidate({ userId });
-      utils.social.getFollowing.invalidate({ userId: session?.user?.id });
+      // Guard against session expiring mid-mutation
+      if (session?.user?.id) {
+        utils.social.getFollowing.invalidate({ userId: session.user.id });
+      }
       utils.social.getSuggestions.invalidate();
     },
   });
