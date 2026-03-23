@@ -2,6 +2,7 @@
 
 import { Avatar } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
+import { Repeat2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ImageGrid } from "../media/image-grid";
@@ -36,6 +37,7 @@ export interface TweetCardProps {
       mediaUrls?: string[];
     } | null;
   };
+  retweetedBy?: string | null;
   hasLiked?: boolean;
   hasRetweeted?: boolean;
   showParentLine?: boolean;
@@ -44,6 +46,7 @@ export interface TweetCardProps {
 
 export function TweetCard({
   tweet,
+  retweetedBy,
   hasLiked = false,
   hasRetweeted = false,
   showParentLine = false,
@@ -70,6 +73,23 @@ export function TweetCard({
       className="relative border-b border-[#38444d] px-4 py-3 transition-colors hover:bg-[#192734]/30 cursor-pointer"
       onClick={handleCardClick}
     >
+      {/* Retweet attribution */}
+      {retweetedBy && (
+        <div className="flex items-center gap-2 mb-2 ml-9 text-[#71767B] text-sm">
+          <Repeat2 className="w-4 h-4" />
+          <span>
+            Retweeted by{" "}
+            <Link
+              href={`/${retweetedBy}`}
+              className="hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              @{retweetedBy}
+            </Link>
+          </span>
+        </div>
+      )}
+
       {/* Parent thread line */}
       {showParentLine && <div className="absolute left-[34px] top-0 bottom-0 w-0.5 bg-[#38444d]" />}
 

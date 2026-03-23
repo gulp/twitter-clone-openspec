@@ -79,6 +79,7 @@ export function FeedList() {
             ...tweet,
             createdAt: new Date(tweet.createdAt),
           }}
+          retweetedBy={tweet.retweetedBy}
           hasLiked={tweet.hasLiked}
           hasRetweeted={tweet.hasRetweeted}
         />
