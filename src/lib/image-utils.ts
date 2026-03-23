@@ -6,6 +6,16 @@ export async function resizeImage(
   targetWidth: number,
   targetHeight: number
 ): Promise<File> {
+  // Validate inputs
+  if (
+    targetWidth <= 0 ||
+    targetHeight <= 0 ||
+    !Number.isFinite(targetWidth) ||
+    !Number.isFinite(targetHeight)
+  ) {
+    throw new Error("Target dimensions must be positive finite numbers");
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     const canvas = document.createElement("canvas");
@@ -16,7 +26,19 @@ export async function resizeImage(
       return;
     }
 
+    // Timeout to prevent hanging on corrupted images (30 seconds)
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error("Image processing timeout"));
+    }, 30000);
+
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      img.src = ""; // Release memory
+    };
+
     img.onload = () => {
+      cleanup();
       canvas.width = targetWidth;
       canvas.height = targetHeight;
 
@@ -49,6 +71,7 @@ export async function resizeImage(
     };
 
     img.onerror = () => {
+      cleanup();
       reject(new Error("Failed to load image"));
     };
 
@@ -58,6 +81,7 @@ export async function resizeImage(
       img.src = e.target?.result as string;
     };
     reader.onerror = () => {
+      cleanup();
       reject(new Error("Failed to read file"));
     };
     reader.readAsDataURL(file);
